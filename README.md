@@ -37,16 +37,19 @@ TECH STACK
 Frontend:
 - Node.js
 - React.js
+- TypeScript
 
 Backend:
+- Node.js
+- Express.js
 - PostgreSQL (base de datos relacional)
 - MongoDB (base de datos NoSQL)
 - JSON (formato de intercambio de datos)
 
 Lenguajes de Programación:
+- TypeScript
 - Python
 - Go (Golang)
-
 
 OBJETIVO DEL PROYECTO
 --------------------
