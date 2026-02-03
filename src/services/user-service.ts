@@ -1,4 +1,5 @@
 import type { User } from '../models/user.js'
+import { UserErrors } from '../errors/errors.js';
 
 
 export class UserService {
@@ -9,9 +10,9 @@ export class UserService {
             console.log("Starting to register user!")
             const password = userToRegister.password;
 
-            if (!password) {
+            if (!password || password.length < this.PasswordLength) {
                 console.log("Password is needed!");
-                throw new Error("Empty Password");
+                throw UserErrors.InvalidPassword;
             }
 
             if (password.length < this.PasswordLength) {
