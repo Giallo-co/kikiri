@@ -13,4 +13,10 @@ export class UserController {
 
         _res.json(registeredUser);
     }
+
+    simulate = (_req : Request, _res : Response) => {
+        this.userService.simulation();
+
+        _res.send("Success");
+    }
 }

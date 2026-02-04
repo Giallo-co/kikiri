@@ -9,4 +9,6 @@ const userController = new UserController(userService);
 
 userRoutes.post("/v1/register", userController.registerUser)
 
+userRoutes.get("/v1/simulation", userController.simulate);
+
 export default userRoutes;
