@@ -7,9 +7,9 @@ export class UserController {
         console.log('Initilized user controller')
     }
 
-    registerUser = (_req : Request, _res : Response) => {
+    registerUser = async (_req : Request, _res : Response) => {
         let user : User = _req.body;
-        let registeredUser = this.userService.registerUser(user);
+        let registeredUser = await this.userService.registerUserAsync(user);
 
         _res.json(registeredUser);
     }
