@@ -12,11 +12,12 @@ app.get("/", (_req, _res) => {
   _res.send("Hello World!");
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
-
 app.use('/user', userRoutes);
 
 app.use(errorHandler); 
 export default app;
+
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
+
