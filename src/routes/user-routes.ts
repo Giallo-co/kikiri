@@ -10,7 +10,6 @@ const userService = new UserService(userRepository);
 const userController = new UserController(userService);
 
 userRoutes.post("/v1/register", userController.registerUser)
-
 userRoutes.get("/v1/simulation", userController.simulate);
 
-export default userRoutes;
+export default userRoutes; 
