@@ -43,4 +43,16 @@ export class UserService {
         })
     }
 
+    async addFriendAsync(userId: number, friendId: number): Promise<User> {
+        
+        const user = await this.userRepository.getUserByIdAsync(userId);
+        if (!user.friends) {
+            user.friends = [];
+        }
+        user.friends.push(friendId); // Esto es unidireccional (follower mas que frienship), al USUARIO se le añade un AMIGO al que SIGUE
+
+        await this.userRepository.saveRelationshipAsync(user);
+        return user;
+    }
+
 }

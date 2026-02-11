@@ -17,6 +17,17 @@ export class UserController {
     simulate = (_req : Request, _res : Response) => {
         this.userService.simulation();
 
-        _res.send("Success");
+        _res.send("Success (～￣▽￣)～");
+    }
+
+    addFriend = async (_req: Request, _res: Response) => {
+        const { userId, friendId } = _req.body;
+        
+        try {
+            const updatedUser = await this.userService.addFriendAsync(userId, friendId);
+            _res.status(200).json(updatedUser);
+        } catch (error) {
+            _res.status(500).send("Error adding friend (┬┬﹏┬┬)");
+        }
     }
 }

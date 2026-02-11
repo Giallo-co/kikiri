@@ -21,4 +21,20 @@ export class UserRepository {
         await this.callToExternalServiceAsync();
 
     }
+
+    getUserByIdAsync = async (id: number) : Promise<User> => {
+
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                resolve({
+                    email: "jonatan@gmail.com",
+                    username: "zu-aster",
+                    password: "encrypted",
+                    id: id,
+                    role: 0,
+                    friends: []
+                });
+            }, 100);
+        })
+    }
 }
