@@ -8,8 +8,8 @@ describe('UserService', () => {
         const userService = new UserService(userRepository);
 
         let user : User = {
-            email: "philipfallag@gmail.com",
-            username: "Philip",
+            email: "hugo@test.com",
+            username: "hugo",
             password: "encrypted",
             id: 1,
             role: 0,
