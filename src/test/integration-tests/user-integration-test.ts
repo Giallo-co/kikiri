@@ -6,7 +6,7 @@ describe("UserRegister", () => {
         const response = await supertest(app).post("/user/v1/register").send({
             email: "hugo@test.com",
             username: "hugo",
-            password: "UnaContrasenaMuyLarga123", // Larga para que el servidor la acepte (200)
+            password: "UnaContrasenaMuyLarga123", 
         });
 
         expect(response.status).toBe(200);
@@ -20,7 +20,7 @@ describe("Password Validation", () => {
         const response = await supertest(app).post("/user/v1/register").send({
             email: "hugo@test.com",
             username: "hugo",
-            password: "", // Vacía para forzar el error "Password is needed" (400)
+            password: "", 
         });
 
         expect(response.status).toBe(400);
@@ -34,3 +34,10 @@ describe("Root Endpoint", () => {
         expect(response.text).toContain("Hello World");
     });
 });
+
+it("Should return 404 for non-existent routes", async () => {
+    
+    const response = await (supertest as any)(app).get("/esta-ruta-no-existe");
+    
+    expect(response.status).toBe(404);
+  });
