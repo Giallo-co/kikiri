@@ -1,7 +1,10 @@
 import express from "express";
+import config from "./config/config"; 
+import { errorHandler } from './middlewares/errorHandler';
+import userRoutes from './routes/userRoutes'; 
 
 const app = express();
-const PORT = 3000;
+const PORT = config.port; 
 
 app.use(express.json());
 
@@ -13,4 +16,7 @@ app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
 
+app.use('/user', userRoutes);
+
+app.use(errorHandler); 
 export default app;
