@@ -65,4 +65,32 @@ export class UserService {
     return true;
   }
 
+  simulation(): Promise<string> {
+      return new Promise((resolve) => {
+          setTimeout(() => {
+              resolve("Completed Task");
+          }, 5000);
+      })
+  }
+
+  async addFriendAsync(userId: number, friendId: number): Promise<User> {
+      const user = await this.userRepository.getUserByIdAsync(userId);
+      
+      if (!user) {
+          throw new ServiceException(1002, "User not found for friendship.");
+      }
+
+      if (!user.friends) {
+          user.friends = [];
+      }
+      
+      // Evitar duplicados si es necesario
+      if (!user.friends.includes(friendId)) {
+        user.friends.push(friendId);
+      }
+
+      await this.userRepository.saveRelationshipAsync(user);
+      return user;
+  }
+
 }

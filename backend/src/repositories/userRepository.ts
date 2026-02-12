@@ -18,7 +18,7 @@ export class UserRepository {
     return this.users.find(u => u.email === email);
   }
 
-    async update(userId: number, update: Partial<User>): Promise<User | undefined> {
+  async update(userId: number, update: Partial<User>): Promise<User | undefined> {
     const idx = this.users.findIndex(u => u.id === userId);
     if (idx === -1) return undefined;
 
@@ -33,9 +33,9 @@ export class UserRepository {
 
     this.users[idx] = updated;
     return updated;
-    }
+  }
 
-    async delete(userId: number): Promise<boolean> {
+  async delete(userId: number): Promise<boolean> {
     const idx = this.users.findIndex(u => u.id === userId);
     if (idx === -1) return false;
 
@@ -43,5 +43,24 @@ export class UserRepository {
     return true;
     }
 
+  async getUserByIdAsync(id: number): Promise<User | undefined> {
+      return new Promise((resolve) => {
+          setTimeout(() => {
+              resolve(this.users.find(u => u.id === id));
+          }, 100);
+      });
+  }
+
+  callToExternalServiceAsync = async () : Promise<string> => {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            resolve("External call success.");
+        }, 200)
+    })
+  }
+
+  async saveRelationshipAsync(user: User): Promise<void> {
+      await this.callToExternalServiceAsync();
+  }
 
 }

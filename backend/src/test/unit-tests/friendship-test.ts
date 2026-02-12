@@ -1,6 +1,6 @@
-import { UserRepository } from "../../repositories/user-repository.js";
-import { UserService } from "../../services/user-service.js";
-import type { User } from "../../models/user.js";
+import { UserRepository } from "../../repositories/userRepository";
+import { UserService } from "../../services/userService";
+import type { User } from "../../models/user";
 
 describe('UserService - Friendship', () => {
     it('Should add a friend to the user list', async () => {
