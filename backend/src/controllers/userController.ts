@@ -36,4 +36,35 @@ public async register(req: Request, res: Response, next: NextFunction) {
   }
 }
 
+// resto de metodos CRUD
+public async getByEmail(req: Request, res: Response, next: NextFunction) {
+        try {
+            const email = req.params.email as string;
+            if (!email) return res.status(400).json({ message: "Email parameter is required" });
+            const user = await this.userService.getUserByEmail(email);
+            if (!user) return res.status(404).json({ message: "User not found" });
+            res.json(user);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    public async update(req: Request, res: Response, next: NextFunction) {
+        try {
+            const updatedUser = await this.userService.updateUser(Number(req.params.id), req.body);
+            res.json(updatedUser);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    public async delete(req: Request, res: Response, next: NextFunction) {
+        try {
+            await this.userService.deleteUser(Number(req.params.id));
+            res.status(204).send();
+        } catch (error) {
+            next(error);
+        }
+    }
+
 }
