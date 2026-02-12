@@ -82,4 +82,36 @@ export class UserController {
         }
     }
 
+    public getFriends = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const userId = Number(req.params.userId);
+            const friends = await this.userService.getFriends(userId);
+            res.status(200).json({ friends });
+        } catch (error) { next(error); }
+    }
+
+    public deleteFriend = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const userId = Number(req.params.userId);
+            const friendId = Number(req.params.friendId);
+            
+            const updatedUser = await this.userService.removeFriend(userId, friendId);
+            res.status(200).json(updatedUser);
+        } catch (error) { next(error); }
+    }
+
+    public updateFriendList = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const userId = Number(req.params.userId);
+            const { friends } = req.body; // Espera un array { "friends": [1, 2, 3] }
+
+            if (!Array.isArray(friends)) {
+                return res.status(400).json({ message: "Friends must be an array of numbers" });
+            }
+
+            const updatedUser = await this.userService.updateFriendList(userId, friends);
+            res.status(200).json(updatedUser);
+        } catch (error) { next(error); }
+    }
+
 }

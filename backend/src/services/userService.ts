@@ -93,4 +93,33 @@ export class UserService {
       return user;
   }
 
+  async getFriends(userId: number): Promise<number[]> {
+      const user = await this.userRepository.getUserByIdAsync(userId);
+      if (!user) throw new ServiceException(1002, "User not found.");
+      
+      return user.friends || [];
+  }
+
+  async removeFriend(userId: number, friendId: number): Promise<User> {
+      const user = await this.userRepository.getUserByIdAsync(userId);
+      if (!user) throw new ServiceException(1002, "User not found.");
+
+      if (user.friends) {
+          user.friends = user.friends.filter(id => id !== friendId);
+      }
+
+      await this.userRepository.saveRelationshipAsync(user);
+      return user;
+  }
+
+  async updateFriendList(userId: number, newFriendList: number[]): Promise<User> {
+      const user = await this.userRepository.getUserByIdAsync(userId);
+      if (!user) throw new ServiceException(1002, "User not found.");
+
+      user.friends = newFriendList;
+
+      await this.userRepository.saveRelationshipAsync(user);
+      return user;
+  }
+
 }

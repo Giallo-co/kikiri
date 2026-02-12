@@ -17,6 +17,9 @@ router.delete("/v1/users/:id", (req, res, next) => userController.delete(req, re
 
 // Rutas CRUD follow
 router.post("/v1/friend", (req, res, next) => userController.addFriend(req, res, next));
+router.get("/v1/users/:userId/friends", (req, res, next) => userController.getFriends(req, res, next));
+router.put("/v1/users/:userId/friends", (req, res, next) => userController.updateFriendList(req, res, next));
+router.delete("/v1/users/:userId/friends/:friendId", (req, res, next) => userController.deleteFriend(req, res, next));
 
 // Rutas ejemplos
 router.get("/v1/simulation", (req, res, next) => userController.simulate(req, res));
