@@ -1,6 +1,7 @@
 import { UserRepository } from '../repositories/userRepository';
 import { ServiceException } from '../errors/ServiceException';
 import { User } from '../models/user';
+import config from '../config/config';
 
 export class UserService {
   constructor(private readonly userRepository: UserRepository) {}
@@ -15,8 +16,11 @@ export class UserService {
     password: string;
     role?: number;
   }): Promise<User> {
-    if (userData.password.length < 8) {
-      throw new ServiceException(1001, "Password must be at least 8 characters long.");
+    if (userData.password.length < config.minPasswordLength) {
+      throw new ServiceException(
+        1001,
+        `Password must be at least ${config.minPasswordLength} characters long.`
+      );
     }
 
     const newUser = await this.userRepository.save({

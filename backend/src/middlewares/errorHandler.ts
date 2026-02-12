@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { ServiceException } from '../errors/ServiceException'; 
+import config from '../config/config';
 
 export const errorHandler = (err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error(err.stack); 
@@ -9,6 +10,6 @@ export const errorHandler = (err: Error, req: Request, res: Response, next: Next
       "message": err.message
     });
   } else {
-    res.status(500).send('Something broke!');
+    res.status(500).send(config.errorMessage);
   }
 };
