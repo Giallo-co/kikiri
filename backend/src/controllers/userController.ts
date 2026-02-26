@@ -49,6 +49,24 @@ export class UserController {
         }
     }
 
+    public async getById(req: Request, res: Response, next: NextFunction) {
+        try {
+            const id = Number(req.params.id);
+    
+            if (isNaN(id)) {
+                return res.status(400).json({ message: "Invalid user id" });
+            }
+    
+            const user = await this.userService.getUserById(id);
+            if (!user) {
+                return res.status(404).json({ message: "User not found" });
+            }
+            return res.status(200).json(user);
+        } catch (error) {
+            next(error);
+        }
+    }
+
     public async update(req: Request, res: Response, next: NextFunction) {
         try {
             const updatedUser = await this.userService.updateUser(Number(req.params.id), req.body);

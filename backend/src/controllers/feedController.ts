@@ -12,6 +12,7 @@ export class FeedController {
         return res.status(400).json({ message: "Invalid userId" });
       }
 
+      // se pasa el userId para hacerlo personalizado a futuro
       const feed = await this.feedService.generateFeed(userId);
 
       return res.status(200).json(feed);

@@ -10,7 +10,8 @@ export class FeedService {
   ) {}
 
   async generateFeed(userId: number): Promise<FeedResponse> {
-    await this.ensureUserExists(userId);
+
+    // se pasa el userId para hacerlo personalizado a futuro
 
     const posts = await this.postRepository.getAll();
 
@@ -26,11 +27,4 @@ export class FeedService {
     };
   }
 
-  private async ensureUserExists(userId: number): Promise<void> {
-    const user = await this.userRepository.getById(userId);
-
-    if (!user) {
-      throw new ServiceException(1100, 'User not found');
-    }
-  }
 }

@@ -10,6 +10,10 @@ export class UserService {
     return this.userRepository.findByEmail(email);
   }
 
+  public async getUserById(id: number): Promise<User | undefined> {
+    return this.userRepository.findById(id);
+  }
+
   public async registerUserAsync(userData: {
     email: string;
     username: string;
