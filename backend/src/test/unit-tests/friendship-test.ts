@@ -2,6 +2,9 @@ import { UserRepository } from "../../repositories/userRepository";
 import { UserService } from "../../services/userService";
 import { User } from "../../models/userModel";
 
+const simulateExecution = (): Promise<void> =>
+  new Promise(resolve => setTimeout(resolve, 500));
+
 // Mock del UserRepository
 jest.mock("../../repositories/userRepository");
 
@@ -26,6 +29,7 @@ describe('UserService - Friendship Logic', () => {
     });
 
     it('should add a friend to the user list', async () => {
+        await simulateExecution();
         // Setup
         (userRepository.getUserByIdAsync as jest.Mock).mockResolvedValue(dummyUser);
         const saveSpy = userRepository.saveRelationshipAsync as jest.Mock;
@@ -37,6 +41,7 @@ describe('UserService - Friendship Logic', () => {
     });
 
     it('should get the list of friends', async () => {
+        await simulateExecution();
         (userRepository.getUserByIdAsync as jest.Mock).mockResolvedValue(dummyUser);
 
         const friends = await userService.getFriends(1);
@@ -45,6 +50,7 @@ describe('UserService - Friendship Logic', () => {
     });
 
     it('should remove a friend from the list', async () => {
+        await simulateExecution();
         (userRepository.getUserByIdAsync as jest.Mock).mockResolvedValue(dummyUser);
         const saveSpy = userRepository.saveRelationshipAsync as jest.Mock;
 
@@ -56,6 +62,7 @@ describe('UserService - Friendship Logic', () => {
     });
 
     it('should update the entire friend list', async () => {
+        await simulateExecution();
         (userRepository.getUserByIdAsync as jest.Mock).mockResolvedValue(dummyUser);
         const saveSpy = userRepository.saveRelationshipAsync as jest.Mock;
 
@@ -67,6 +74,7 @@ describe('UserService - Friendship Logic', () => {
     });
 
     it('should throw error if user does not exist', async () => {
+        await simulateExecution();
         (userRepository.getUserByIdAsync as jest.Mock).mockResolvedValue(undefined);
 
         await expect(userService.getFriends(999))

@@ -19,7 +19,12 @@ app.use(config.apiBasePath, feedRoutes);
 app.use(errorHandler); 
 export default app;
 
-app.listen(PORT, () => {
-  console.log(`Server running on ${config.protocol}://${config.host}:${PORT}`);
-});
+declare const require: any;
+declare const module: any;
+
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server running on ${config.protocol}://${config.host}:${PORT}`);
+  });
+}
 

@@ -7,11 +7,11 @@ export class UserService {
   constructor(private readonly userRepository: UserRepository) {}
 
   public async getUserByEmail(email: string): Promise<User | undefined> {
-    return this.userRepository.findByEmail(email);
+    return await this.userRepository.findByEmail(email);
   }
 
   public async getUserById(id: number): Promise<User | undefined> {
-    return this.userRepository.findById(id);
+    return await this.userRepository.findById(id);
   }
 
   public async registerUserAsync(userData: {
@@ -73,12 +73,9 @@ export class UserService {
     return true;
   }
 
-  simulation(): Promise<string> {
-      return new Promise((resolve) => {
-          setTimeout(() => {
-              resolve("Completed Task");
-          }, 5000);
-      })
+  async simulation(): Promise<string> {
+    await new Promise<void>(resolve => setTimeout(resolve, 5000));
+    return "Completed Task";
   }
 
   async addFriendAsync(userId: number, friendId: number): Promise<User> {

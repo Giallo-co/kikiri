@@ -1,6 +1,7 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
+  maxWorkers: 1, // Tests secuenciales: un solo worker, uno tras otro
   roots: ['<rootDir>/src'],
   testMatch: ['**/test/**/*.test.ts', '**/test/**/*.spec.ts', '**/test/**/*-test.ts', '**/test/**/*.ts'],
   moduleFileExtensions: ['ts', 'js'],

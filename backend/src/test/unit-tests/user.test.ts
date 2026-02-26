@@ -3,6 +3,9 @@ import { UserRepository } from '../../repositories/userRepository';
 import { ServiceException } from '../../errors/ServiceException';
 import { User } from '../../models/userModel';
 
+const simulateExecution = (): Promise<void> =>
+  new Promise(resolve => setTimeout(resolve, 500));
+
 describe('UserService - CRUD', () => {
 
     let userService: UserService;
@@ -28,6 +31,7 @@ describe('UserService - CRUD', () => {
     // create 
 
     it('Should throw ServiceException if password is too short', async () => {
+        await simulateExecution();
 
         await expect(
             userService.registerUserAsync({
@@ -47,6 +51,7 @@ describe('UserService - CRUD', () => {
     });
 
     it('Should create user successfully', async () => {
+        await simulateExecution();
 
         const result = await userService.registerUserAsync({
             email: 'test@test.com',
@@ -62,6 +67,7 @@ describe('UserService - CRUD', () => {
     //read 
 
     it('Should return user when email exists', async () => {
+        await simulateExecution();
 
         const sampleUser: User = {
             id: 1,
@@ -81,6 +87,7 @@ describe('UserService - CRUD', () => {
     });
 
     it('Should return undefined when email does not exist', async () => {
+        await simulateExecution();
 
         (userRepositoryMock.findByEmail as jest.Mock).mockResolvedValue(undefined);
 
@@ -94,6 +101,8 @@ describe('UserService - CRUD', () => {
 
 
     it('Should update user successfully', async () => {
+        await simulateExecution();
+
         const updatedUser: User = {
             id: 1,
             email: "updated@test.com",
@@ -112,6 +121,8 @@ describe('UserService - CRUD', () => {
     });
 
     it('Should throw ServiceException when trying to update a non-existent user', async () => {
+        await simulateExecution();
+
         (userRepositoryMock.update as jest.Mock) = jest.fn().mockResolvedValue(undefined);
 
         await expect(userService.updateUser(999, { username: "noOne" })).rejects.toThrow(ServiceException);
@@ -122,6 +133,8 @@ describe('UserService - CRUD', () => {
     //delete
 
     it('Should delete user successfully', async () => {
+        await simulateExecution();
+
         (userRepositoryMock.delete as jest.Mock) = jest.fn().mockResolvedValue(true);
 
         const result = await userService.deleteUser(1);
@@ -131,6 +144,8 @@ describe('UserService - CRUD', () => {
     });
 
     it('Should throw ServiceException when trying to delete a non-existent user', async () => {
+        await simulateExecution();
+
         (userRepositoryMock.delete as jest.Mock) = jest.fn().mockResolvedValue(false);
 
         await expect(userService.deleteUser(999)).rejects.toThrow(ServiceException);

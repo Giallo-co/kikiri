@@ -10,17 +10,13 @@ export class FeedService {
   ) {}
 
   async generateFeed(userId: number): Promise<FeedResponse> {
-
     // se pasa el userId para hacerlo personalizado a futuro
-
     const posts = await this.postRepository.getAll();
-
     const items: FeedItem[] = posts
       .slice(0, 10)
       .map(post => ({
         ...post
       }));
-
     return {
       userId,
       items
