@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { UserService } from '../services/userService';
 import { ServiceException } from '../errors/ServiceException'; //estos no se usan, pero igual los dejo
-import { User } from '../models/user'; 
+import { User } from '../models/userModel'; 
 
 export class UserController {
     constructor(private readonly userService: UserService) {}

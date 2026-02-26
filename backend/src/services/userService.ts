@@ -1,6 +1,6 @@
 import { UserRepository } from '../repositories/userRepository';
 import { ServiceException } from '../errors/ServiceException';
-import { User } from '../models/user';
+import { User } from '../models/userModel';
 import config from '../config/config';
 
 export class UserService {

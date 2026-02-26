@@ -1,7 +1,7 @@
 import { UserService } from '../../services/userService';
 import { UserRepository } from '../../repositories/userRepository';
 import { ServiceException } from '../../errors/ServiceException';
-import { User } from '../../models/user';
+import { User } from '../../models/userModel';
 
 describe('UserService - CRUD', () => {
 

@@ -1,6 +1,6 @@
 import { UserRepository } from "../../repositories/userRepository";
 import { UserService } from "../../services/userService";
-import { User } from "../../models/user";
+import { User } from "../../models/userModel";
 
 // Mock del UserRepository
 jest.mock("../../repositories/userRepository");
