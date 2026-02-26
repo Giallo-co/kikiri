@@ -1,7 +1,11 @@
 import express from "express";
+import config from "./config/config"; 
+import { errorHandler } from './middlewares/errorHandler';
+import userRoutes from './routes/userRoutes';
+import feedRoutes from './routes/feedRoutes';
 
 const app = express();
-const PORT = 3000;
+const PORT = config.port; 
 
 app.use(express.json());
 
@@ -9,8 +13,18 @@ app.get("/", (_req, _res) => {
   _res.send("Hello World!");
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+app.use(config.apiBasePath, userRoutes);
+app.use(config.apiBasePath, feedRoutes);
 
+app.use(errorHandler); 
 export default app;
+
+declare const require: any;
+declare const module: any;
+
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server running on ${config.protocol}://${config.host}:${PORT}`);
+  });
+}
+
