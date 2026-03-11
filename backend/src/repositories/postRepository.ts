@@ -1,18 +1,24 @@
+import prisma from '../prisma';
 import { Post } from '../models/postModel';
 
 export class PostRepository {
-    private posts: Post[] = [];
-  
-    async getAll(): Promise<Post[]> {
-      return this.posts;
+    async getAll(): Promise<any[]> {
+      return await prisma.post.findMany();
     }
   
-    async getByAuthor(authorId: number): Promise<Post[]> {
-      return this.posts.filter(p => p.authorId === authorId);
+    async getByAuthor(authorId: number): Promise<any[]> {
+      return await prisma.post.findMany({
+        where: { authorId }
+      });
     }
   
-    async save(post: Post): Promise<Post> {
-      this.posts.push(post);
-      return post;
+    async save(post: Omit<Post, 'id' | 'createdAt'>): Promise<any> {
+      return await prisma.post.create({
+        data: {
+          content: post.content,
+          authorId: post.authorId,
+          likes: post.likes
+        }
+      });
     }
 }

@@ -1,70 +1,75 @@
+import prisma from '../prisma';
 import { User } from '../models/userModel';
 
 export class UserRepository {
-  private users: User[] = [];
-  private nextId: number = 1;
 
   async save(user: Omit<User, 'id' | 'friends'>): Promise<User> {
-    const newUser: User = {
-      ...user,
-      id: this.nextId++,
-      friends: []
-    };
-    this.users.push(newUser);
-    return newUser;
+    const newUser = await prisma.user.create({
+      data: {
+        email: user.email,
+        username: user.username,
+        password: user.password,
+        role: user.role,
+      },
+    });
+    return newUser as unknown as User;
   }
 
   async findByEmail(email: string): Promise<User | undefined> {
-    return this.users.find(u => u.email === email);
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+    return user ? (user as unknown as User) : undefined;
   }
 
   async findById(id: number): Promise<User | undefined> {
-    return this.users.find(u => u.id === id);
+    const user = await prisma.user.findUnique({
+      where: { id },
+    });
+    return user ? (user as unknown as User) : undefined;
   }
 
   async update(userId: number, update: Partial<User>): Promise<User | undefined> {
-    const idx = this.users.findIndex(u => u.id === userId);
-    if (idx === -1) return undefined;
-
-    const existing = this.users[idx]!;
-
-    const updated: User = {
-        ...existing,
-        ...update,
-        id: existing.id,
-        friends: existing.friends
-    };
-
-    this.users[idx] = updated;
-    return updated;
+    try {
+      const updated = await prisma.user.update({
+        where: { id: userId },
+        data: {
+          email: update.email,
+          username: update.username,
+          password: update.password,
+          role: update.role,
+        },
+      });
+      return updated as unknown as User;
+    } catch (error) {
+      return undefined;
+    }
   }
 
   async delete(userId: number): Promise<boolean> {
-    const idx = this.users.findIndex(u => u.id === userId);
-    if (idx === -1) return false;
-
-    this.users.splice(idx, 1);
-    return true;
+    try {
+      await prisma.user.delete({
+        where: { id: userId },
+      });
+      return true;
+    } catch (error) {
+      return false;
     }
+  }
 
   async getUserByIdAsync(id: number): Promise<User | undefined> {
-      return new Promise((resolve) => {
-          setTimeout(() => {
-              resolve(this.users.find(u => u.id === id));
-          }, 100);
-      });
+    return await this.findById(id);
   }
 
-  callToExternalServiceAsync = async () : Promise<string> => {
+  callToExternalServiceAsync = async (): Promise<string> => {
     return new Promise((resolve) => {
-        setTimeout(() => {
-            resolve("External call success.");
-        }, 200)
-    })
-  }
+      setTimeout(() => {
+        resolve("External call success.");
+      }, 200);
+    });
+  };
 
   async saveRelationshipAsync(user: User): Promise<void> {
-      await this.callToExternalServiceAsync();
+    await this.callToExternalServiceAsync();
   }
-
 }
