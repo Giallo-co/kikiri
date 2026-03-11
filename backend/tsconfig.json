@@ -3,7 +3,7 @@
     "rootDir": "./src",
     "outDir": "./dist",
 
-    "module": "commonjs",
+    "module": "commonjs", // En el ejemplo de Prisma usan "ESNext", pero prefiero seguir usando commonJS
     "target": "es2016",
     "types": ["node", "jest"],
     "esModuleInterop": true,
