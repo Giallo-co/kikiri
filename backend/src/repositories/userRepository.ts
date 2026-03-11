@@ -1,4 +1,4 @@
-import prisma from '../prisma';
+import prisma from '../lib/prisma';
 import { User } from '../models/userModel';
 
 export class UserRepository {
