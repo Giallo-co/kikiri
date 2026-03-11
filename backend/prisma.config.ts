@@ -9,6 +9,7 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    url: process.env["DATABASE_URL"],
+    url: process.env.DATABASE_URL,
+    // Ahora aqui se configura el proveedor de datos, el docker con MySQL en nuestro caso
   },
 });
