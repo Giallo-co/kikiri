@@ -31,14 +31,16 @@ export class UserRepository {
 
   async update(userId: number, update: Partial<User>): Promise<User | undefined> {
     try {
+      // Construimos un objeto con las propiedades no undefined
+      const dataToUpdate: any = {};
+      if (update.email !== undefined) dataToUpdate.email = update.email;
+      if (update.username !== undefined) dataToUpdate.username = update.username;
+      if (update.password !== undefined) dataToUpdate.password = update.password;
+      if (update.role !== undefined) dataToUpdate.role = update.role;
+
       const updated = await prisma.user.update({
         where: { id: userId },
-        data: {
-          email: update.email,
-          username: update.username,
-          password: update.password,
-          role: update.role,
-        },
+        data: dataToUpdate,
       });
       return updated as unknown as User;
     } catch (error) {
