@@ -1,5 +1,6 @@
 import request from 'supertest';
 import app from '../../app';
+import prisma from '../../lib/prisma';
 
 const simulateExecution = (): Promise<void> =>
   new Promise(resolve => setTimeout(resolve, 500));
@@ -11,6 +12,10 @@ describe('User API Integration Tests', () => {
         password: "password123"
     };
     
+    afterAll(async () => {
+        await prisma.$disconnect();
+    });
+
     let createdUserId: number;
 
     it('should register a new user (POST /v1/register)', async () => {

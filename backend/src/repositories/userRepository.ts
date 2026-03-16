@@ -63,15 +63,12 @@ export class UserRepository {
     return await this.findById(id);
   }
 
-  callToExternalServiceAsync = async (): Promise<string> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve("External call success.");
-      }, 200);
-    });
-  };
-
   async saveRelationshipAsync(user: User): Promise<void> {
-    await this.callToExternalServiceAsync();
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        friends: user.friends ?? [], 
+      },
+    });
   }
 }

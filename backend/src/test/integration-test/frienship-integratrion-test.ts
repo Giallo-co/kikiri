@@ -1,5 +1,6 @@
 import request from 'supertest';
 import app from '../../app';
+import prisma from '../../lib/prisma';
 
 const simulateExecution = (): Promise<void> =>
   new Promise(resolve => setTimeout(resolve, 500));
@@ -8,6 +9,10 @@ describe('Friendship API Integration Flow', () => {
   let userId: number;
   let friendIdA: number;
   let friendIdB: number;
+
+  afterAll(async () => {
+    await prisma.$disconnect();
+  });
 
   // Crear usuarios reales para las pruebas
   it('should register a user and friends first', async () => {
