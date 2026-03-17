@@ -1,0 +1,18 @@
+{
+  "name": "kikiri-root",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "pre:setup": "bash ./scripts/setup.sh",
+    "test:backend": "npm run pre:setup && npm run test --workspace=backend",
+    "dev:backend": "npm run pre:setup && npm run dev --workspace=backend",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "dev:all": "npm run pre:setup && concurrently \"npm run dev --workspace=backend\" \"npm run dev --workspace=frontend\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}
