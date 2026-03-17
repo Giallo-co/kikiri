@@ -1,10 +1,22 @@
 import request from 'supertest';
 import app from '../../app';
+import prisma from '../../lib/prisma';
 
 const simulateExecution = (): Promise<void> =>
   new Promise(resolve => setTimeout(resolve, 50));
 
 describe('Feed API Integration', () => {
+
+  afterAll(async () => {
+    // Opcional: Limpiar los datos de prueba al terminar
+    await prisma.follow.deleteMany();
+    await prisma.user.deleteMany({
+        where: { email: { contains: '@kikiri.com' } }
+    });
+    
+    await prisma.$disconnect();
+  });
+
   it('should return 200 and a feed response for a numeric userId', async () => {
     await simulateExecution();
 
@@ -25,4 +37,3 @@ describe('Feed API Integration', () => {
     expect(res.body).toEqual({ message: 'Invalid userId' });
   });
 });
-
