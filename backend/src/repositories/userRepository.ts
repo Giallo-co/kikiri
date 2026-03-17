@@ -85,8 +85,8 @@ export class UserRepository {
   async searchByQuery(q: string, skip = 0, take = 20): Promise<{ data: User[]; total: number }> {
     const where = {
       OR: [
-        { username: { contains: q, mode: 'insensitive' } },
-        { email: { contains: q, mode: 'insensitive' } },
+        { username: { contains: q } }, // quitar el insensitive
+        { email: { contains: q } },    // quitar el insensitive
       ],
     };
 

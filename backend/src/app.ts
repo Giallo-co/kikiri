@@ -3,6 +3,7 @@ import config from "./config/config";
 import { errorHandler } from './middlewares/errorHandler';
 import userRoutes from './routes/userRoutes';
 import feedRoutes from './routes/feedRoutes';
+import searchRoutes from './routes/searchRoutes';
 
 const app = express();
 const PORT = config.port; 
@@ -15,6 +16,7 @@ app.get("/", (_req, _res) => {
 
 app.use(config.apiBasePath, userRoutes);
 app.use(config.apiBasePath, feedRoutes);
+app.use(config.apiBasePath, searchRoutes);
 
 app.use(errorHandler); 
 export default app;
