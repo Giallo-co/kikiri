@@ -29,6 +29,34 @@ export class UserRepository {
     return user ? (user as unknown as User) : undefined;
   }
 
+  async findByPublicId(publicId: string): Promise<User | undefined> {
+    const user = await prisma.user.findUnique({
+      where: { publicId },
+    });
+    return user ? (user as unknown as User) : undefined;
+  }
+
+  async searchByQuery(query: string, skip: number, take: number): Promise<{ data: User[]; total: number }> {
+    const whereClause = {
+      OR: [
+        { username: { contains: query } },
+        // Si quieres que también busque por email, puedes dejar la siguiente línea:
+        { email: { contains: query } }
+      ]
+    };
+
+    const [data, total] = await Promise.all([
+      prisma.user.findMany({
+        where: whereClause,
+        skip,
+        take,
+      }),
+      prisma.user.count({ where: whereClause })
+    ]);
+
+    return { data: data as unknown as User[], total };
+  }
+
   async update(userId: number, update: Partial<User>): Promise<User | undefined> {
     try {
       const dataToUpdate: any = {};
