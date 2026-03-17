@@ -67,7 +67,7 @@ export class UserRepository {
     await prisma.user.update({
       where: { id: user.id },
       data: {
-        friends: user.friends ?? [], 
+        // friends: user.friends ?? [], no se va a usar ahora mismo, basicamente por que aun no esta en el schema de prisma (prisma/schema.prisma) y esta generando errores al ejecutar npx tsc --noEmit
       },
     });
   }
