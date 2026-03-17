@@ -5,84 +5,89 @@ import prisma from '../../lib/prisma';
 const simulateExecution = (): Promise<void> =>
   new Promise(resolve => setTimeout(resolve, 500));
 
-describe('Friendship API Integration Flow', () => {
+describe('Follow API Integration Flow', () => {
   let userId: number;
-  let friendIdA: number;
-  let friendIdB: number;
+  let targetIdA: number;
+  let targetIdB: number;
 
   afterAll(async () => {
+    // Opcional: Limpiar los datos de prueba al terminar
+    await prisma.follow.deleteMany();
+    await prisma.user.deleteMany({
+        where: { email: { contains: '@kikiri.com' } }
+    });
+    
     await prisma.$disconnect();
   });
 
-  // Crear usuarios reales para las pruebas
-  it('should register a user and friends first', async () => {
+  it('should register a user and targets first', async () => {
     await simulateExecution();
     
-    // Crear un usuario principal
+    // Crear un usuario principal (agregamos Date.now() para asegurar que username y email sean únicos)
     const res = await request(app).post('/user/v1/register').send({
       email: `social_${Date.now()}@kikiri.com`,
-      username: "SocialUser",
+      username: `SocialUser_${Date.now()}`,
       password: "password123"
     });
     expect(res.status).toBe(201);
     userId = res.body.id;
 
-    // Amigo A
-    const resFriendA = await request(app).post('/user/v1/register').send({
-      email: `friendA_${Date.now()}@kikiri.com`,
-      username: "FriendA",
+    // Usuario a seguir A
+    const resTargetA = await request(app).post('/user/v1/register').send({
+      email: `targetA_${Date.now()}@kikiri.com`,
+      username: `TargetA_${Date.now()}`,
       password: "password123"
     });
-    friendIdA = resFriendA.body.id;
+    targetIdA = resTargetA.body.id;
 
-    // Amigo B
-    const resFriendB = await request(app).post('/user/v1/register').send({
-      email: `friendB_${Date.now()}@kikiri.com`,
-      username: "FriendB",
+    // Usuario a seguir B
+    const resTargetB = await request(app).post('/user/v1/register').send({
+      email: `targetB_${Date.now()}@kikiri.com`,
+      username: `TargetB_${Date.now()}`,
       password: "password123"
     });
-    friendIdB = resFriendB.body.id;
+    targetIdB = resTargetB.body.id;
   });
 
-  it('should add a friend (POST /user/v1/friend)', async () => {
+  it('should follow a user (POST /user/v1/users/:userId/follow/:targetId)', async () => {
     await simulateExecution();
-    const res = await request(app).post('/user/v1/friend').send({
-      userId: userId,
-      friendId: friendIdA
-    });
+    const res = await request(app).post(`/user/v1/users/${userId}/follow/${targetIdA}`);
 
     expect(res.status).toBe(200);
-    expect(res.body.friends).toContain(friendIdA);
+    expect(res.body.message).toBe("Successfully followed user.");
   });
 
-  it('should get friend list (GET /user/v1/users/:id/friends)', async () => {
+  it('should not allow following the same user twice', async () => {
     await simulateExecution();
-    await request(app).post('/user/v1/friend').send({ userId, friendId: friendIdB });
+    const res = await request(app).post(`/user/v1/users/${userId}/follow/${targetIdA}`);
 
-    const res = await request(app).get(`/user/v1/users/${userId}/friends`);
-
-    expect(res.status).toBe(200);
-    expect(res.body.friends).toContain(friendIdA);
-    expect(res.body.friends).toContain(friendIdB);
+    // Debería fallar porque la BD rechaza el duplicado (llave primaria compuesta)
+    expect(res.status).not.toBe(200); 
   });
 
-  it('should update the full friend list (PUT /user/v1/users/:id/friends)', async () => {
+  it('should get following list (GET /user/v1/users/:userId/following)', async () => {
     await simulateExecution();
-    const newFriendList = [888, 999];
+    // Seguimos al segundo usuario
+    await request(app).post(`/user/v1/users/${userId}/follow/${targetIdB}`);
 
-    const res = await request(app)
-        .put(`/user/v1/users/${userId}/friends`)
-        .send({ friends: newFriendList });
+    const res = await request(app).get(`/user/v1/users/${userId}/following`);
 
     expect(res.status).toBe(200);
-    expect(res.body.friends).toEqual(newFriendList);
+    // Verificamos que el arreglo `following` contenga ambos IDs
+    expect(res.body.following).toContain(targetIdA);
+    expect(res.body.following).toContain(targetIdB);
   });
 
-  it('should delete a specific friend (DELETE /user/v1/users/:id/friends/:friendId)', async () => {
+  it('should unfollow a specific user (DELETE /user/v1/users/:userId/follow/:targetId)', async () => {
     await simulateExecution();
-    const res = await request(app).delete(`/user/v1/users/${userId}/friends/888`);
+    const res = await request(app).delete(`/user/v1/users/${userId}/follow/${targetIdA}`);
 
     expect(res.status).toBe(200);
-    expect(res.body.friends).not.toContain(888);
+    expect(res.body.message).toBe("Successfully unfollowed user.");
+    
+    // Verificamos que realmente se haya eliminado de la lista
+    const verifyRes = await request(app).get(`/user/v1/users/${userId}/following`);
+    expect(verifyRes.body.following).not.toContain(targetIdA);
+    expect(verifyRes.body.following).toContain(targetIdB);
   });
 });
