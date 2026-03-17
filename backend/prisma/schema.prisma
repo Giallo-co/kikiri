@@ -4,33 +4,62 @@
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
-// backend/prisma/schema.prisma
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "mysql"
-  // url      = env("DATABASE_URL")
-  // Parece que esto ya no se hace
 }
 
 model User {
-  id       Int    @id @default(autoincrement())
-  email    String @unique
-  username String
-  password String
-  role     Int
-  friends  Json?  @default("[]")
-  posts    Post[] // Relación: Un usuario tiene muchos posts
+  id        Int      @id @default(autoincrement())
+  publicId  String   @unique @default(uuid())
+  email     String   @unique
+  username  String   @unique
+  password  String
+  role      Int
+  
+  profile   Profile?
+  posts     Post[]
+
+  followers Follow[] @relation("UserFollowers")
+  following Follow[] @relation("UserFollowing")
+}
+
+model Profile {
+  id        Int     @id @default(autoincrement())
+  bio       String? @db.Text
+  avatarUrl String?
+  
+  userId    Int     @unique
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Follow {
+  followerId  Int
+  followingId Int
+  createdAt   DateTime @default(now())
+  
+  follower    User @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@id([followerId, followingId])
+  @@index([followingId])
 }
 
 model Post {
   id        Int      @id @default(autoincrement())
-  content   String
+  content   String   @db.Text
   createdAt DateTime @default(now())
   likes     Int      @default(0)
   authorId  Int
-  author    User     @relation(fields: [authorId], references: [id])
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  tags      Tag[]    
+}
+
+model Tag {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  posts Post[] 
 }
