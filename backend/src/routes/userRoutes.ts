@@ -16,11 +16,10 @@ router.get("/v1/users/id/:id", (req, res, next) => userController.getById(req, r
 router.put("/v1/users/:id", (req, res, next) => userController.update(req, res, next));
 router.delete("/v1/users/:id", (req, res, next) => userController.delete(req, res, next));
 
-// Rutas CRUD follow
-router.post("/v1/friend", (req, res, next) => userController.addFriend(req, res, next));
-router.get("/v1/users/:userId/friends", (req, res, next) => userController.getFriends(req, res, next));
-router.put("/v1/users/:userId/friends", (req, res, next) => userController.updateFriendList(req, res, next));
-router.delete("/v1/users/:userId/friends/:friendId", (req, res, next) => userController.deleteFriend(req, res, next));
+// Rutas CRUD follow, menos update
+router.post("/v1/users/:userId/follow/:targetId", (req, res, next) => userController.follow(req, res, next));
+router.delete("/v1/users/:userId/follow/:targetId", (req, res, next) => userController.unfollow(req, res, next));
+router.get("/v1/users/:userId/following", (req, res, next) => userController.getFollowing(req, res, next));
 
 // Rutas ejemplos
 router.get("/v1/simulation", (req, res, next) => userController.simulate(req, res));
