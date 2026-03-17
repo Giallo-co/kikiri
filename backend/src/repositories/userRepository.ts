@@ -71,4 +71,42 @@ export class UserRepository {
       },
     });
   }
+
+  //-----------
+  // Search by name & id
+  //-----------
+  async findByPublicId(publicId: string): Promise<User | undefined> {
+    const user = await prisma.user.findUnique({
+      where: { publicId },
+    });
+    return user ? (user as unknown as User) : undefined;
+  }
+
+  async searchByQuery(q: string, skip = 0, take = 20): Promise<{ data: User[]; total: number }> {
+    const where = {
+      OR: [
+        { username: { contains: q, mode: 'insensitive' } },
+        { email: { contains: q, mode: 'insensitive' } },
+      ],
+    };
+
+    const [total, data] = await Promise.all([
+      prisma.user.count({ where }),
+      prisma.user.findMany({
+        where,
+        skip,
+        take,
+        select: {
+          id: true,
+          publicId: true,
+          username: true,
+          email: true,
+          role: true,
+        },
+        orderBy: { username: 'asc' },
+      }),
+    ]);
+
+    return { data: data as unknown as User[], total };
+  }
 }
