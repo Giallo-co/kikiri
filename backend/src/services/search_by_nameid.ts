@@ -16,9 +16,9 @@ export class SearchService {
 
     try {
       const { data, total } = await this.userRepository.searchByQuery(q.trim(), skip, take);
-      const sanitized = data.map(u => ({
+      const sanitized = data.map((u: any) => ({
         id: u.id,
-        publicId: (u as any).publicId,
+        publicId: u.publicId,
         username: u.username,
         email: u.email,
         role: u.role,
