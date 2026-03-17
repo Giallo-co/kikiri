@@ -1,0 +1,19 @@
+GUIA DE INICIO RAPIDO - KIKIRI (ENTORNO DE DESARROLLO)
+
+Siga estos comandos en estricto orden desde la raiz del proyecto para inicializar el entorno por primera vez.
+
+1. Instalar dependencias globales y vincular los subproyectos:
+   npm install
+
+2. Otorgar permisos de ejecucion al script de inicializacion (Solo macOS/Linux):
+   chmod +x scripts/setup.sh
+
+3. Ejecutar el entorno.
+   Opcion A - Levantar el backend y el frontend simultaneamente:
+   npm run dev:all
+
+   Opcion B - Levantar unicamente el servidor del backend:
+   npm run dev:backend
+
+   Opcion C - Ejecutar unicamente las pruebas del backend:
+   npm run test:backend

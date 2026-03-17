@@ -5,80 +5,64 @@ import { User } from "../../models/userModel";
 const simulateExecution = (): Promise<void> =>
   new Promise(resolve => setTimeout(resolve, 500));
 
-// Mock del UserRepository
 jest.mock("../../repositories/userRepository");
 
-describe('UserService - Friendship Logic', () => {
+describe('UserService - Follow Logic', () => {
     let userService: UserService;
     let userRepository: UserRepository;
     let dummyUser: User;
+    let targetUser: User;
 
     beforeEach(() => {
-        // Reiniciamos mocks y datos antes de cada test
         userRepository = new UserRepository();
         userService = new UserService(userRepository);
 
         dummyUser = {
-            email: "test@gmail.com",
-            username: "Test",
-            password: "encrypted",
-            id: 1,
-            role: 0,
-            friends: [10, 20]
+            id: 1, publicId: "uuid-1", email: "test@gmail.com", username: "Test", password: "encrypted", role: 0
+        };
+
+        targetUser = {
+            id: 99, publicId: "uuid-99", email: "target@gmail.com", username: "Target", password: "encrypted", role: 0
         };
     });
 
-    it('should add a friend to the user list', async () => {
+    it('should follow a user', async () => {
         await simulateExecution();
-        // Setup
-        (userRepository.getUserByIdAsync as jest.Mock).mockResolvedValue(dummyUser);
-        const saveSpy = userRepository.saveRelationshipAsync as jest.Mock;
-        const result = await userService.addFriendAsync(1, 99);
+        (userRepository.findById as jest.Mock)
+            .mockResolvedValueOnce(dummyUser)
+            .mockResolvedValueOnce(targetUser);
+        
+        (userRepository.followUser as jest.Mock).mockResolvedValue(undefined);
 
-        expect(result.friends).toContain(99);
-        expect(result.friends).toHaveLength(3);
-        expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ id: 1 }));
+        await userService.followUser(1, 99);
+
+        expect(userRepository.followUser).toHaveBeenCalledWith(1, 99);
     });
 
-    it('should get the list of friends', async () => {
+    it('should get the list of following', async () => {
         await simulateExecution();
-        (userRepository.getUserByIdAsync as jest.Mock).mockResolvedValue(dummyUser);
+        (userRepository.findById as jest.Mock).mockResolvedValue(dummyUser);
+        (userRepository.getFollowingIds as jest.Mock).mockResolvedValue([10, 20]);
 
-        const friends = await userService.getFriends(1);
+        const following = await userService.getFollowing(1);
 
-        expect(friends).toEqual([10, 20]);
+        expect(following).toEqual([10, 20]);
     });
 
-    it('should remove a friend from the list', async () => {
+    it('should unfollow a user', async () => {
         await simulateExecution();
-        (userRepository.getUserByIdAsync as jest.Mock).mockResolvedValue(dummyUser);
-        const saveSpy = userRepository.saveRelationshipAsync as jest.Mock;
+        (userRepository.findById as jest.Mock).mockResolvedValue(dummyUser);
+        (userRepository.unfollowUser as jest.Mock).mockResolvedValue(undefined);
 
-        const result = await userService.removeFriend(1, 10);
+        await userService.unfollowUser(1, 99);
 
-        expect(result.friends).not.toContain(10);
-        expect(result.friends).toContain(20);
-        expect(saveSpy).toHaveBeenCalled();
+        expect(userRepository.unfollowUser).toHaveBeenCalledWith(1, 99);
     });
 
-    it('should update the entire friend list', async () => {
+    it('should throw error if user tries to follow themselves', async () => {
         await simulateExecution();
-        (userRepository.getUserByIdAsync as jest.Mock).mockResolvedValue(dummyUser);
-        const saveSpy = userRepository.saveRelationshipAsync as jest.Mock;
-
-        const newFriends = [100, 200, 300];
-        const result = await userService.updateFriendList(1, newFriends);
-
-        expect(result.friends).toEqual(newFriends);
-        expect(saveSpy).toHaveBeenCalled();
-    });
-
-    it('should throw error if user does not exist', async () => {
-        await simulateExecution();
-        (userRepository.getUserByIdAsync as jest.Mock).mockResolvedValue(undefined);
-
-        await expect(userService.getFriends(999))
+        await expect(userService.followUser(1, 1))
             .rejects
-            .toThrow("User not found");
+            .toThrow("A user cannot follow themselves.");
     });
 });
