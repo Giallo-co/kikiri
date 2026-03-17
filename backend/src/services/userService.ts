@@ -60,7 +60,6 @@ export class UserService {
       password: "encrypted",
       role: updatedUser.role
     };
-    
   }
 
   public async deleteUser(userId: number): Promise<boolean> {
@@ -78,53 +77,40 @@ export class UserService {
     return "Completed Task";
   }
 
-  async addFriendAsync(userId: number, friendId: number): Promise<User> {
-      const user = await this.userRepository.getUserByIdAsync(userId);
-      
-      if (!user) {
-          throw new ServiceException(1002, "User not found for friendship.");
+  async followUser(userId: number, targetId: number): Promise<void> {
+      if (userId === targetId) {
+          throw new ServiceException(1004, "A user cannot follow themselves.");
       }
 
-      if (!user.friends) {
-          user.friends = [];
-      }
+      const user = await this.userRepository.findById(userId);
+      const target = await this.userRepository.findById(targetId);
       
-      // Evitar duplicados si es necesario
-      if (!user.friends.includes(friendId)) {
-        user.friends.push(friendId);
+      if (!user || !target) {
+          throw new ServiceException(1002, "User not found.");
       }
 
-      await this.userRepository.saveRelationshipAsync(user);
-      return user;
+      try {
+          await this.userRepository.followUser(userId, targetId);
+      } catch (error) {
+          throw new ServiceException(1005, "Already following this user.");
+      }
   }
 
-  async getFriends(userId: number): Promise<number[]> {
-      const user = await this.userRepository.getUserByIdAsync(userId);
-      if (!user) throw new ServiceException(1002, "User not found.");
-      
-      return user.friends || [];
-  }
-
-  async removeFriend(userId: number, friendId: number): Promise<User> {
-      const user = await this.userRepository.getUserByIdAsync(userId);
+  async unfollowUser(userId: number, targetId: number): Promise<void> {
+      const user = await this.userRepository.findById(userId);
       if (!user) throw new ServiceException(1002, "User not found.");
 
-      if (user.friends) {
-          user.friends = user.friends.filter(id => id !== friendId);
+      try {
+          await this.userRepository.unfollowUser(userId, targetId);
+      } catch (error) {
+          throw new ServiceException(1006, "Not following this user.");
       }
-
-      await this.userRepository.saveRelationshipAsync(user);
-      return user;
   }
 
-  async updateFriendList(userId: number, newFriendList: number[]): Promise<User> {
-      const user = await this.userRepository.getUserByIdAsync(userId);
+  async getFollowing(userId: number): Promise<number[]> {
+      const user = await this.userRepository.findById(userId);
       if (!user) throw new ServiceException(1002, "User not found.");
-
-      user.friends = newFriendList;
-
-      await this.userRepository.saveRelationshipAsync(user);
-      return user;
+      
+      return await this.userRepository.getFollowingIds(userId);
   }
-
 }

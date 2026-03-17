@@ -3,7 +3,7 @@ import { User } from '../models/userModel';
 
 export class UserRepository {
 
-  async save(user: Omit<User, 'id' | 'friends'>): Promise<User> {
+  async save(user: Omit<User, 'id' | 'publicId'>): Promise<User> {
     const newUser = await prisma.user.create({
       data: {
         email: user.email,
@@ -31,7 +31,6 @@ export class UserRepository {
 
   async update(userId: number, update: Partial<User>): Promise<User | undefined> {
     try {
-      // Construimos un objeto con las propiedades no undefined
       const dataToUpdate: any = {};
       if (update.email !== undefined) dataToUpdate.email = update.email;
       if (update.username !== undefined) dataToUpdate.username = update.username;
@@ -63,50 +62,33 @@ export class UserRepository {
     return await this.findById(id);
   }
 
-  async saveRelationshipAsync(user: User): Promise<void> {
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        // friends: user.friends ?? [], no se va a usar ahora mismo, basicamente por que aun no esta en el schema de prisma (prisma/schema.prisma) y esta generando errores al ejecutar npx tsc --noEmit
+  callToExternalServiceAsync = async (): Promise<string> => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve("External call success.");
+      }, 200);
+    });
+  };
+
+  async followUser(followerId: number, followingId: number): Promise<void> {
+    await prisma.follow.create({
+      data: { followerId, followingId },
+    });
+  }
+
+  async unfollowUser(followerId: number, followingId: number): Promise<void> {
+    await prisma.follow.delete({
+      where: {
+        followerId_followingId: { followerId, followingId },
       },
     });
   }
 
-  //-----------
-  // Search by name & id
-  //-----------
-  async findByPublicId(publicId: string): Promise<User | undefined> {
-    const user = await prisma.user.findUnique({
-      where: { publicId },
+  async getFollowingIds(userId: number): Promise<number[]> {
+    const follows = await prisma.follow.findMany({
+      where: { followerId: userId },
+      select: { followingId: true },
     });
-    return user ? (user as unknown as User) : undefined;
-  }
-
-  async searchByQuery(q: string, skip = 0, take = 20): Promise<{ data: User[]; total: number }> {
-    const where = {
-      OR: [
-        { username: { contains: q } }, // quitar el insensitive
-        { email: { contains: q } },    // quitar el insensitive
-      ],
-    };
-
-    const [total, data] = await Promise.all([
-      prisma.user.count({ where }),
-      prisma.user.findMany({
-        where,
-        skip,
-        take,
-        select: {
-          id: true,
-          publicId: true,
-          username: true,
-          email: true,
-          role: true,
-        },
-        orderBy: { username: 'asc' },
-      }),
-    ]);
-
-    return { data: data as unknown as User[], total };
+    return follows.map(f => f.followingId);
   }
 }
