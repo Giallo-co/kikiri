@@ -1,20 +1,14 @@
 module.exports = {
-  preset: 'ts-jest',
+  rootDir: '.',
   testEnvironment: 'node',
   maxWorkers: 1, // Tests secuenciales: un solo worker, uno tras otro
   roots: ['<rootDir>/src'],
   testMatch: ['**/test/**/*.test.ts', '**/test/**/*.spec.ts', '**/test/**/*-test.ts', '**/test/**/*.ts'],
   moduleFileExtensions: ['ts', 'js'],
   transform: {
-    '^.+\\.ts$': [
-      'ts-jest',
-      {
-        tsconfig: '<rootDir>/tsconfig.jest.json',
-      },
-    ],
+    '^.+\\.[tj]sx?$': 'babel-jest',
   },
   moduleNameMapper: {
     "^(\\.{1,2}/.*)\\.js$": "$1",
   },
 };
-
