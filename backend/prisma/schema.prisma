@@ -25,6 +25,10 @@ model User {
 
   followers Follow[] @relation("UserFollowers")
   following Follow[] @relation("UserFollowing")
+
+  likes     Like[]
+  comments  Comment[]
+  shares    Share[]
 }
 
 model Profile {
@@ -49,13 +53,61 @@ model Follow {
 }
 
 model Post {
+  id          Int       @id @default(autoincrement())
+  content     String    @db.Text
+  createdAt   DateTime  @default(now())
+  
+  // Contadores de acceso rapido
+  likesCount  Int       @default(0) @map("likes")
+  sharesCount Int       @default(0)
+  
+  authorId    Int
+  author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  tags        Tag[]    
+
+  likesRel    Like[]
+  comments    Comment[]
+  shares      Share[]
+}
+
+model Like {
+  userId    Int
+  postId    Int
+  createdAt DateTime @default(now())
+
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  // Un usuario solo puede dar like a un post una vez
+  @@id([userId, postId])
+  @@index([postId])
+}
+
+model Comment {
   id        Int      @id @default(autoincrement())
   content   String   @db.Text
   createdAt DateTime @default(now())
-  likes     Int      @default(0)
-  authorId  Int
-  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  tags      Tag[]    
+  
+  userId    Int
+  postId    Int
+
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([postId])
+}
+
+model Share {
+  userId    Int
+  postId    Int
+  createdAt DateTime @default(now())
+
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@id([userId, postId])
+  @@index([postId])
 }
 
 model Tag {
