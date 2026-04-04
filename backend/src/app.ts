@@ -4,6 +4,7 @@ import { errorHandler } from './middlewares/errorHandler';
 import userRoutes from './routes/userRoutes';
 import feedRoutes from './routes/feedRoutes';
 import searchRoutes from './routes/searchRoutes';
+import interactionRoutes from './routes/interactionRoutes';
 
 const app = express();
 const PORT = config.port; 
@@ -17,6 +18,7 @@ app.get("/", (_req, _res) => {
 app.use(config.apiBasePath, userRoutes);
 app.use(config.apiBasePath, feedRoutes);
 app.use(config.apiBasePath, searchRoutes);
+app.use(config.apiBasePath, interactionRoutes);
 
 app.use(errorHandler); 
 export default app;
@@ -29,4 +31,3 @@ if (require.main === module) {
     console.log(`Server running on ${config.protocol}://${config.host}:${PORT}`);
   });
 }
-
