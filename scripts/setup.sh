@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# Salir inmediatamente si algún comando falla
+# Salir inmediatamente si algun comando falla
 set -e
 
 echo "Verificando variables de entorno..."
-if [ ! -f backend/.env ]; then
-  echo "Creando backend/.env a partir de .env.example..."
-  cp backend/.env.example backend/.env
+if [ ! -f .env ]; then
+  echo "Creando .env a partir de .env.example..."
+  cp .env.example .env
 fi
 
 if [ ! -f frontend/.env ] && [ -f frontend/.env.example ]; then
@@ -14,18 +14,10 @@ if [ ! -f frontend/.env ] && [ -f frontend/.env.example ]; then
   cp frontend/.env.example frontend/.env
 fi
 
-echo "Levantando la base de datos con Docker..."
-cd backend/docker
-docker compose up -d
-cd ../..
-
-echo "Esperando a que la base de datos esté lista (10s)..."
-sleep 10
-
 echo "Generando cliente de Prisma..."
-cd backend
 npx prisma generate
-npx prisma db push --force-reset
-cd ..
+
+echo "Aplicando migraciones a la base de datos RDS..."
+npx prisma migrate deploy
 
 echo "Entorno listo."
