@@ -2,6 +2,13 @@ import { UserRepository } from '../repositories/userRepository';
 import { ServiceException } from '../errors/ServiceException';
 import { User } from '../models/userModel';
 import config from '../config/config';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+
+interface AuthResponse {
+  user: Omit<User, 'password'>;
+  token: string;
+}
 
 export class UserService {
   constructor(private readonly userRepository: UserRepository) {}
@@ -19,7 +26,7 @@ export class UserService {
     username: string;
     password: string;
     role?: number;
-  }): Promise<User> {
+  }): Promise<AuthResponse> {
     if (userData.password.length < config.minPasswordLength) {
       throw new ServiceException(
         1001,
@@ -27,38 +34,102 @@ export class UserService {
       );
     }
 
+    const saltRounds: number = 10;
+    const hashedPassword = await bcrypt.hash(userData.password, saltRounds);
+
     const newUser = await this.userRepository.save({
       email: userData.email,
       username: userData.username,
-      password: userData.password,
+      password: hashedPassword,
       role: userData.role ?? 0
     });
 
-    const userWithEncryptedPassword: User = {
-      ...newUser,
-      password: "encrypted",
-      role: newUser.role
+    const jwtSecretKey = process.env.JWT_SECRET_KEY as string;
+    const payload = {
+      sub: newUser.id,
+      email: newUser.email,
+      iat: Math.floor(Date.now() / 1000),
     };
+    
+    const token = jwt.sign(payload, jwtSecretKey, { expiresIn: '3d' });
 
-    return userWithEncryptedPassword;
+    const { password, ...userWithoutPassword } = newUser;
+
+    return {
+      user: userWithoutPassword,
+      token
+    };
   }
 
-  public async updateUser(userId: number, updateData: {
+  public async loginUser(email: string, plainPassword: string): Promise<AuthResponse> {
+    const user = await this.userRepository.findByEmail(email);
+    
+    if (!user) {
+      throw new ServiceException(1002, "Invalid credentials.");
+    }
+    
+    const isMatch: boolean = await bcrypt.compare(plainPassword, user.password);
+    
+    if (!isMatch) {
+      throw new ServiceException(1002, "Invalid credentials.");
+    }
+
+    const jwtSecretKey = process.env.JWT_SECRET_KEY as string;
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      iat: Math.floor(Date.now() / 1000),
+    };
+    
+    const token = jwt.sign(payload, jwtSecretKey, { expiresIn: '3d' });
+
+    const { password, ...userWithoutPassword } = user;
+
+    return {
+      user: userWithoutPassword,
+      token
+    };
+  }
+
+public async updateUser(userId: number, updateData: {
     email?: string;
     username?: string;
     password?: string;
     role?: number;
-  }): Promise<User> {
+  }): Promise<AuthResponse> {
+    
+    // Validar y encriptar la contraseña si se incluye en la actualización
+    if (updateData.password) {
+      if (updateData.password.length < config.minPasswordLength) {
+        throw new ServiceException(
+          1001,
+          `Password must be at least ${config.minPasswordLength} characters long.`
+        );
+      }
+      const saltRounds = 10;
+      updateData.password = await bcrypt.hash(updateData.password, saltRounds);
+    }
+
     const updatedUser = await this.userRepository.update(userId, updateData as Partial<User>);
 
     if (!updatedUser) {
       throw new ServiceException(1002, "User not found.");
     }
 
+    const jwtSecretKey = process.env.JWT_SECRET_KEY as string;
+    const payload = {
+      sub: updatedUser.id,
+      email: updatedUser.email,
+      iat: Math.floor(Date.now() / 1000),
+    };
+    
+    const token = jwt.sign(payload, jwtSecretKey, { expiresIn: '3d' });
+
+    const { password, ...userWithoutPassword } = updatedUser;
+
     return {
-      ...updatedUser,
-      password: "encrypted",
-      role: updatedUser.role
+      user: userWithoutPassword,
+      token
     };
   }
 

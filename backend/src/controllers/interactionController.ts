@@ -7,8 +7,7 @@ export class InteractionController {
   async likePost(req: Request, res: Response, next: NextFunction) {
     try {
       const postId = Number(req.params.postId);
-      const { userId } = req.body; // En el futuro esto debería venir del JWT Auth, es decir:
-      // const userId = req.user.id;
+      const userId = (req as any).user.sub;
 
       if (isNaN(postId) || typeof userId !== 'number') {
         return res.status(400).json({ message: "Datos inválidos" });
@@ -29,7 +28,7 @@ export class InteractionController {
   async unlikePost(req: Request, res: Response, next: NextFunction) {
     try {
       const postId = Number(req.params.postId);
-      const { userId } = req.body;
+      const userId = (req as any).user.sub;
 
       if (isNaN(postId) || typeof userId !== 'number') {
         return res.status(400).json({ message: "Datos inválidos" });
@@ -45,7 +44,8 @@ export class InteractionController {
   async addComment(req: Request, res: Response, next: NextFunction) {
     try {
       const postId = Number(req.params.postId);
-      const { userId, content } = req.body;
+      const userId = (req as any).user.sub;
+      const { content } = req.body;
 
       if (isNaN(postId) || typeof userId !== 'number' || !content) {
         return res.status(400).json({ message: "Datos incompletos o inválidos" });
@@ -75,7 +75,7 @@ export class InteractionController {
   async sharePost(req: Request, res: Response, next: NextFunction) {
     try {
       const postId = Number(req.params.postId);
-      const { userId } = req.body; 
+      const userId = (req as any).user.sub;
 
       if (isNaN(postId) || typeof userId !== 'number') {
         return res.status(400).json({ message: "Datos inválidos" });
@@ -97,9 +97,8 @@ export class InteractionController {
 
   async deleteComment(req: Request, res: Response, next: NextFunction) {
     try {
-      // Tomamos el ID del comentario de la URL (/v1/comments/5)
-      const commentId = Number(req.params.commentId); 
-      const { userId } = req.body; // En el futuro esto vendrá de req.user
+      const commentId = Number(req.params.commentId);
+      const userId = (req as any).user.sub;
 
       if (isNaN(commentId) || typeof userId !== 'number') {
         return res.status(400).json({ message: "Datos inválidos" });

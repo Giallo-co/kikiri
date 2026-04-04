@@ -13,7 +13,7 @@ export class UserController {
                 role?: number;
             };
 
-            const newUser = await this.userService.registerUserAsync({
+            const authData = await this.userService.registerUserAsync({
                 email,
                 username,
                 password,
@@ -22,11 +22,29 @@ export class UserController {
 
             res.status(201).json({
                 message: "User registered successfully",
-                id: newUser.id,
-                email: newUser.email,
-                username: newUser.username,
-                password: newUser.password,
-                role: newUser.role
+                user: authData.user,
+                token: authData.token
+            });
+
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    public async login(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { email, password } = req.body;
+
+            if (!email || !password) {
+                return res.status(400).json({ message: "Email and password are required" });
+            }
+
+            const authData = await this.userService.loginUser(email, password);
+
+            res.status(200).json({
+                message: "Login successful",
+                user: authData.user,
+                token: authData.token
             });
 
         } catch (error) {
@@ -66,8 +84,12 @@ export class UserController {
 
     public async update(req: Request, res: Response, next: NextFunction) {
         try {
-            const updatedUser = await this.userService.updateUser(Number(req.params.id), req.body);
-            res.json(updatedUser);
+            const authData = await this.userService.updateUser(Number(req.params.id), req.body);
+            res.status(200).json({
+                message: "User updated successfully",
+                user: authData.user,
+                token: authData.token
+            });
         } catch (error) {
             next(error);
         }
