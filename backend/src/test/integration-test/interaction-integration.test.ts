@@ -2,10 +2,12 @@ import request from 'supertest';
 import app from '../../app';
 import prisma from '../../lib/prisma';
 import config from '../../config/config';
+import jwt from 'jsonwebtoken';
 
 describe('Interaction API Integration', () => {
   let testUserId: number;
   let testPostId: number;
+  let authToken: string;
 
   beforeAll(async () => {
     // 1. Crear usuario de prueba
@@ -19,7 +21,14 @@ describe('Interaction API Integration', () => {
     });
     testUserId = user.id;
 
-    // 2. Crear post de prueba
+    // 2. Generar el token JWT
+    const jwtSecretKey = process.env.JWT_SECRET_KEY as string || 'test_secret';
+    authToken = jwt.sign(
+      { sub: testUserId, email: user.email, iat: Math.floor(Date.now() / 1000) }, 
+      jwtSecretKey
+    );
+
+    // 3. Crear post de prueba
     const post = await prisma.post.create({
       data: {
         content: 'Post de prueba para interacciones',
@@ -42,8 +51,9 @@ describe('Interaction API Integration', () => {
   describe('Likes', () => {
     it('should add a like to a post', async () => {
       const res = await request(app)
-        .post(`${config.apiBasePath}/v1/posts/${testPostId}/like`) 
-        .send({ userId: testUserId });
+        .post(`${config.apiBasePath}/v1/posts/${testPostId}/like`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send();
 
       expect(res.status).toBe(200);
       expect(res.body.message).toBe('Like agregado correctamente');
@@ -55,7 +65,8 @@ describe('Interaction API Integration', () => {
     it('should not allow duplicate likes', async () => {
       const res = await request(app)
         .post(`${config.apiBasePath}/v1/posts/${testPostId}/like`)
-        .send({ userId: testUserId });
+        .set('Authorization', `Bearer ${authToken}`)
+        .send();
 
       expect(res.status).toBe(400);
       expect(res.body.message).toBe('El usuario ya dio like a este post');
@@ -64,7 +75,8 @@ describe('Interaction API Integration', () => {
     it('should remove a like', async () => {
       const res = await request(app)
         .delete(`${config.apiBasePath}/v1/posts/${testPostId}/like`)
-        .send({ userId: testUserId });
+        .set('Authorization', `Bearer ${authToken}`)
+        .send();
 
       expect(res.status).toBe(200);
       expect(res.body.message).toBe('Like removido correctamente');
@@ -78,10 +90,11 @@ describe('Interaction API Integration', () => {
     it('should share a post and increment counter', async () => {
       const res = await request(app)
         .post(`${config.apiBasePath}/v1/posts/${testPostId}/share`)
-        .send({ userId: testUserId });
+        .set('Authorization', `Bearer ${authToken}`)
+        .send();
 
       expect(res.status).toBe(200);
-      
+      expect(res.body.message).toBe('Post compartido y contador actualizado');
       const updatedPost = await prisma.post.findUnique({ where: { id: testPostId } });
       expect(updatedPost?.sharesCount).toBe(1);
     });

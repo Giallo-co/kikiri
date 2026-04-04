@@ -39,7 +39,10 @@ describe('UserService - CRUD', () => {
         const result = await userService.registerUserAsync({
             email: 'test@test.com', username: 'testuser', password: '12345678'
         });
-        expect(result.id).toBe(1);
+        
+        expect(result.user.id).toBe(1);
+        
+        expect(typeof result.token).toBe('string');
     });
 
     it('Should return user when email exists', async () => {
@@ -68,7 +71,11 @@ describe('UserService - CRUD', () => {
 
         (userRepositoryMock.update as jest.Mock) = jest.fn().mockResolvedValue(updatedUser);
         const result = await userService.updateUser(1, { email: "updated@test.com", username: "updatedUser", role: 1 });
-        expect(result).toEqual({ ...updatedUser, password: "encrypted" });
+        
+        const { password, ...expectedUser } = updatedUser;
+        
+        expect(result.user).toEqual(expectedUser);
+        expect(typeof result.token).toBe('string');
     });
 
     it('Should throw ServiceException when trying to update a non-existent user', async () => {
