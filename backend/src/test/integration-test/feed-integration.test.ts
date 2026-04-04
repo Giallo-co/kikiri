@@ -8,7 +8,6 @@ const simulateExecution = (): Promise<void> =>
 describe('Feed API Integration', () => {
 
   afterAll(async () => {
-    // Opcional: Limpiar los datos de prueba al terminar
     await prisma.follow.deleteMany();
     await prisma.user.deleteMany({
         where: { email: { contains: '@kikiri.com' } }
@@ -26,6 +25,11 @@ describe('Feed API Integration', () => {
     expect(res.body).toHaveProperty('userId', 1);
     expect(res.body).toHaveProperty('items');
     expect(Array.isArray(res.body.items)).toBe(true);
+    
+    if (res.body.items.length > 0) {
+      expect(res.body.items[0]).toHaveProperty('likesCount');
+      expect(res.body.items[0]).toHaveProperty('sharesCount');
+    }
   });
 
   it('should return 400 for invalid userId', async () => {

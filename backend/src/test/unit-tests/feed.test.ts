@@ -31,7 +31,8 @@ describe('FeedService', () => {
       authorId: 100 + idx,
       content: `post-${idx + 1}`,
       createdAt: new Date(`2020-01-${String(idx + 1).padStart(2, '0')}T00:00:00.000Z`),
-      likes: idx,
+      likesCount: idx,
+      sharesCount: 0,
     }));
 
     (postRepositoryMock.getAll as jest.Mock).mockResolvedValue(posts);
@@ -58,4 +59,3 @@ describe('FeedService', () => {
     });
   });
 });
-
