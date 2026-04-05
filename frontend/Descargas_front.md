@@ -1,4 +1,4 @@
-En la carpeta de frontend 
+git En la carpeta de frontend 
  ejecutar -> npm create vite@latest . -- --template react-ts
                 Select a framework: React
                 Lenguaje: TypeScript + SWC
