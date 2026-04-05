@@ -1,3 +1,4 @@
+import KetzLogo from "../ui/KetzLogo";
 export default function Sidebar() {
   const items = [
     { label: "Home", icon: "⌂", active: true },
@@ -9,8 +10,19 @@ export default function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
-        <div className="brand-mark">▶</div>
-        <span>Music</span>
+        <img
+          src="/Logo.png"
+          alt="Ketz"
+          style={{
+            width: 100,
+            height: 100,
+            borderRadius: "50%",
+            objectFit: "cover",
+          }}
+        />
+        <div className="sidebar-brand">
+          <KetzLogo width={100} />
+        </div>
       </div>
 
       <nav className="nav-list">

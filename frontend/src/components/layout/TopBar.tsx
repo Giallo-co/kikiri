@@ -7,10 +7,7 @@ export default function TopBar({ search, setSearch }: Props) {
   return (
     <header className="topbar">
       <div className="topbar-left">
-        <button className="topbar-icon">☰</button>
         <div className="brand-inline">
-          <div className="brand-mark">▶</div>
-          <span>Music</span>
         </div>
       </div>
 

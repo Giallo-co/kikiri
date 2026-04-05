@@ -36,7 +36,7 @@ export default function HomePage() {
               <div className="hero-avatar">H</div>
               <div>
                 <p className="hero-subtitle">Good afternoon</p>
-                <h1 className="hero-title">Welcome Hugo Jonathan Daniel</h1>
+                <h1 className="hero-title">Welcome Dave Davison </h1>
               </div>
             </div>
 
