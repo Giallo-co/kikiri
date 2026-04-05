@@ -1,16 +1,35 @@
-export default function TopBar() {
+type Props = {
+  search: string;
+  setSearch: (value: string) => void;
+};
+
+export default function TopBar({ search, setSearch }: Props) {
   return (
-    <div style={{ padding: 20, borderBottom: "1px solid #222" }}>
-      <input
-        placeholder="Search..."
-        style={{
-          padding: 10,
-          width: 300,
-          background: "#111",
-          border: "1px solid #333",
-          color: "white",
-        }}
-      />
-    </div>
+    <header className="topbar">
+      <div className="topbar-left">
+        <button className="topbar-icon">☰</button>
+        <div className="brand-inline">
+          <div className="brand-mark">▶</div>
+          <span>Music</span>
+        </div>
+      </div>
+
+      <div className="topbar-center">
+        <div className="search-wrap">
+          <span className="search-icon">⌕</span>
+          <input
+            className="search-input"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search songs, albums, artists, podcasts"
+          />
+        </div>
+      </div>
+
+      <div className="topbar-right">
+        <button className="topbar-icon">◫</button>
+        <div className="avatar">H</div>
+      </div>
+    </header>
   );
 }

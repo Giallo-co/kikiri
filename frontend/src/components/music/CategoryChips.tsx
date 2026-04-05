@@ -1,4 +1,4 @@
-type CategoryChipsProps = {
+type Props = {
   categories: string[];
   activeCategory: string;
   onChange: (category: string) => void;
@@ -8,14 +8,13 @@ export default function CategoryChips({
   categories,
   activeCategory,
   onChange,
-}: CategoryChipsProps) {
+}: Props) {
   return (
-    <div className="chips-row">
+    <div className="chip-row">
       {categories.map((category) => (
         <button
           key={category}
-          type="button"
-          className={`chip ${activeCategory === category ? "chip--active" : ""}`}
+          className={`chip ${activeCategory === category ? "active" : ""}`}
           onClick={() => onChange(category)}
         >
           {category}
