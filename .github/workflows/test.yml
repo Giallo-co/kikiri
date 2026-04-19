@@ -40,8 +40,8 @@ jobs:
           DATABASE_URL: "mysql://root:root@localhost:3306/social_media_test"
 
       - name: Execute Tests
-        run: npm test
-        env:
-          DATABASE_URL: "mysql://root:root@localhost:3306/social_media_test"
-          JWT_SECRET: "test-secret-key"
-          NODE_ENV: test
+              run: npm test
+              env:
+                JWT_SECRET_KEY: "clave-secreta-falsa-para-tests" 
+                JWT_SECRET: "clave-secreta-falsa-para-tests"
+                NODE_ENV: test
