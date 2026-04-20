@@ -2,7 +2,7 @@ name: Unit & Integration Tests
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
 
 jobs:
   test:
@@ -44,5 +44,5 @@ jobs:
         env:
           JWT_SECRET_KEY: "clave-secreta-falsa-para-tests"
           JWT_SECRET: "clave-secreta-falsa-para-tests"
-          DATABASE_URL: "mysql://root:root@localhost:3306/kikiri_test" 
+          DATABASE_URL: "mysql://root:root@localhost:3306/social_media_test" 
           NODE_ENV: test
