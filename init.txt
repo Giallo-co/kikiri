@@ -1,19 +1,24 @@
-GUIA DE INICIO RAPIDO - KIKIRI (ENTORNO DE DESARROLLO)
+GUIA DE INICIO RAPIDO - KIKIRI
 
-Siga estos comandos en estricto orden desde la raiz del proyecto para inicializar el entorno por primera vez.
+Siga estos comandos en estricto orden desde la raíz del proyecto para inicializar el entorno.
 
-1. Instalar dependencias globales y vincular los subproyectos:
+1. Instalar dependencias y vincular los subproyectos:
    npm install
 
-2. Otorgar permisos de ejecucion al script de inicializacion (Solo macOS/Linux):
-   chmod +x scripts/setup.sh
+2. Configurar variables de entorno:
+   Copie el archivo .env.example a .env en la raíz del proyecto.
+   Asegúrese de configurar DATABASE_URL con las credenciales correctas.
+   Asegúrese de configurar JWT_SECRET_KEY con una clave secreta super segura.
 
-3. Ejecutar el entorno.
-   Opcion A - Levantar el backend y el frontend simultaneamente:
+3. Sincronizar la base de datos y generar Prisma Client:
+   npx prisma migrate dev
+
+4. Ejecutar el entorno.
+   Opción A - Levantar el backend y el frontend simultáneamente:
    npm run dev:all
 
-   Opcion B - Levantar unicamente el servidor del backend:
+   Opción B - Levantar únicamente el servidor del backend:
    npm run dev:backend
 
-   Opcion C - Ejecutar unicamente las pruebas del backend:
+   Opción C - Ejecutar las pruebas automatizadas del backend:
    npm run test:backend
