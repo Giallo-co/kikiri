@@ -39,4 +39,17 @@ export class SearchController {
       next(error);
     }
   }
+  public async searchPosts(req: Request, res: Response, next: NextFunction) {
+    try {
+      const q = String(req.query.q ?? '').trim();
+      if (!q) {
+        return res.json({ data: [], total: 0 });
+      }
+      const { searchPosts } = await import('../lib/aws/dynamo/crud');
+      const results = await searchPosts(q.toLowerCase());
+      return res.json({ data: results, total: results.length });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
