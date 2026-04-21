@@ -13,6 +13,9 @@ module.exports = {
       },
     ],
   },
+  transformIgnorePatterns: [
+    "node_modules/(?!(@aws-sdk|@smithy|uuid)/)"
+  ],
   moduleNameMapper: {
     "^(\\.{1,2}/.*)\\.js$": "$1",
   },

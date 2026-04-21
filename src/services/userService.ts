@@ -1,9 +1,12 @@
 import { UserRepository } from '../repositories/userRepository';
+import { PostRepository } from '../repositories/postRepository';
 import { ServiceException } from '../errors/ServiceException';
 import { User } from '../models/userModel';
 import config from '../config/config';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { docClient, TABLE_NAME } from '../lib/dynamo';
+import { BatchWriteCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 
 interface AuthResponse {
   user: Omit<User, 'password'>;
@@ -11,6 +14,8 @@ interface AuthResponse {
 }
 
 export class UserService {
+  private postRepository = new PostRepository();
+
   constructor(private readonly userRepository: UserRepository) {}
 
   public async getUserByEmail(email: string): Promise<User | undefined> {
@@ -91,14 +96,13 @@ export class UserService {
     };
   }
 
-public async updateUser(userId: number, updateData: {
+  public async updateUser(userId: number, updateData: {
     email?: string;
     username?: string;
     password?: string;
     role?: number;
   }): Promise<AuthResponse> {
     
-    // Validar y encriptar la contraseña si se incluye en la actualización
     if (updateData.password) {
       if (updateData.password.length < config.minPasswordLength) {
         throw new ServiceException(
@@ -133,14 +137,90 @@ public async updateUser(userId: number, updateData: {
     };
   }
 
+  /**
+   * Fase 6: Borrado en Cascada Compensado
+   */
   public async deleteUser(userId: number): Promise<boolean> {
-    const deleted = await this.userRepository.delete(userId);
-
-    if (!deleted) {
+    // 1. Verificar que el usuario existe
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
       throw new ServiceException(1003, "User not found.");
     }
 
-    return true;
+    try {
+      // 2. Consultar todos los posts del usuario en DynamoDB usando GSI1 (vía PostRepository)
+      const posts = await this.postRepository.getByAuthor(userId);
+
+      if (posts.length > 0) {
+        // 3. Preparar los comandos de borrado para BatchWrite (máximo 25 a la vez)
+        const deleteRequests = posts.map(post => ({
+          DeleteRequest: {
+            Key: {
+              PK: post.PK,
+              SK: post.SK
+            }
+          }
+        }));
+
+        // Procesar en bloques de 25 (límite de DynamoDB)
+        for (let i = 0; i < deleteRequests.length; i += 25) {
+          const chunk = deleteRequests.slice(i, i + 25);
+          await docClient.send(new BatchWriteCommand({
+            RequestItems: {
+              [TABLE_NAME]: chunk
+            }
+          }));
+        }
+      }
+
+      // 4. Limpieza adicional (Seguidores, Likes, etc. si fuera necesario)
+      // Por ahora la consulta genérica en cleanupDynamoDBData cubría más casos, 
+      // pero seguiré la estructura de correciones.md que es más específica para posts.
+      // Si queremos borrar TODO lo relacionado en GSI1:
+      await this.cleanupDynamoDBData(userId);
+
+      // 5. Eliminar definitivamente de SQL
+      const deleted = await this.userRepository.delete(userId);
+      return deleted;
+    } catch (error) {
+      console.error("Error during user deletion cascade:", error);
+      throw new ServiceException(1007, "Failed to complete user deletion cascade.");
+    }
+  }
+
+  private async cleanupDynamoDBData(userId: number) {
+    // Buscar todos los registros donde el usuario sea protagonista en GSI1
+    // Esto incluye sus posts (GSI1PK: USER#id) y sus seguidores (GSI1PK: USER#id con SK: FOLLOWER#...)
+    const result = await docClient.send(new QueryCommand({
+      TableName: TABLE_NAME,
+      IndexName: "GSI1",
+      KeyConditionExpression: "GSI1PK = :pk",
+      ExpressionAttributeValues: {
+        ":pk": `USER#${userId}`
+      }
+    }));
+
+    const items = result.Items || [];
+    if (items.length === 0) return;
+
+    // Borrado por lotes de 25
+    for (let i = 0; i < items.length; i += 25) {
+      const batch = items.slice(i, i + 25);
+      const deleteRequests = batch.map(item => ({
+        DeleteRequest: {
+          Key: {
+            PK: item.PK,
+            SK: item.SK
+          }
+        }
+      }));
+
+      await docClient.send(new BatchWriteCommand({
+        RequestItems: {
+          [TABLE_NAME]: deleteRequests
+        }
+      }));
+    }
   }
 
   async simulation(): Promise<string> {

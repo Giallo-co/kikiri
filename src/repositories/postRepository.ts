@@ -1,39 +1,69 @@
-import prisma from '../lib/prisma';
-import { Post } from '../models/postModel';
+import { PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import crypto from "crypto";
+import { docClient, TABLE_NAME } from "../lib/dynamo";
+import { PostItem, MediaAttachment } from "../models/postModel";
 
 export class PostRepository {
-    async getAll(): Promise<any[]> {
-      return await prisma.post.findMany({
-        include: {
-          author: {
-            select: { username: true, profile: { select: { avatarUrl: true } } }
-          },
-          _count: {
-            select: { comments: true, likesRel: true, shares: true }
-          }
-        },
-        orderBy: { createdAt: 'desc' }
-      });
+    async getAll(): Promise<PostItem[]> {
+        const params = {
+            TableName: TABLE_NAME,
+            IndexName: "GSI2", // Utilizaremos este índice
+            KeyConditionExpression: "GSI2PK = :pk",
+            ExpressionAttributeValues: {
+                ":pk": "POST"
+            },
+            ScanIndexForward: false, // descendente (más recientes primero)
+            Limit: 50 // Límite de seguridad
+        };
+
+        const result = await docClient.send(new QueryCommand(params));
+        return (result.Items as PostItem[]) || [];
     }
-  
-    async getByAuthor(authorId: number): Promise<any[]> {
-      return await prisma.post.findMany({
-        where: { authorId },
-        include: {
-          _count: {
-            select: { comments: true, likesRel: true, shares: true }
-          }
-        },
-        orderBy: { createdAt: 'desc' }
-      });
+
+    async getByAuthor(authorId: number): Promise<PostItem[]> {
+        const params = {
+            TableName: TABLE_NAME,
+            IndexName: "GSI1",
+            KeyConditionExpression: "GSI1PK = :pk AND begins_with(GSI1SK, :sk)",
+            ExpressionAttributeValues: {
+                ":pk": `USER#${authorId}`,
+                ":sk": "POST#"
+            },
+            ScanIndexForward: false // Newest first
+        };
+
+        const result = await docClient.send(new QueryCommand(params));
+        return (result.Items as PostItem[]) || [];
     }
-  
-    async save(post: Omit<Post, 'id' | 'createdAt' | 'likesCount' | 'sharesCount'>): Promise<any> {
-      return await prisma.post.create({
-        data: {
-          content: post.content,
-          authorId: post.authorId,
-        }
-      });
+
+    async save(post: { content: string; authorId: number; media?: MediaAttachment[] }): Promise<PostItem> {
+        const postId = crypto.randomUUID();
+        const timestamp = new Date().toISOString();
+
+        const item: PostItem = {
+            PK: `POST#${postId}`,
+            SK: `METADATA`,
+            GSI1PK: `USER#${post.authorId}`,
+            GSI1SK: `POST#${timestamp}`,
+            // NUEVOS ATRIBUTOS PARA EL FEED GLOBAL
+            GSI2PK: `POST`, 
+            GSI2SK: timestamp,
+            postId,
+            authorId: post.authorId,
+            content: post.content,
+            createdAt: timestamp,
+            likesCount: 0,
+            commentsCount: 0,
+            sharesCount: 0,
+            // Solo insertamos la propiedad 'media' si viene definida en el argumento
+            ...(post.media !== undefined && { media: post.media })
+        };
+
+        await docClient.send(new PutCommand({
+            TableName: TABLE_NAME,
+            Item: item
+        }));
+
+        return item;
     }
 }

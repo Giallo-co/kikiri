@@ -29,13 +29,17 @@
     "dev:all": "npm run pre:setup && concurrently \"ts-node-dev --respawn --transpile-only src/app.ts\" \"npm run dev --workspace=frontend\""
   },
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.1033.0",
+    "@aws-sdk/lib-dynamodb": "^3.1033.0",
     "@prisma/adapter-mariadb": "^7.4.2",
     "@prisma/client": "^7.5.0",
+    "@types/uuid": "^10.0.0",
     "bcrypt": "^5.1.1",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.2",
-    "mariadb": "^3.5.2"
+    "mariadb": "^3.5.2",
+    "uuid": "^14.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",

@@ -1,6 +1,6 @@
-import { Post } from "./postModel";
+import { EnrichedPost } from "./postModel";
 
-export interface FeedItem extends Post {
+export interface FeedItem extends EnrichedPost {
   score?: number;
 }
 
