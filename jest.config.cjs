@@ -2,7 +2,7 @@ module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   setupFiles: ['<rootDir>/src/test/jest-setup-env.cjs'],
-  maxWorkers: 1, // Tests secuenciales: un solo worker, uno tras otro
+  maxWorkers: 1,
   roots: ['<rootDir>/src'],
   testMatch: ['**/test/**/*.test.ts', '**/test/**/*.spec.ts', '**/test/**/*-test.ts', '**/test/**/*.ts'],
   moduleFileExtensions: ['ts', 'js'],
@@ -13,6 +13,7 @@ module.exports = {
         tsconfig: '<rootDir>/tsconfig.jest.json',
       },
     ],
+    '^.+\\.js$': 'babel-jest',
   },
   transformIgnorePatterns: [
     "node_modules/(?!(@aws-sdk|@smithy|uuid)/)"
@@ -21,4 +22,3 @@ module.exports = {
     "^(\\.{1,2}/.*)\\.js$": "$1",
   },
 };
-
