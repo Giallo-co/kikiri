@@ -12,5 +12,13 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
 
+  dynamodb:
+    image: amazon/dynamodb-local
+    container_name: dynamodb-local
+    restart: always
+    ports:
+      - "8000:8000"
+    command: "-jar DynamoDBLocal.jar -sharedDb"
+
 volumes:
   mysql_data:

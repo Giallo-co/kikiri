@@ -1,5 +1,7 @@
 import prisma from '../lib/prisma';
 import { User } from '../models/userModel';
+import { docClient, TABLE_NAME } from "../lib/dynamo";
+import { PutCommand, DeleteCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 
 export class UserRepository {
 
@@ -29,6 +31,17 @@ export class UserRepository {
     return user ? (user as unknown as User) : undefined;
   }
 
+  async findByIds(ids: number[]): Promise<any[]> {
+    return await prisma.user.findMany({
+      where: { id: { in: ids } },
+      select: {
+        id: true,
+        username: true,
+        profile: { select: { avatarUrl: true } }
+      }
+    });
+  }
+
   async findByPublicId(publicId: string): Promise<User | undefined> {
     const user = await prisma.user.findUnique({
       where: { publicId },
@@ -40,7 +53,6 @@ export class UserRepository {
     const whereClause = {
       OR: [
         { username: { contains: query } },
-        // Si quieres que también busque por email, puedes dejar la siguiente línea:
         { email: { contains: query } }
       ]
     };
@@ -77,6 +89,7 @@ export class UserRepository {
 
   async delete(userId: number): Promise<boolean> {
     try {
+      // In a real scenario, we should also delete from DynamoDB here (Phase 6)
       await prisma.user.delete({
         where: { id: userId },
       });
@@ -99,24 +112,39 @@ export class UserRepository {
   };
 
   async followUser(followerId: number, followingId: number): Promise<void> {
-    await prisma.follow.create({
-      data: { followerId, followingId },
-    });
+    await docClient.send(new PutCommand({
+        TableName: TABLE_NAME,
+        Item: {
+            PK: `USER#${followerId}`,
+            SK: `FOLLOWS#${followingId}`,
+            GSI1PK: `USER#${followingId}`,
+            GSI1SK: `FOLLOWER#${followerId}`,
+            followerId,
+            followingId,
+            createdAt: new Date().toISOString()
+        }
+    }));
   }
 
   async unfollowUser(followerId: number, followingId: number): Promise<void> {
-    await prisma.follow.delete({
-      where: {
-        followerId_followingId: { followerId, followingId },
-      },
-    });
+    await docClient.send(new DeleteCommand({
+        TableName: TABLE_NAME,
+        Key: {
+            PK: `USER#${followerId}`,
+            SK: `FOLLOWS#${followingId}`
+        }
+    }));
   }
 
   async getFollowingIds(userId: number): Promise<number[]> {
-    const follows = await prisma.follow.findMany({
-      where: { followerId: userId },
-      select: { followingId: true },
-    });
-    return follows.map(f => f.followingId);
+    const result = await docClient.send(new QueryCommand({
+        TableName: TABLE_NAME,
+        KeyConditionExpression: "PK = :pk AND begins_with(SK, :sk)",
+        ExpressionAttributeValues: {
+            ":pk": `USER#${userId}`,
+            ":sk": "FOLLOWS#"
+        }
+    }));
+    return (result.Items || []).map(item => item.followingId);
   }
 }
