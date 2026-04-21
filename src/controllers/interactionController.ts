@@ -6,10 +6,10 @@ export class InteractionController {
 
   async likePost(req: Request, res: Response, next: NextFunction) {
     try {
-      const postId = Number(req.params.postId);
+      const postId = req.params.postId as string;
       const userId = (req as any).user.sub;
 
-      if (isNaN(postId) || typeof userId !== 'number') {
+      if (!postId || typeof userId !== 'number') {
         return res.status(400).json({ message: "Datos inválidos" });
       }
 
@@ -27,10 +27,10 @@ export class InteractionController {
 
   async unlikePost(req: Request, res: Response, next: NextFunction) {
     try {
-      const postId = Number(req.params.postId);
+      const postId = req.params.postId as string;
       const userId = (req as any).user.sub;
 
-      if (isNaN(postId) || typeof userId !== 'number') {
+      if (!postId || typeof userId !== 'number') {
         return res.status(400).json({ message: "Datos inválidos" });
       }
 
@@ -43,11 +43,11 @@ export class InteractionController {
 
   async addComment(req: Request, res: Response, next: NextFunction) {
     try {
-      const postId = Number(req.params.postId);
+      const postId = req.params.postId as string;
       const userId = (req as any).user.sub;
       const { content } = req.body;
 
-      if (isNaN(postId) || typeof userId !== 'number' || !content) {
+      if (!postId || typeof userId !== 'number' || !content) {
         return res.status(400).json({ message: "Datos incompletos o inválidos" });
       }
 
@@ -60,8 +60,8 @@ export class InteractionController {
 
   async getComments(req: Request, res: Response, next: NextFunction) {
     try {
-      const postId = Number(req.params.postId);
-      if (isNaN(postId)) {
+      const postId = req.params.postId as string;
+      if (!postId) {
         return res.status(400).json({ message: "postId inválido" });
       }
 
@@ -74,10 +74,10 @@ export class InteractionController {
 
   async sharePost(req: Request, res: Response, next: NextFunction) {
     try {
-      const postId = Number(req.params.postId);
+      const postId = req.params.postId as string;
       const userId = (req as any).user.sub;
 
-      if (isNaN(postId) || typeof userId !== 'number') {
+      if (!postId || typeof userId !== 'number') {
         return res.status(400).json({ message: "Datos inválidos" });
       }
 
@@ -97,24 +97,15 @@ export class InteractionController {
 
   async deleteComment(req: Request, res: Response, next: NextFunction) {
     try {
-      const commentId = Number(req.params.commentId);
+      const commentId = req.params.commentId as string;
+      const { postId, timestamp } = req.body;
       const userId = (req as any).user.sub;
 
-      if (isNaN(commentId) || typeof userId !== 'number') {
-        return res.status(400).json({ message: "Datos inválidos" });
+      if (!commentId || !postId || !timestamp || typeof userId !== 'number') {
+        return res.status(400).json({ message: "Datos inválidos (se requiere postId y timestamp)" });
       }
 
-      const comment = await this.interactionRepository.getCommentById(commentId);
-
-      if (!comment) {
-        return res.status(404).json({ message: "Comentario no encontrado" });
-      }
-
-      if (comment.userId !== userId) {
-        return res.status(403).json({ message: "No tienes permiso para eliminar este comentario" });
-      }
-
-      await this.interactionRepository.deleteComment(commentId);
+      await this.interactionRepository.deleteComment(postId as string, commentId, timestamp as string);
       return res.status(200).json({ message: "Comentario eliminado exitosamente" });
 
     } catch (error) {

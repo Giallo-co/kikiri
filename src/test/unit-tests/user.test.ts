@@ -21,7 +21,9 @@ describe('UserService - CRUD', () => {
                 password: "hashed",
                 role: 0
             } as User),
-            findByEmail: jest.fn()
+            findByEmail: jest.fn(),
+            findById: jest.fn(),
+            findByPublicId: jest.fn()
         };
 
         userService = new UserService(userRepositoryMock as UserRepository);
@@ -86,6 +88,10 @@ describe('UserService - CRUD', () => {
 
     it('Should delete user successfully', async () => {
         await simulateExecution();
+        const sampleUser: User = {
+            id: 1, publicId: "test-public-id", email: "test@test.com", username: "testuser", password: "hashed", role: 0
+        };
+        (userRepositoryMock.findById as jest.Mock).mockResolvedValue(sampleUser);
         (userRepositoryMock.delete as jest.Mock) = jest.fn().mockResolvedValue(true);
         const result = await userService.deleteUser(1);
         expect(result).toBe(true);
@@ -93,6 +99,7 @@ describe('UserService - CRUD', () => {
 
     it('Should throw ServiceException when trying to delete a non-existent user', async () => {
         await simulateExecution();
+        (userRepositoryMock.findById as jest.Mock).mockResolvedValue(undefined);
         (userRepositoryMock.delete as jest.Mock) = jest.fn().mockResolvedValue(false);
         await expect(userService.deleteUser(999)).rejects.toThrow(ServiceException);
     });
