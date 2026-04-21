@@ -3,6 +3,8 @@ export interface DynamoDBItem {
     SK: string;
     GSI1PK?: string;
     GSI1SK?: string;
+    GSI2PK?: string;
+    GSI2SK?: string;
 }
 
 export interface MediaAttachment {

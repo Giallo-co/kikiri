@@ -7,13 +7,16 @@ export class PostRepository {
     async getAll(): Promise<PostItem[]> {
         const params = {
             TableName: TABLE_NAME,
-            FilterExpression: "SK = :sk",
+            IndexName: "GSI2", // Utilizaremos este índice
+            KeyConditionExpression: "GSI2PK = :pk",
             ExpressionAttributeValues: {
-                ":sk": "METADATA"
-            }
+                ":pk": "POST"
+            },
+            ScanIndexForward: false, // descendente (más recientes primero)
+            Limit: 50 // Límite de seguridad
         };
 
-        const result = await docClient.send(new ScanCommand(params));
+        const result = await docClient.send(new QueryCommand(params));
         return (result.Items as PostItem[]) || [];
     }
 
@@ -42,6 +45,9 @@ export class PostRepository {
             SK: `METADATA`,
             GSI1PK: `USER#${post.authorId}`,
             GSI1SK: `POST#${timestamp}`,
+            // NUEVOS ATRIBUTOS PARA EL FEED GLOBAL
+            GSI2PK: `POST`, 
+            GSI2SK: timestamp,
             postId,
             authorId: post.authorId,
             content: post.content,
