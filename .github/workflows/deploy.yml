@@ -50,6 +50,8 @@ jobs:
             # Recreación del .env incluyendo la arquitectura de AWS
             cat <<EOF > /var/www/kikiri/kikiri/.env
             PORT=${{ secrets.PORT }}
+            HOST=0.0.0.0
+            PROTOCOL=http
             DATABASE_URL=${{ secrets.DATABASE_URL }}
             DATABASE_USER=${{ secrets.DATABASE_USER }}
             DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
