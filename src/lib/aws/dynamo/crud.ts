@@ -85,6 +85,26 @@ export async function scanAll(limit = 50): Promise<UserPost[]> {
   return (result.Items as UserPost[]) ?? [];
 }
 
+export async function searchPosts(query: string): Promise<UserPost[]> {
+  const lowerQuery = query.toLowerCase();
+
+  const result = await docClient.send(new ScanCommand({
+    TableName: TABLE_NAME,
+    FilterExpression:
+      "contains(#title, :q) OR contains(#content, :q) OR contains(#status, :q)",
+    ExpressionAttributeNames: {
+      "#title": "title",
+      "#content": "content",
+      "#status": "status",
+    },
+    ExpressionAttributeValues: {
+      ":q": lowerQuery,
+    },
+  }));
+
+  return (result.Items as UserPost[]) ?? [];
+}
+
 /*
 async function main() {
   const PK = "USER#user-001";
