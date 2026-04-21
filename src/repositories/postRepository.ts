@@ -1,7 +1,7 @@
-import { PutCommand, QueryCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
+import { PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import crypto from "crypto";
 import { docClient, TABLE_NAME } from "../lib/dynamo";
-import { PostItem } from "../models/postModel";
+import { PostItem, MediaAttachment } from "../models/postModel";
 
 export class PostRepository {
     async getAll(): Promise<PostItem[]> {
@@ -36,7 +36,7 @@ export class PostRepository {
         return (result.Items as PostItem[]) || [];
     }
 
-    async save(post: { content: string; authorId: number; media?: any[] }): Promise<PostItem> {
+    async save(post: { content: string; authorId: number; media?: MediaAttachment[] }): Promise<PostItem> {
         const postId = crypto.randomUUID();
         const timestamp = new Date().toISOString();
 
@@ -55,7 +55,8 @@ export class PostRepository {
             likesCount: 0,
             commentsCount: 0,
             sharesCount: 0,
-            media: post.media
+            // Solo insertamos la propiedad 'media' si viene definida en el argumento
+            ...(post.media !== undefined && { media: post.media })
         };
 
         await docClient.send(new PutCommand({
