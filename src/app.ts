@@ -1,4 +1,5 @@
 import express from "express";
+import path from "path";
 import config from "./config/config"; 
 import { errorHandler } from './middlewares/errorHandler';
 import userRoutes from './routes/userRoutes';
@@ -7,11 +8,13 @@ import searchRoutes from './routes/searchRoutes';
 import interactionRoutes from './routes/interactionRoutes';
 import uploadRoutes from './routes/uploadRoutes';
 import userPostRoutes from './routes/userPostRoutes';
+import profilePictureRoutes from './routes/profilePicture';
 
 const app = express();
 const PORT = config.port; 
 
 app.use(express.json());
+app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/", (_req, _res) => {
   _res.send("Hello World!");
@@ -23,6 +26,7 @@ app.use(config.apiBasePath, searchRoutes);
 app.use(config.apiBasePath, interactionRoutes);
 app.use(config.apiBasePath, uploadRoutes);
 app.use(config.apiBasePath, userPostRoutes);
+app.use("/api/profile-picture", profilePictureRoutes);
 
 app.use(errorHandler); 
 export default app;
