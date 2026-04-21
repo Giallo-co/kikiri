@@ -26,6 +26,7 @@
     "test:backend": "npm run pre:setup && npm run test",
     "dev:backend": "npm run pre:setup && ts-node-dev --respawn --transpile-only src/app.ts",
     "dev:frontend": "npm run dev --workspace=frontend",
+    "crud:dynamo": "ts-node src/lib/aws/dynamo/crud.ts",
     "dev:all": "npm run pre:setup && concurrently \"ts-node-dev --respawn --transpile-only src/app.ts\" \"npm run dev --workspace=frontend\""
   },
   "dependencies": {

@@ -84,3 +84,35 @@ export async function scanAll(limit = 50): Promise<UserPost[]> {
   }));
   return (result.Items as UserPost[]) ?? [];
 }
+
+
+async function main() {
+  const now = Date.now();
+
+  console.log("\n--- CREATE ---");
+  const post = await createPost({
+    userId: "user-001",
+    createdOn: now,
+    title: "Hello from EC2",
+    content: "DynamoDB connection works.",
+    status: "published",
+    tags: ["aws", "ec2", "dynamodb"],
+  });
+  console.log(post);
+
+  console.log("\n--- GET ---");
+  console.log(await getPost("user-001", now));
+
+  console.log("\n--- UPDATE ---");
+  console.log(await updatePost("user-001", now, { title: "Updated Title", status: "draft" }));
+
+  console.log("\n--- QUERY ---");
+  console.log(await queryByUser("user-001"));
+
+  console.log("\n--- DELETE ---");
+  await deletePost("user-001", now);
+  console.log("Deleted.");
+}
+
+main().catch(console.error);
+
