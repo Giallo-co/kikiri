@@ -26,17 +26,20 @@ describe('Interaction API Integration', () => {
         testUserId = user.id;
 
         testPostId = crypto.randomUUID();
+        const timestamp = new Date().toISOString();
         await docClient.send(new PutCommand({
             TableName: TABLE_NAME,
             Item: {
                 PK: `POST#${testPostId}`,
                 SK: `METADATA`,
                 GSI1PK: `USER#${testUserId}`,
-                GSI1SK: `POST#${new Date().toISOString()}`,
+                GSI1SK: `POST#${timestamp}`,
+                GSI2PK: "POST",
+                GSI2SK: timestamp,
                 postId: testPostId,
                 authorId: testUserId,
                 content: "Test post for interactions",
-                createdAt: new Date().toISOString(),
+                createdAt: timestamp,
                 likesCount: 0,
                 commentsCount: 0,
                 sharesCount: 0

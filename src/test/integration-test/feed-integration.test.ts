@@ -36,6 +36,8 @@ describe('Feed API Integration', () => {
             SK: `METADATA`,
             GSI1PK: `USER#${testUserId}`,
             GSI1SK: `POST#${timestamp}`,
+            GSI2PK: "POST",
+            GSI2SK: timestamp,
             postId: testPostId,
             authorId: testUserId,
             content: "Integration test post",
