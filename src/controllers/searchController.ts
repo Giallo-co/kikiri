@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { SearchService } from '../services/search_by_nameid';
 import { UserRepository } from '../repositories/userRepository';
+import { searchPosts } from '../lib/aws/dynamo/crud';
 
 export class SearchController {
   private readonly searchService: SearchService;
@@ -40,3 +41,16 @@ export class SearchController {
     }
   }
 }
+
+public async searchPosts(req: Request, res: Response, next: NextFunction) {
+    try {
+      const q = String(req.query.q ?? '').trim();
+      if (!q) {
+        return res.json({ data: [], total: 0 });
+      }
+      const results = await searchPosts(q.toLowerCase());
+      return res.json({ data: results, total: results.length });
+    } catch (error) {
+      next(error);
+    }
+  }
