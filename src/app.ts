@@ -5,6 +5,8 @@ import userRoutes from './routes/userRoutes';
 import feedRoutes from './routes/feedRoutes';
 import searchRoutes from './routes/searchRoutes';
 import interactionRoutes from './routes/interactionRoutes';
+import uploadRoutes from './routes/uploadRoutes';
+import userPostRoutes from './routes/userPostRoutes';
 
 const app = express();
 const PORT = config.port; 
@@ -19,6 +21,8 @@ app.use(config.apiBasePath, userRoutes);
 app.use(config.apiBasePath, feedRoutes);
 app.use(config.apiBasePath, searchRoutes);
 app.use(config.apiBasePath, interactionRoutes);
+app.use(config.apiBasePath, uploadRoutes);
+app.use(config.apiBasePath, userPostRoutes);
 
 app.use(errorHandler); 
 export default app;

@@ -50,7 +50,7 @@ describe('FeedService', () => {
     expect(userRepositoryMock.findByIds).toHaveBeenCalledTimes(1);
     expect(result.userId).toBe(99);
     expect(result.items).toHaveLength(10);
-    
+
     const firstItem = result.items[0];
     const firstPost = posts[0];
     if (firstItem && firstPost) {

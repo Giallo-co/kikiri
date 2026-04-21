@@ -1,0 +1,19 @@
+[Unit]
+Description=Kikiri Social Media API
+After=network.target
+
+[Service]
+# Entorno y directorio de trabajo
+Environment="NODE_ENV=production"
+WorkingDirectory=/var/www/kikiri/kikiri
+
+# El comando para iniciar la app.
+# Asegúrate de que tu package.json tiene un script "start": "node dist/app.js"
+ExecStart=/home/ubuntu/.nvm/versions/node/v24.x.x/bin/node dist/app.js
+
+# Reiniciar automáticamente si la app crashea
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

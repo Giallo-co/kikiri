@@ -37,6 +37,7 @@ export class UserRepository {
       select: {
         id: true,
         username: true,
+        profilePictureKey: true,
         profile: { select: { avatarUrl: true } }
       }
     });
@@ -76,6 +77,7 @@ export class UserRepository {
       if (update.username !== undefined) dataToUpdate.username = update.username;
       if (update.password !== undefined) dataToUpdate.password = update.password;
       if (update.role !== undefined) dataToUpdate.role = update.role;
+      if (update.profilePictureKey !== undefined) dataToUpdate.profilePictureKey = update.profilePictureKey;
 
       const updated = await prisma.user.update({
         where: { id: userId },
@@ -83,6 +85,18 @@ export class UserRepository {
       });
       return updated as unknown as User;
     } catch (error) {
+      return undefined;
+    }
+  }
+
+  async updateProfilePictureKey(userId: number, profilePictureKey: string): Promise<User | undefined> {
+    try {
+      const updated = await prisma.user.update({
+        where: { id: userId },
+        data: { profilePictureKey }
+      });
+      return updated as unknown as User;
+    } catch {
       return undefined;
     }
   }

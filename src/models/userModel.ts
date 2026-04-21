@@ -5,6 +5,7 @@ export interface User {
     username: string;
     password: string; 
     role: number;
+    profilePictureKey?: string | null;
     profile?: Profile | null;
 }
 
