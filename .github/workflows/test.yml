@@ -17,6 +17,11 @@ jobs:
         ports:
           - 3306:3306
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+      
+      dynamodb:
+        image: amazon/dynamodb-local
+        ports:
+          - 8000:8000
 
     steps:
       - name: Checkout code
@@ -25,7 +30,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20'
+          node-version: '24' # Actualizado a una versión más reciente compatible con crypto.randomUUID() nativo sin flags experimentales
           cache: 'npm'
 
       - name: Install dependencies
@@ -39,10 +44,22 @@ jobs:
         env:
           DATABASE_URL: "mysql://root:root@localhost:3306/social_media_test"
 
+      - name: Setup DynamoDB Table
+        run: npx ts-node src/config/setupDynamo.ts
+        env:
+          DYNAMODB_ENDPOINT: "http://localhost:8000"
+          AWS_REGION: "us-east-1"
+          AWS_ACCESS_KEY_ID: "local"
+          AWS_SECRET_ACCESS_KEY: "local"
+
       - name: Execute Tests
         run: npm test
         env:
           JWT_SECRET_KEY: "clave-secreta-falsa-para-tests"
-          JWT_SECRET: "clave-secreta-falsa-para-tests"
-          DATABASE_URL: "mysql://root:root@localhost:3306/social_media_test" 
+          DATABASE_URL: "mysql://root:root@localhost:3306/social_media_test"
+          DYNAMODB_ENDPOINT: "http://localhost:8000"
+          AWS_REGION: "us-east-1"
+          AWS_ACCESS_KEY_ID: "local"
+          AWS_SECRET_ACCESS_KEY: "local"
           NODE_ENV: test
+          NODE_OPTIONS: "--experimental-vm-modules"
