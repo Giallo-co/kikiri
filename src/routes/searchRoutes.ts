@@ -8,4 +8,6 @@ router.get('/v1/search/users', (req, res, next) => searchController.searchUsers(
 
 router.get('/v1/search/users/:id', (req, res, next) => searchController.getUser(req, res, next));
 
+router.get('/posts', (req, res, next) => controller.searchPosts(req, res, next));
+
 export default router;
