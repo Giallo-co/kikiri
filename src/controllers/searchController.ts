@@ -52,4 +52,15 @@ export class SearchController {
       next(error);
     }
   }
+
+  public async explorePosts(req: Request, res: Response, next: NextFunction) {
+    try {
+      const limit = Math.min(50, Number(req.query.limit ?? 20));
+      const { getRandomPosts } = await import('../lib/aws/dynamo/crud');
+      const results = await getRandomPosts(limit);
+      return res.json({ data: results, total: results.length });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

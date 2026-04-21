@@ -134,3 +134,12 @@ async function main() {
 
 main().catch(console.error);
 */
+
+export async function getRandomPosts(limit = 20): Promise<UserPost[]> {
+  const result = await docClient.send(new ScanCommand({
+    TableName: TABLE_NAME,
+  }));
+  const all = (result.Items as UserPost[]) ?? [];
+  // shuffle random
+  return all.sort(() => Math.random() - 0.5).slice(0, limit);
+}

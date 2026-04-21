@@ -7,5 +7,6 @@ const searchController = new SearchController();
 router.get('/v1/search/users', (req, res, next) => searchController.searchUsers(req, res, next));
 router.get('/v1/search/users/:id', (req, res, next) => searchController.getUser(req, res, next));
 router.get('/v1/search/posts', (req, res, next) => searchController.searchPosts(req, res, next));
+router.get('/v1/explore', (req, res, next) => searchController.explorePosts(req, res, next));
 
 export default router;
