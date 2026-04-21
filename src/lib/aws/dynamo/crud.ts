@@ -13,23 +13,23 @@ export async function createPost(item: UserPost): Promise<UserPost> {
   await docClient.send(new PutCommand({
     TableName: TABLE_NAME,
     Item: item,
-    ConditionExpression: "attribute_not_exists(userId) AND attribute_not_exists(createdOn)",
+    ConditionExpression: "attribute_not_exists(PK) AND attribute_not_exists(SK)",
   }));
   return item;
 }
 
-export async function getPost(userId: string, createdOn: number): Promise<UserPost | null> {
+export async function getPost(PK: string, SK: string): Promise<UserPost | null> {
   const result = await docClient.send(new GetCommand({
     TableName: TABLE_NAME,
-    Key: { userId, createdOn },
+    Key: { PK, SK },
   }));
   return (result.Item as UserPost) ?? null;
 }
 
 export async function updatePost(
-  userId: string,
-  createdOn: number,
-  updates: Partial<Omit<UserPost, "userId" | "createdOn">>
+  PK: string,
+  SK: string,
+  updates: Partial<Omit<UserPost, "PK" | "SK">>
 ): Promise<UserPost | null> {
   const fields = Object.entries(updates);
   if (fields.length === 0) throw new Error("No fields to update.");
@@ -46,31 +46,31 @@ export async function updatePost(
 
   const result = await docClient.send(new UpdateCommand({
     TableName: TABLE_NAME,
-    Key: { userId, createdOn },
+    Key: { PK, SK },
     UpdateExpression: `SET ${parts.join(", ")}`,
     ExpressionAttributeNames: names,
     ExpressionAttributeValues: values,
-    ConditionExpression: "attribute_exists(userId) AND attribute_exists(createdOn)",
+    ConditionExpression: "attribute_exists(PK) AND attribute_exists(SK)",
     ReturnValues: "ALL_NEW",
   }));
 
   return (result.Attributes as UserPost) ?? null;
 }
 
-export async function deletePost(userId: string, createdOn: number): Promise<void> {
+export async function deletePost(PK: string, SK: string): Promise<void> {
   await docClient.send(new DeleteCommand({
     TableName: TABLE_NAME,
-    Key: { userId, createdOn },
-    ConditionExpression: "attribute_exists(userId) AND attribute_exists(createdOn)",
+    Key: { PK, SK },
+    ConditionExpression: "attribute_exists(PK) AND attribute_exists(SK)",
   }));
 }
 
-export async function queryByUser(userId: string, limit = 20): Promise<UserPost[]> {
+export async function queryByPK(PK: string, limit = 20): Promise<UserPost[]> {
   const result = await docClient.send(new QueryCommand({
     TableName: TABLE_NAME,
-    KeyConditionExpression: "#userId = :userId",
-    ExpressionAttributeNames: { "#userId": "userId" },
-    ExpressionAttributeValues: { ":userId": userId },
+    KeyConditionExpression: "#PK = :PK",
+    ExpressionAttributeNames: { "#PK": "PK" },
+    ExpressionAttributeValues: { ":PK": PK },
     Limit: limit,
     ScanIndexForward: false,
   }));
@@ -84,15 +84,16 @@ export async function scanAll(limit = 50): Promise<UserPost[]> {
   }));
   return (result.Items as UserPost[]) ?? [];
 }
-
-
+/*
 async function main() {
-  const now = Date.now();
+
+  const PK = "USER#user-001";
+  const SK = `POST#${Date.now()}`;
 
   console.log("\n--- CREATE ---");
   const post = await createPost({
-    userId: "user-001",
-    createdOn: now,
+    PK,
+    SK,
     title: "Hello from EC2",
     content: "DynamoDB connection works.",
     status: "published",
@@ -101,18 +102,20 @@ async function main() {
   console.log(post);
 
   console.log("\n--- GET ---");
-  console.log(await getPost("user-001", now));
+  console.log(await getPost(PK, SK));
 
   console.log("\n--- UPDATE ---");
-  console.log(await updatePost("user-001", now, { title: "Updated Title", status: "draft" }));
+  console.log(await updatePost(PK, SK, { title: "Updated Title", status: "draft" }));
 
   console.log("\n--- QUERY ---");
-  console.log(await queryByUser("user-001"));
+  console.log(await queryByPK(PK));
+
 
   console.log("\n--- DELETE ---");
-  await deletePost("user-001", now);
+  await deletePost("USER#user-001", "POST#1776744906731");
   console.log("Deleted.");
 }
 
 main().catch(console.error);
 
+*/

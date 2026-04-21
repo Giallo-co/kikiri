@@ -7,4 +7,4 @@ export const docClient = DynamoDBDocumentClient.from(client, {
   marshallOptions: { removeUndefinedValues: true },
 });
 
-export const TABLE_NAME = "UserPosts";
+export const TABLE_NAME = "KikiriSocial";

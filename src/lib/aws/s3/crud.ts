@@ -56,7 +56,10 @@ export async function createObject(
   const response = await s3Client.send(command);
   const expiresMsg = ttlSeconds ? ` (TTL: ${ttlSeconds}s)` : "";
   console.log(`Created: s3://${BUCKET}/${key}${expiresMsg}`);
-  return { ETag: response.ETag ?? undefined, VersionId: response.VersionId ?? undefined };
+  const result: { ETag?: string; VersionId?: string } = {};
+  if (response.ETag) result.ETag = response.ETag;
+  if (response.VersionId) result.VersionId = response.VersionId;
+  return result;
 }
 
 export async function readObject(
@@ -135,7 +138,10 @@ export async function updateObject(
 
   const response = await s3Client.send(command);
   console.log(`Updated: s3://${BUCKET}/${key}`);
-  return { ETag: response.ETag ?? undefined, VersionId: response.VersionId ?? undefined };
+  const result: { ETag?: string; VersionId?: string } = {};
+  if (response.ETag) result.ETag = response.ETag;
+  if (response.VersionId) result.VersionId = response.VersionId;
+  return result;
 }
 
 export async function deleteObject(key: string): Promise<void> {
