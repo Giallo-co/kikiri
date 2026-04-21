@@ -86,8 +86,6 @@ export async function scanAll(limit = 50): Promise<UserPost[]> {
 }
 
 export async function searchPosts(query: string): Promise<UserPost[]> {
-  const lowerQuery = query.toLowerCase();
-
   const result = await docClient.send(new ScanCommand({
     TableName: TABLE_NAME,
     FilterExpression:
@@ -98,10 +96,9 @@ export async function searchPosts(query: string): Promise<UserPost[]> {
       "#status": "status",
     },
     ExpressionAttributeValues: {
-      ":q": lowerQuery,
+      ":q": query,
     },
   }));
-
   return (result.Items as UserPost[]) ?? [];
 }
 
