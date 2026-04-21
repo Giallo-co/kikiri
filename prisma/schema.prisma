@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -19,13 +13,10 @@ model User {
   username  String   @unique
   password  String
   role      Int
-  
   profile   Profile?
   posts     Post[]
-
   followers Follow[] @relation("UserFollowers")
   following Follow[] @relation("UserFollowing")
-
   likes     Like[]
   comments  Comment[]
   shares    Share[]
@@ -35,7 +26,6 @@ model Profile {
   id        Int     @id @default(autoincrement())
   bio       String? @db.Text
   avatarUrl String?
-  
   userId    Int     @unique
   user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -44,10 +34,8 @@ model Follow {
   followerId  Int
   followingId Int
   createdAt   DateTime @default(now())
-  
   follower    User @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
   following   User @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
-
   @@id([followerId, followingId])
   @@index([followingId])
 }
@@ -56,15 +44,11 @@ model Post {
   id          Int       @id @default(autoincrement())
   content     String    @db.Text
   createdAt   DateTime  @default(now())
-  
-  // Contadores de acceso rapido
   likesCount  Int       @default(0) @map("likes")
   sharesCount Int       @default(0)
-  
   authorId    Int
   author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  tags        Tag[]    
-
+  tags        Tag[]
   likesRel    Like[]
   comments    Comment[]
   shares      Share[]
@@ -74,11 +58,8 @@ model Like {
   userId    Int
   postId    Int
   createdAt DateTime @default(now())
-
   user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
   post      Post @relation(fields: [postId], references: [id], onDelete: Cascade)
-
-  // Un usuario solo puede dar like a un post una vez
   @@id([userId, postId])
   @@index([postId])
 }
@@ -87,13 +68,10 @@ model Comment {
   id        Int      @id @default(autoincrement())
   content   String   @db.Text
   createdAt DateTime @default(now())
-  
   userId    Int
   postId    Int
-
   user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
   post      Post @relation(fields: [postId], references: [id], onDelete: Cascade)
-
   @@index([userId])
   @@index([postId])
 }
@@ -102,10 +80,8 @@ model Share {
   userId    Int
   postId    Int
   createdAt DateTime @default(now())
-
   user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
   post      Post @relation(fields: [postId], references: [id], onDelete: Cascade)
-
   @@id([userId, postId])
   @@index([postId])
 }
@@ -113,5 +89,5 @@ model Share {
 model Tag {
   id    Int    @id @default(autoincrement())
   name  String @unique
-  posts Post[] 
+  posts Post[]
 }
