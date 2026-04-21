@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { UserService } from '../services/userService';
+import { getAuthUserId } from '../utils/authRequest';
+import { objectPublicUrl } from '../utils/mediaUrls';
 
 export class UserController {
     constructor(private readonly userService: UserService) {}
@@ -76,7 +78,32 @@ export class UserController {
             if (!user) {
                 return res.status(404).json({ message: "User not found" });
             }
-            return res.status(200).json(user);
+            const { password, ...rest } = user;
+            const profilePictureUrl = objectPublicUrl(rest.profilePictureKey ?? undefined);
+            return res.status(200).json({ ...rest, profilePictureUrl });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    public async patchProfilePicture(req: Request, res: Response, next: NextFunction) {
+        try {
+            const actorId = getAuthUserId(req);
+            if (actorId === undefined) {
+                return res.status(401).json({ message: 'Unauthorized' });
+            }
+            const targetId = Number(req.params.id);
+            if (!Number.isFinite(targetId)) {
+                return res.status(400).json({ message: 'Invalid user id' });
+            }
+            const { profilePictureKey } = req.body as { profilePictureKey?: string };
+            const updated = await this.userService.setProfilePictureKey(actorId, targetId, profilePictureKey ?? '');
+            const { password, ...rest } = updated;
+            const profilePictureUrl = objectPublicUrl(rest.profilePictureKey ?? undefined);
+            return res.status(200).json({
+                message: 'Profile picture updated',
+                user: { ...rest, profilePictureUrl }
+            });
         } catch (error) {
             next(error);
         }

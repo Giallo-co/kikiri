@@ -14,6 +14,7 @@ const userController = new UserController(userService);
 router.post("/v1/register", (req, res, next) => userController.register(req, res, next));
 router.get("/v1/users/email/:email", authenticateToken, (req, res, next) => userController.getByEmail(req, res, next));
 router.get("/v1/users/id/:id", authenticateToken, (req, res, next) => userController.getById(req, res, next));
+router.patch("/v1/users/:id/profile-picture", authenticateToken, (req, res, next) => userController.patchProfilePicture(req, res, next));
 router.put("/v1/users/:id", authenticateToken, (req, res, next) => userController.update(req, res, next));
 router.delete("/v1/users/:id", authenticateToken, (req, res, next) => userController.delete(req, res, next));
 

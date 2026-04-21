@@ -5,7 +5,7 @@ import config from '../config/config';
 export const errorHandler = (err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error(err.stack); 
   if (err instanceof ServiceException) {
-    res.status(400).json({
+    res.status(err.statusCode).json({
       "Code": err.errorCode,
       "message": err.message
     });

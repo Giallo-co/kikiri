@@ -1,7 +1,8 @@
 import { PostRepository } from '../repositories/postRepository';
 import { UserRepository } from '../repositories/userRepository';
-import { FeedResponse } from '../models/feedModel';
 import { EnrichedPost } from '../models/postModel';
+import { FeedResponse, FeedItem } from '../models/feedModel';
+import { objectPublicUrl } from '../utils/mediaUrls';
 
 export class FeedService {
   constructor(
@@ -29,6 +30,14 @@ export class FeedService {
     // 5. Ensamblar los datos
     const enrichedPosts: EnrichedPost[] = posts.map(post => {
       const authorData = userMap.get(post.authorId);
+      const profilePictureUrl = objectPublicUrl(authorData?.profilePictureKey as string | undefined);
+      const author: EnrichedPost['author'] = {
+        username: authorData?.username || "Usuario Desconocido",
+        avatarUrl: authorData?.profile?.avatarUrl || null
+      };
+      if (profilePictureUrl !== undefined) {
+        author.profilePictureUrl = profilePictureUrl;
+      }
       return {
         postId: post.postId,
         authorId: post.authorId,
@@ -37,10 +46,7 @@ export class FeedService {
         likesCount: post.likesCount,
         commentsCount: post.commentsCount,
         sharesCount: post.sharesCount,
-        author: {
-          username: authorData?.username || "Usuario Desconocido",
-          avatarUrl: authorData?.profile?.avatarUrl || null
-        }
+        author
       };
     });
 

@@ -7,6 +7,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { docClient, TABLE_NAME } from '../lib/dynamo';
 import { BatchWriteCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
+import { S3PresignService } from './s3PresignService';
 
 interface AuthResponse {
   user: Omit<User, 'password'>;
@@ -263,5 +264,23 @@ export class UserService {
       if (!user) throw new ServiceException(1002, "User not found.");
       
       return await this.userRepository.getFollowingIds(userId);
+  }
+
+  async setProfilePictureKey(actorId: number, targetUserId: number, profilePictureKey: string): Promise<User> {
+    if (actorId !== targetUserId) {
+      throw new ServiceException(4030, 'You can only update your own profile picture.', 403);
+    }
+    const key = profilePictureKey.trim();
+    if (!key) {
+      throw new ServiceException(4011, 'profilePictureKey is required.');
+    }
+    if (!S3PresignService.isAvatarKeyForUser(key, targetUserId)) {
+      throw new ServiceException(4012, 'Invalid profilePictureKey for this user.');
+    }
+    const updated = await this.userRepository.updateProfilePictureKey(targetUserId, key);
+    if (!updated) {
+      throw new ServiceException(1002, 'User not found.');
+    }
+    return updated;
   }
 }
