@@ -52,6 +52,7 @@ jobs:
             PORT=${{ secrets.PORT }}
             HOST=0.0.0.0
             PROTOCOL=http
+            API_BASE_PATH=/user
             DATABASE_URL=${{ secrets.DATABASE_URL }}
             DATABASE_USER=${{ secrets.DATABASE_USER }}
             DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
