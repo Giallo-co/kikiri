@@ -13,7 +13,7 @@ export class InteractionRepository {
             TableName: TABLE_NAME,
             Item: {
               PK: `POST#${postId}`,
-              SK: `LIKE#${userId}`,
+              SK: `LIKE#USER#${userId}`,
               GSI1PK: `USER#${userId}`,
               GSI1SK: `LIKE#${timestamp}`,
               userId,
@@ -27,8 +27,8 @@ export class InteractionRepository {
           Update: {
             TableName: TABLE_NAME,
             Key: { PK: `POST#${postId}`, SK: "METADATA" },
-            UpdateExpression: "SET likesCount = if_not_exists(likesCount, :zero) + :inc",
-            ExpressionAttributeValues: { ":inc": 1, ":zero": 0 }
+            UpdateExpression: "ADD likesCount :inc",
+            ExpressionAttributeValues: { ":inc": 1 }
           }
         }
       ]
@@ -43,7 +43,7 @@ export class InteractionRepository {
             TableName: TABLE_NAME,
             Key: {
               PK: `POST#${postId}`,
-              SK: `LIKE#${userId}`
+              SK: `LIKE#USER#${userId}`
             },
             ConditionExpression: "attribute_exists(PK)"
           }
@@ -66,7 +66,7 @@ export class InteractionRepository {
       TableName: TABLE_NAME,
       Key: {
         PK: `POST#${postId}`,
-        SK: `LIKE#${userId}`
+        SK: `LIKE#USER#${userId}`
       }
     }));
     return !!result.Item;
