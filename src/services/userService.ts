@@ -148,10 +148,38 @@ export class UserService {
     }
 
     try {
-      // 2. Limpieza en DynamoDB (Posts, Follows, Likes registrados en GSI1)
+      // 2. Consultar todos los posts del usuario en DynamoDB usando GSI1 (vía PostRepository)
+      const posts = await this.postRepository.getByAuthor(userId);
+
+      if (posts.length > 0) {
+        // 3. Preparar los comandos de borrado para BatchWrite (máximo 25 a la vez)
+        const deleteRequests = posts.map(post => ({
+          DeleteRequest: {
+            Key: {
+              PK: post.PK,
+              SK: post.SK
+            }
+          }
+        }));
+
+        // Procesar en bloques de 25 (límite de DynamoDB)
+        for (let i = 0; i < deleteRequests.length; i += 25) {
+          const chunk = deleteRequests.slice(i, i + 25);
+          await docClient.send(new BatchWriteCommand({
+            RequestItems: {
+              [TABLE_NAME]: chunk
+            }
+          }));
+        }
+      }
+
+      // 4. Limpieza adicional (Seguidores, Likes, etc. si fuera necesario)
+      // Por ahora la consulta genérica en cleanupDynamoDBData cubría más casos, 
+      // pero seguiré la estructura de correciones.md que es más específica para posts.
+      // Si queremos borrar TODO lo relacionado en GSI1:
       await this.cleanupDynamoDBData(userId);
 
-      // 3. Eliminar definitivamente de SQL
+      // 5. Eliminar definitivamente de SQL
       const deleted = await this.userRepository.delete(userId);
       return deleted;
     } catch (error) {
