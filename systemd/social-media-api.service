@@ -9,7 +9,7 @@ WorkingDirectory=/var/www/kikiri/kikiri
 
 # El comando para iniciar la app.
 # Asegúrate de que tu package.json tiene un script "start": "node dist/app.js"
-ExecStart=/home/ubuntu/.nvm/versions/node/v24.x.x/bin/node dist/app.js
+ExecStart=/home/ubuntu/.nvm/versions/node/v20.20.1/bin/node /var/www/kikiri/kikiri/dist/app.js
 
 # Reiniciar automáticamente si la app crashea
 Restart=on-failure
