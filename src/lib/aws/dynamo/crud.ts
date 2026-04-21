@@ -84,9 +84,9 @@ export async function scanAll(limit = 50): Promise<UserPost[]> {
   }));
   return (result.Items as UserPost[]) ?? [];
 }
+
 /*
 async function main() {
-
   const PK = "USER#user-001";
   const SK = `POST#${Date.now()}`;
 
@@ -110,12 +110,10 @@ async function main() {
   console.log("\n--- QUERY ---");
   console.log(await queryByPK(PK));
 
-
   console.log("\n--- DELETE ---");
-  await deletePost("USER#user-001", "POST#1776744906731");
+  await deletePost(PK, SK);
   console.log("Deleted.");
 }
 
 main().catch(console.error);
-
 */
