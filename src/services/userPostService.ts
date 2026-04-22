@@ -1,8 +1,8 @@
 import { UserPostRepository, UserPostRecord } from '../repositories/userPostRepository';
 import { ServiceException } from '../errors/ServiceException';
 import { S3PresignService } from './s3PresignService';
-import config from '../config/config';
 import { objectPublicUrl } from '../utils/mediaUrls';
+import { TABLE_NAME } from '../lib/dynamo';
 
 export interface UserPostView extends UserPostRecord {
   imageUrls: (string | undefined)[];
@@ -13,8 +13,8 @@ export class UserPostService {
   constructor(private readonly userPostRepository: UserPostRepository) {}
 
   private assertDynamoConfigured(): void {
-    if (!config.dynamodbUserPostTableName) {
-      throw new ServiceException(5002, 'DynamoDB user posts are not configured.');
+    if (!TABLE_NAME) {
+      throw new ServiceException(5002, 'DynamoDB is not configured (missing DYNAMODB_TABLE_NAME).');
     }
   }
 
