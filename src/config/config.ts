@@ -42,7 +42,8 @@ const config: Config = {
   awsRegion: process.env.AWS_REGION || 'us-east-1',
   s3BucketName: process.env.S3_BUCKET_NAME || '',
   s3PublicBaseUrl: (process.env.S3_PUBLIC_BASE_URL || '').replace(/\/$/, ''),
-  dynamodbUserPostTableName: process.env.DYNAMODB_USER_POST_TABLE_NAME || 'userPost'
+  /** @deprecated User posts use single-table `DYNAMODB_TABLE_NAME`; kept for backward-compatible env reads */
+  dynamodbUserPostTableName: process.env.DYNAMODB_USER_POST_TABLE_NAME || process.env.DYNAMODB_TABLE_NAME || 'KikiriSocial'
 };
 
 export default config;
