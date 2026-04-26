@@ -1,0 +1,24 @@
+{
+  "name": "dynamodb-music",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/create-table.js",
+    "dev": "ts-node src/create-table.ts",
+    "seed": "ts-node src/seed.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.1037.0",
+    "@aws-sdk/lib-dynamodb": "^3.1037.0"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "description": "",
+  "main": "index.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
