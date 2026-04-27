@@ -196,7 +196,8 @@ export default function GraphView({ nodes, links, config }: Props) {
               d.fy = null
             })
           )
-          .on('click', (_event, d) => {
+          .on('click', (event, d) => {
+            event.stopPropagation()
             const isSelected = selectedRef.current === d.id
             selectedRef.current = isSelected ? null : d.id
             updateHighlight()
@@ -222,6 +223,17 @@ export default function GraphView({ nodes, links, config }: Props) {
         update => update.attr('r', config.nodeSize),
         exit => exit.remove()
       )
+
+    // Background click to deselect and reset view
+    d3.select(svgRef.current).on('click', () => {
+      selectedRef.current = null
+      updateHighlight()
+      if (zoomRef.current && svgRef.current) {
+        d3.select(svgRef.current).transition()
+          .duration(750)
+          .call(zoomRef.current.transform, d3.zoomIdentity)
+      }
+    })
 
     // Apply simulation updates
     simulation.nodes(newNodes)
