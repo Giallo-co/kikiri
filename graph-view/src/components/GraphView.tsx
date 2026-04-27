@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef } from 'react'
 import * as d3 from 'd3'
 import type { NodeDatum, LinkDatum, GraphConfig } from '../types'
 
@@ -15,41 +15,20 @@ const LINK_SELECTED = '#ab90df'
 
 export default function GraphView({ nodes, links, config }: Props) {
   const svgRef = useRef<SVGSVGElement>(null)
-  const simulationRef = useRef<d3.Simulation<NodeDatum, LinkDatum> | null>(null)
   const selectedRef = useRef<string | null>(null)
 
-  const applySelection = useCallback((svgEl: SVGSVGElement, selectedId: string | null) => {
-    const nodeSet = new Set<string>()
-    const linkSet = new Set<number>()
-
-    if (selectedId !== null) {
-      nodeSet.add(selectedId)
-      links.forEach((l, i) => {
-        const srcId = typeof l.source === 'string' ? l.source : l.source.id
-        const tgtId = typeof l.target === 'string' ? l.target : l.target.id
-        if (srcId === selectedId || tgtId === selectedId) {
-          linkSet.add(i)
-          nodeSet.add(srcId)
-          nodeSet.add(tgtId)
-        }
-      })
-    }
-
-    d3.select(svgEl).selectAll<SVGCircleElement, NodeDatum>('circle.node')
-      .attr('fill', d => (selectedId === null || nodeSet.has(d.id)) ? SELECTED_COLOR : BASE_COLOR)
-
-    d3.select(svgEl).selectAll<SVGLineElement, LinkDatum & { _index: number }>('line.link')
-      .attr('stroke', d => (selectedId === null || linkSet.has(d._index)) ? LINK_SELECTED : LINK_BASE)
-      .attr('stroke-opacity', d => (selectedId === null || linkSet.has(d._index)) ? 1 : 0.4)
-  }, [links])
-
   useEffect(() => {
+    if (!nodes.length) return
     const svgEl = svgRef.current
     if (!svgEl) return
 
-    const { width, height } = svgEl.getBoundingClientRect()
+    const rect = svgEl.getBoundingClientRect()
+    const width = rect.width || window.innerWidth
+    const height = rect.height || window.innerHeight
+
     const svg = d3.select(svgEl)
     svg.selectAll('*').remove()
+    selectedRef.current = null
 
     const g = svg.append('g')
 
@@ -59,18 +38,17 @@ export default function GraphView({ nodes, links, config }: Props) {
         .on('zoom', (event) => g.attr('transform', event.transform))
     )
 
-    const indexedLinks = links.map((l, i) => ({ ...l, _index: i }))
+    const nodesCopy: NodeDatum[] = nodes.map(n => ({ ...n }))
+    const indexedLinks = links.map((l, i) => ({ source: l.source, target: l.target, _index: i }))
 
-    const simulation = d3.forceSimulation<NodeDatum>(nodes)
-      .force('link', d3.forceLink<NodeDatum, LinkDatum>(indexedLinks)
+    const simulation = d3.forceSimulation<NodeDatum>(nodesCopy)
+      .force('link', d3.forceLink<NodeDatum, typeof indexedLinks[0]>(indexedLinks)
         .id(d => d.id)
         .strength(config.linkForce)
         .distance(config.linkDistance)
       )
       .force('charge', d3.forceManyBody().strength(config.repelForce))
       .force('center', d3.forceCenter(width / 2, height / 2).strength(config.centerForce))
-
-    simulationRef.current = simulation
 
     const link = g.append('g')
       .selectAll<SVGLineElement, typeof indexedLinks[0]>('line')
@@ -83,20 +61,36 @@ export default function GraphView({ nodes, links, config }: Props) {
 
     const node = g.append('g')
       .selectAll<SVGCircleElement, NodeDatum>('circle')
-      .data(nodes)
+      .data(nodesCopy)
       .join('circle')
       .attr('class', 'node')
       .attr('r', config.nodeSize)
       .attr('fill', BASE_COLOR)
       .attr('cursor', 'pointer')
       .on('click', (_event, d) => {
-        if (selectedRef.current === d.id) {
-          selectedRef.current = null
-          applySelection(svgEl, null)
-        } else {
-          selectedRef.current = d.id
-          applySelection(svgEl, d.id)
+        const isSelected = selectedRef.current === d.id
+        selectedRef.current = isSelected ? null : d.id
+        const selId = selectedRef.current
+
+        const nodeSet = new Set<string>()
+        const linkSet = new Set<number>()
+
+        if (selId !== null) {
+          nodeSet.add(selId)
+          indexedLinks.forEach((l) => {
+            const srcId = typeof l.source === 'string' ? l.source : (l.source as NodeDatum).id
+            const tgtId = typeof l.target === 'string' ? l.target : (l.target as NodeDatum).id
+            if (srcId === selId || tgtId === selId) {
+              linkSet.add(l._index)
+              nodeSet.add(srcId)
+              nodeSet.add(tgtId)
+            }
+          })
         }
+
+        node.attr('fill', (n) => (selId === null || nodeSet.has(n.id)) ? SELECTED_COLOR : BASE_COLOR)
+        link.attr('stroke', (l) => (selId === null || linkSet.has(l._index)) ? LINK_SELECTED : LINK_BASE)
+          .attr('stroke-opacity', (l) => (selId === null || linkSet.has(l._index)) ? 1 : 0.3)
       })
       .call(
         d3.drag<SVGCircleElement, NodeDatum>()
@@ -128,10 +122,8 @@ export default function GraphView({ nodes, links, config }: Props) {
         .attr('cy', d => d.y ?? 0)
     })
 
-    return () => {
-      simulation.stop()
-    }
-  }, [nodes, links, config, applySelection])
+    return () => { simulation.stop() }
+  }, [nodes, links, config])
 
   return (
     <svg
