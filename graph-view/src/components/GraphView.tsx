@@ -21,6 +21,8 @@ export default function GraphView({ nodes, links, config }: Props) {
   const linkSelectionRef = useRef<d3.Selection<SVGLineElement, any, SVGGElement, unknown> | null>(null)
   const selectedRef = useRef<string | null>(null)
 
+  const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null)
+
   // Initialize SVG and Simulation
   useEffect(() => {
     const svgEl = svgRef.current
@@ -36,11 +38,12 @@ export default function GraphView({ nodes, links, config }: Props) {
     const g = svg.append('g')
     gRef.current = g
 
-    svg.call(
-      d3.zoom<SVGSVGElement, unknown>()
-        .scaleExtent([0.1, 8])
-        .on('zoom', (event) => g.attr('transform', event.transform))
-    )
+    const zoom = d3.zoom<SVGSVGElement, unknown>()
+      .scaleExtent([0.1, 8])
+      .on('zoom', (event) => g.attr('transform', event.transform))
+    
+    zoomRef.current = zoom
+    svg.call(zoom)
 
     const simulation = d3.forceSimulation<NodeDatum>()
       .force('link', d3.forceLink<NodeDatum, any>().id(d => d.id))
@@ -188,6 +191,24 @@ export default function GraphView({ nodes, links, config }: Props) {
             const isSelected = selectedRef.current === d.id
             selectedRef.current = isSelected ? null : d.id
             updateHighlight()
+
+            if (selectedRef.current && svgRef.current && zoomRef.current) {
+              const svg = d3.select(svgRef.current)
+              const rect = svgRef.current.getBoundingClientRect()
+              const width = rect.width
+              const height = rect.height
+              
+              // Smoothly transition to center the node
+              svg.transition()
+                .duration(750)
+                .call(
+                  zoomRef.current.transform,
+                  d3.zoomIdentity
+                    .translate(width / 2, height / 2)
+                    .scale(1.5) // Adjust zoom level on focus
+                    .translate(-(d.x ?? 0), -(d.y ?? 0))
+                )
+            }
           }),
         update => update.attr('r', config.nodeSize),
         exit => exit.remove()
