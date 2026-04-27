@@ -146,19 +146,28 @@ export default function GraphView({ nodes, links, config }: Props) {
       }
 
       if (nodeSelectionRef.current) {
-        nodeSelectionRef.current.attr('fill', (n) => (selId === null || nodeSet.has(n.id)) ? SELECTED_COLOR : BASE_COLOR)
+        nodeSelectionRef.current.attr('fill', (n) => {
+          if (selId === null || nodeSet.has(n.id)) {
+            return n.color || (selId === null ? BASE_COLOR : SELECTED_COLOR)
+          }
+          return BASE_COLOR
+        })
+        .attr('opacity', (n) => (selId === null || nodeSet.has(n.id)) ? 1 : 0.3)
       }
       if (linkSelectionRef.current) {
         linkSelectionRef.current
           .attr('stroke', (l: any) => {
             const srcId = typeof l.source === 'object' ? l.source.id : l.source
             const tgtId = typeof l.target === 'object' ? l.target.id : l.target
-            return (selId === null || linkSet.has(`${srcId}-${tgtId}`)) ? LINK_SELECTED : LINK_BASE
+            const isRelated = selId !== null && (srcId === selId || tgtId === selId)
+            return isRelated ? LINK_SELECTED : LINK_BASE
           })
           .attr('stroke-opacity', (l: any) => {
             const srcId = typeof l.source === 'object' ? l.source.id : l.source
             const tgtId = typeof l.target === 'object' ? l.target.id : l.target
-            return (selId === null || linkSet.has(`${srcId}-${tgtId}`)) ? 1 : 0.3
+            const isRelated = selId !== null && (srcId === selId || tgtId === selId)
+            if (selId === null) return 0.7
+            return isRelated ? 1 : 0.1
           })
       }
     }
@@ -169,7 +178,7 @@ export default function GraphView({ nodes, links, config }: Props) {
       .join(
         enter => enter.append('circle')
           .attr('r', config.nodeSize)
-          .attr('fill', BASE_COLOR)
+          .attr('fill', d => d.color || BASE_COLOR)
           .attr('cursor', 'pointer')
           .call(d3.drag<SVGCircleElement, NodeDatum>()
             .on('start', (event, d) => {

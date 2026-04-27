@@ -1,5 +1,6 @@
 export interface NodeDatum {
   id: string
+  color?: string
   x?: number
   y?: number
   fx?: number | null
