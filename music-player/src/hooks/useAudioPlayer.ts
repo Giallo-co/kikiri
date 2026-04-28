@@ -52,9 +52,10 @@ export function useAudioPlayer(track: Music | null) {
 
   const changeVolume = useCallback((val: number) => {
     const audio = audioRef.current;
-    setVolume(val);
-    setIsMuted(val === 0);
-    if (audio) audio.volume = val;
+    const clamped = Math.min(1, Math.max(0, val));
+    setVolume(clamped);
+    setIsMuted(clamped === 0);
+    if (audio) audio.volume = clamped;
   }, []);
 
   const toggleMute = useCallback(() => {

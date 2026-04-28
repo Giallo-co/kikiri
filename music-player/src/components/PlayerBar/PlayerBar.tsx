@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import type { Music } from "../../types/music";
 import { useAudioPlayer } from "../../hooks/useAudioPlayer";
 import "./PlayerBar.css";
@@ -14,12 +14,56 @@ function formatTime(s: number): string {
   return `${m}:${sec.toString().padStart(2, "0")}`;
 }
 
+function calcRatio(e: MouseEvent | React.MouseEvent, el: HTMLElement): number {
+  const rect = el.getBoundingClientRect();
+  return Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+}
+
 export default function PlayerBar({ track }: Props) {
   const { isPlaying, currentTime, duration, volume, isMuted, togglePlay, seek, changeVolume, toggleMute } =
     useAudioPlayer(track);
   const [imgError, setImgError] = useState(false);
 
+  const progressRef = useRef<HTMLDivElement>(null);
+  const volumeRef = useRef<HTMLDivElement>(null);
+
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+  const handleProgressMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      const el = progressRef.current;
+      if (!el) return;
+      e.preventDefault();
+      const update = (ev: MouseEvent | React.MouseEvent) => seek(calcRatio(ev as MouseEvent, el) * duration);
+      update(e);
+      const onMove = (ev: MouseEvent) => update(ev);
+      const onUp = () => {
+        window.removeEventListener("mousemove", onMove);
+        window.removeEventListener("mouseup", onUp);
+      };
+      window.addEventListener("mousemove", onMove);
+      window.addEventListener("mouseup", onUp);
+    },
+    [seek, duration]
+  );
+
+  const handleVolumeMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      const el = volumeRef.current;
+      if (!el) return;
+      e.preventDefault();
+      const update = (ev: MouseEvent | React.MouseEvent) => changeVolume(calcRatio(ev as MouseEvent, el));
+      update(e);
+      const onMove = (ev: MouseEvent) => update(ev);
+      const onUp = () => {
+        window.removeEventListener("mousemove", onMove);
+        window.removeEventListener("mouseup", onUp);
+      };
+      window.addEventListener("mousemove", onMove);
+      window.addEventListener("mouseup", onUp);
+    },
+    [changeVolume]
+  );
 
   return (
     <div className="player-bar">
@@ -71,14 +115,7 @@ export default function PlayerBar({ track }: Props) {
 
         <div className="player-progress-area">
           <span className="player-time">{formatTime(currentTime)}</span>
-          <div
-            className="player-progress-track"
-            onClick={(e) => {
-              const rect = e.currentTarget.getBoundingClientRect();
-              const ratio = (e.clientX - rect.left) / rect.width;
-              seek(ratio * duration);
-            }}
-          >
+          <div ref={progressRef} className="player-progress-track" onMouseDown={handleProgressMouseDown}>
             <div className="player-progress-fill" style={{ width: `${progress}%` }}>
               <div className="player-progress-thumb" />
             </div>
@@ -129,14 +166,7 @@ export default function PlayerBar({ track }: Props) {
               </svg>
             )}
           </button>
-          <div
-            className="player-volume-track"
-            onClick={(e) => {
-              const rect = e.currentTarget.getBoundingClientRect();
-              const ratio = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
-              changeVolume(ratio);
-            }}
-          >
+          <div ref={volumeRef} className="player-volume-track" onMouseDown={handleVolumeMouseDown}>
             <div className="player-volume-fill" style={{ width: `${(isMuted ? 0 : volume) * 100}%` }}>
               <div className="player-volume-thumb" />
             </div>
