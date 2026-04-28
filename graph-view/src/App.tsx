@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import GraphView from './components/GraphView'
 import { graphConfig } from './graphConfig'
-import type { NodeDatum, LinkDatum } from './types'
+import type { NodeDatum, LinkDatum, RawNode } from './types'
 
 interface GraphData {
   nodes: NodeDatum[]
@@ -29,13 +29,38 @@ export default function App() {
       es.onmessage = (event) => {
         console.log('[SSE] message received, length:', event.data.length)
         try {
-          const data: GraphData = JSON.parse(event.data)
-          console.log('[SSE] parsed nodes:', data.nodes?.length, 'links:', data.links?.length)
-          if (data.nodes?.length) {
-            setGraphData({
-              nodes: data.nodes.map(n => ({ ...n })),
-              links: data.links.map(l => ({ ...l })),
+          const rawNodes: RawNode[] = JSON.parse(event.data)
+          console.log('[SSE] parsed raw nodes:', rawNodes.length)
+          
+          if (rawNodes.length) {
+            const nodes: NodeDatum[] = rawNodes.map(rn => ({
+              id: rn.node_id,
+              name: rn.node_name,
+              color: rn.color
+            }))
+
+            const links: LinkDatum[] = []
+            const nodeIds = new Set(rawNodes.map(rn => rn.node_id))
+
+            rawNodes.forEach(rn => {
+              const allLinks = [
+                ...(rn.node_tag_links || []),
+                ...(rn.node_music_links || []),
+                ...(rn.node_author_links || []),
+                ...(rn.node_album_links || [])
+              ]
+
+              allLinks.forEach(targetId => {
+                if (nodeIds.has(targetId)) {
+                  links.push({
+                    source: rn.node_id,
+                    target: targetId
+                  })
+                }
+              })
             })
+
+            setGraphData({ nodes, links })
           }
         } catch (e) {
           console.error('[SSE] parse error:', e)
