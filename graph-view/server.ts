@@ -9,6 +9,7 @@ const PORT = 5002
 const NODES_FILE = path.resolve('./nodes.json')
 
 app.use(cors())
+app.use(express.json())
 
 const clients = new Set<express.Response>()
 
@@ -57,6 +58,14 @@ app.get('/api/nodes/stream', (req, res) => {
   req.on('close', () => {
     clients.delete(res)
   })
+})
+
+app.post('/api/node-selected', (req, res) => {
+  const { id, name, content } = req.body
+  console.log(`[Backend] Node Selected: ${name} (ID: ${id})`)
+  console.log(`[Backend] Content:`, content)
+  // Aquí puedes procesar el content como necesites
+  res.sendStatus(200)
 })
 
 createServer(app).listen(PORT, () => {

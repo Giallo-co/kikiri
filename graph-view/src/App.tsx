@@ -36,7 +36,8 @@ export default function App() {
             const nodes: NodeDatum[] = rawNodes.map(rn => ({
               id: rn.node_id,
               name: rn.node_name,
-              color: rn.color
+              color: rn.color,
+              content: rn.node_content
             }))
 
             const links: LinkDatum[] = []

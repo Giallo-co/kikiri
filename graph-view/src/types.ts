@@ -2,6 +2,7 @@ export interface NodeDatum {
   id: string
   name?: string
   color?: string
+  content?: string
   x?: number
   y?: number
   fx?: number | null

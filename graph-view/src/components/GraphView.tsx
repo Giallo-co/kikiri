@@ -222,6 +222,15 @@ export default function GraphView({ nodes, links, config }: Props) {
             selectedRef.current = isSelected ? null : d.id
             updateHighlight()
 
+            // Notify backend about selection
+            if (selectedRef.current) {
+              fetch('/api/node-selected', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: d.id, name: d.name, content: d.content })
+              }).catch(err => console.error('Failed to notify backend:', err))
+            }
+
             if (selectedRef.current && svgRef.current && zoomRef.current) {
               const svg = d3.select(svgRef.current)
               const rect = svgRef.current.getBoundingClientRect()
