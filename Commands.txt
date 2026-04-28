@@ -3,3 +3,14 @@
 docker compose up -d
 docker compose down
 docker compose down -v
+
+# Node js
+npx ts-node <file>.ts 
+
+# NPM
+npm run <package.json path>
+
+# MinIO
+mc anonymous set public local/music
+mc anonymous set public local/music-cover
+mc anonymous set public local/profile-picture

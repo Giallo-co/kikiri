@@ -4,7 +4,7 @@ import os
 import time
 
 BASE = "https://downloads.khinsider.com"
-ALBUM = "https://downloads.khinsider.com/game-soundtracks/album/minecraft-volume-beta-gamerip-2011"
+ALBUM = "https://downloads.khinsider.com/game-soundtracks/album/minecraft-volume-alpha-2015"
 
 OUTPUT = "music"
 os.makedirs(OUTPUT, exist_ok=True)
