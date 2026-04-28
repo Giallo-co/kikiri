@@ -18,6 +18,7 @@ export default function GraphView({ nodes, links, config }: Props) {
   const simulationRef = useRef<d3.Simulation<NodeDatum, undefined> | null>(null)
   const gRef = useRef<d3.Selection<SVGGElement, unknown, null, undefined> | null>(null)
   const nodeSelectionRef = useRef<d3.Selection<SVGCircleElement, NodeDatum, SVGGElement, unknown> | null>(null)
+  const labelSelectionRef = useRef<d3.Selection<SVGTextElement, NodeDatum, SVGGElement, unknown> | null>(null)
   const linkSelectionRef = useRef<d3.Selection<SVGLineElement, any, SVGGElement, unknown> | null>(null)
   const selectedRef = useRef<string | null>(null)
 
@@ -64,6 +65,12 @@ export default function GraphView({ nodes, links, config }: Props) {
           .attr('cx', d => d.x ?? 0)
           .attr('cy', d => d.y ?? 0)
       }
+
+      if (labelSelectionRef.current) {
+        labelSelectionRef.current
+          .attr('x', d => d.x ?? 0)
+          .attr('y', d => (d.y ?? 0) + (config.nodeSize + 12))
+      }
     })
 
     simulationRef.current = simulation
@@ -86,7 +93,7 @@ export default function GraphView({ nodes, links, config }: Props) {
     }
     const chargeForce = simulation.force<d3.ForceManyBody<NodeDatum>>('charge')
     if (chargeForce) {
-      chargeForce.strength(config.repelForce)
+      chargeForce.strength(config.repelForce * config.repelForcePercentage)
     }
     const centerForce = simulation.force<d3.ForceCenter<NodeDatum>>('center')
     if (centerForce) {
@@ -111,9 +118,16 @@ export default function GraphView({ nodes, links, config }: Props) {
     if (!g.select('.nodes-group').size()) {
       g.append('g').attr('class', 'nodes-group')
     }
+    if (!g.select('.labels-group').size()) {
+      g.append('g').attr('class', 'labels-group')
+    }
 
     const linkGroup = g.select<SVGGElement>('.links-group')
     const nodeGroup = g.select<SVGGElement>('.nodes-group')
+    const labelGroup = g.select<SVGGElement>('.labels-group')
+
+    // Toggle label group visibility
+    labelGroup.style('display', config.showLabels ? 'inline' : 'none')
 
     linkSelectionRef.current = linkGroup
       .selectAll<SVGLineElement, any>('line')
@@ -154,6 +168,12 @@ export default function GraphView({ nodes, links, config }: Props) {
         })
         .attr('opacity', (n) => (selId === null || nodeSet.has(n.id)) ? 1 : 0.3)
       }
+
+      if (labelSelectionRef.current) {
+        labelSelectionRef.current
+          .attr('opacity', (n) => (selId === null || nodeSet.has(n.id)) ? 1 : 0.1)
+      }
+
       if (linkSelectionRef.current) {
         linkSelectionRef.current
           .attr('stroke', (l: any) => {
@@ -221,6 +241,21 @@ export default function GraphView({ nodes, links, config }: Props) {
             }
           }),
         update => update.attr('r', config.nodeSize),
+        exit => exit.remove()
+      )
+
+    labelSelectionRef.current = labelGroup
+      .selectAll<SVGTextElement, NodeDatum>('text')
+      .data(newNodes, d => d.id)
+      .join(
+        enter => enter.append('text')
+          .text(d => d.name || d.id)
+          .attr('text-anchor', 'middle')
+          .attr('font-size', '10px')
+          .attr('fill', LINK_BASE)
+          .attr('pointer-events', 'none')
+          .attr('font-family', 'sans-serif'),
+        update => update.text(d => d.name || d.id),
         exit => exit.remove()
       )
 

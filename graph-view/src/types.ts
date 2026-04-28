@@ -1,5 +1,6 @@
 export interface NodeDatum {
   id: string
+  name?: string
   color?: string
   x?: number
   y?: number
@@ -17,6 +18,8 @@ export interface GraphConfig {
   linkThickness: number
   centerForce: number
   repelForce: number
+  repelForcePercentage: number
   linkForce: number
   linkDistance: number
+  showLabels: boolean
 }
