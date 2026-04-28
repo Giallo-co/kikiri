@@ -1,27 +1,37 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import type { Music } from "../types/music";
 
-export function useAudioPlayer(track: Music | null) {
+export function useAudioPlayer(track: Music | null, autoPlay = false) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
+  const volumeRef = useRef(1);
 
   useEffect(() => {
     if (!track) return;
     const audio = new Audio(track.music_url);
     audioRef.current = audio;
-    audio.volume = volume;
+    audio.volume = volumeRef.current;
 
     const onTimeUpdate = () => setCurrentTime(audio.currentTime);
-    const onLoaded = () => setDuration(audio.duration);
+    const onLoaded = () => {
+      setDuration(audio.duration);
+      if (autoPlay) {
+        audio.play().then(() => setIsPlaying(true)).catch(() => {})
+      }
+    };
     const onEnded = () => setIsPlaying(false);
 
     audio.addEventListener("timeupdate", onTimeUpdate);
     audio.addEventListener("loadedmetadata", onLoaded);
     audio.addEventListener("ended", onEnded);
+
+    setCurrentTime(0);
+    setDuration(0);
+    setIsPlaying(false);
 
     return () => {
       audio.pause();
@@ -29,7 +39,7 @@ export function useAudioPlayer(track: Music | null) {
       audio.removeEventListener("loadedmetadata", onLoaded);
       audio.removeEventListener("ended", onEnded);
     };
-  }, [track?.music_url]);
+  }, [track?.music_url, autoPlay]);
 
   const togglePlay = useCallback(() => {
     const audio = audioRef.current;
@@ -38,8 +48,7 @@ export function useAudioPlayer(track: Music | null) {
       audio.pause();
       setIsPlaying(false);
     } else {
-      audio.play();
-      setIsPlaying(true);
+      audio.play().then(() => setIsPlaying(true)).catch(() => {});
     }
   }, [isPlaying]);
 
@@ -54,6 +63,7 @@ export function useAudioPlayer(track: Music | null) {
     const audio = audioRef.current;
     const clamped = Math.min(1, Math.max(0, val));
     setVolume(clamped);
+    volumeRef.current = clamped;
     setIsMuted(clamped === 0);
     if (audio) audio.volume = clamped;
   }, []);
@@ -63,8 +73,8 @@ export function useAudioPlayer(track: Music | null) {
     if (!audio) return;
     const next = !isMuted;
     setIsMuted(next);
-    audio.volume = next ? 0 : volume;
-  }, [isMuted, volume]);
+    audio.volume = next ? 0 : volumeRef.current;
+  }, [isMuted]);
 
   return { isPlaying, currentTime, duration, volume, isMuted, togglePlay, seek, changeVolume, toggleMute };
 }

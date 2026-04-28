@@ -869,5 +869,25 @@
             "15"
         ],
         "color": "#2B2B2B"
+    },
+         {
+        "node_id": "57",
+        "node_name": "Let It Happen",
+        "node_type": "Music",
+        "node_content": "{\"music_id\": \"55\", \"music_name\": \"Let It Happen\", \"music_description\": \"I think most of that song was put together at different times, when I was on tour, actually. I remember it came to me, I think I was walking to my hotel room in Oklahoma. And then the chorus, I was at a festival in Hungary or Turkey. And then the midsection, the jam bit, I was on a train. That's a bit looping and a weird repetitive thing going on, and I had my laptop on a train in France, going to Toulouse. I think with that song, one thing led to another. I was just jamming by myself in the way I do, and I put it on a loop to see what sounds cool. I just see where it takes me.\", \"music_author\": \"Tame Impala\", \"music_cover_url\": \"http://localhost:9000/music-cover/currents.jpg\", \"music_url\": \"http://localhost:9000/music/currents/let-it-happen.mp3\", \"music_album\": \"Currents\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
+        "node_tag_links": [],
+        "node_author_links": ["56"],
+        "node_album_links": [],
+        "color": "#2B2B2B"
+   },
+ {
+        "node_id": "56",
+        "node_name": "Tame Impala",
+        "node_type": "Author",
+        "color": "#5a485d",
+        "node_content": "{\"author_id\": \"2\", \"author_name\": \"Tame Impala\", \"author_real_name\": \"Kevin Parker\", \"author_description\": \"Grabo música bajo el nombre de Tame Impala. Cuando sumas a 4 de mis amigos, somos una banda que gira por todo el mundo. He hecho 3 álbumes, uno aún por salir. Ummmm, no sé qué más añadir. Hemos ganado algunos WAMIs, algunos ARIAs y nos nominaron a un Grammy, lo que sea que eso cuente. Una vez, Danny de Vito nos vio desde un lado del escenario.\", \"author_profile_picture\": \"http://localhost:9000/profile-picture/tame-impala.jpg\"}",
+        "node_tag_links": [],
+        "node_music_links": [],
+        "node_album_links": []
     }
 ]

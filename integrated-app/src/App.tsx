@@ -29,7 +29,13 @@ export default function App() {
   const [connected, setConnected] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [currentTrack, setCurrentTrack] = useState<Music>(DEFAULT_TRACK)
+  const [autoPlay, setAutoPlay] = useState(false)
   const esRef = useRef<EventSource | null>(null)
+
+  const handleTrackChange = (track: Music) => {
+    setAutoPlay(true)
+    setCurrentTrack(track)
+  }
 
   useEffect(() => {
     const connect = () => {
@@ -113,20 +119,15 @@ export default function App() {
             nodes={graphData.nodes}
             links={graphData.links}
             config={graphConfig}
-            onTrackChange={setCurrentTrack}
+            onTrackChange={handleTrackChange}
           />
         )}
       </div>
 
       <div style={{
-        position: 'absolute',
-        top: 12,
-        right: 16,
-        fontSize: 11,
-        fontFamily: 'monospace',
-        color: connected ? '#6dbf8a' : '#cf6679',
-        letterSpacing: '0.05em',
-        zIndex: 10,
+        position: 'absolute', top: 12, right: 16, fontSize: 11,
+        fontFamily: 'monospace', color: connected ? '#6dbf8a' : '#cf6679',
+        letterSpacing: '0.05em', zIndex: 10,
       }}>
         {connected ? 'live' : 'reconnecting...'}
       </div>
@@ -147,7 +148,7 @@ export default function App() {
       )}
 
       <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', zIndex: 100 }}>
-        <PlayerBar track={currentTrack} />
+        <PlayerBar track={currentTrack} autoPlay={autoPlay} />
       </div>
     </div>
   )

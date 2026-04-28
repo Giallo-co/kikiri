@@ -5,6 +5,7 @@ import "./PlayerBar.css";
 
 interface Props {
   track: Music | null;
+  autoPlay?: boolean;
 }
 
 function formatTime(s: number): string {
@@ -19,9 +20,9 @@ function calcRatio(e: MouseEvent | React.MouseEvent, el: HTMLElement): number {
   return Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
 }
 
-export default function PlayerBar({ track }: Props) {
+export default function PlayerBar({ track, autoPlay = false }: Props) {
   const { isPlaying, currentTime, duration, volume, isMuted, togglePlay, seek, changeVolume, toggleMute } =
-    useAudioPlayer(track);
+    useAudioPlayer(track, autoPlay);
   const [imgError, setImgError] = useState(false);
 
   const progressRef = useRef<HTMLDivElement>(null);
