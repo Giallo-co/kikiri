@@ -13,6 +13,8 @@ app.use(express.json())
 
 const clients = new Set<express.Response>()
 
+let lastTrack: object | null = null
+
 const readNodes = () => {
   const raw = fs.readFileSync(NODES_FILE, 'utf-8')
   return JSON.stringify(JSON.parse(raw))
@@ -20,6 +22,11 @@ const readNodes = () => {
 
 const broadcast = (line: string) => {
   clients.forEach(res => res.write(`data: ${line}\n\n`))
+}
+
+const broadcastTrack = (track: object) => {
+  const payload = JSON.stringify({ __type: 'track', track })
+  clients.forEach(res => res.write(`data: ${payload}\n\n`))
 }
 
 let lastContent = ''
@@ -53,6 +60,11 @@ app.get('/api/nodes/stream', (req, res) => {
     res.write(`data: ${line}\n\n`)
   } catch {}
 
+  if (lastTrack) {
+    const payload = JSON.stringify({ __type: 'track', track: lastTrack })
+    res.write(`data: ${payload}\n\n`)
+  }
+
   clients.add(res)
 
   req.on('close', () => {
@@ -60,11 +72,24 @@ app.get('/api/nodes/stream', (req, res) => {
   })
 })
 
+app.get('/api/current-track', (_req, res) => {
+  if (lastTrack) {
+    res.json(lastTrack)
+  } else {
+    res.status(204).end()
+  }
+})
+
 app.post('/api/node-selected', (req, res) => {
   const { id, name, content } = req.body
   console.log(`[Backend] Node Selected: ${name} (ID: ${id})`)
   console.log(`[Backend] Content:`, content)
-  // Aquí puedes procesar el content como necesites
+
+  if (content && content.music_id) {
+    lastTrack = content
+    broadcastTrack(content)
+  }
+
   res.sendStatus(200)
 })
 

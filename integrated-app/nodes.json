@@ -306,7 +306,7 @@
         "node_id": "18",
         "node_name": "Ki",
         "node_type": "Music",
-        "node_content": "{\"music_id\": \"18\", \"music_name\": \"Ki\", \"music_description\": \"\\u201cKi,\\u201d like \\u201cKey,\\u201d on the previous album is an introduction to the album. But this time it\\u2019s not quiet, somber and welcoming, but dark and foreboding.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.png\", \"music_url\": \"http://localhost:9000/music/volume-beta/ki.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
+        "node_content": "{\"music_id\": \"18\", \"music_name\": \"Ki\", \"music_description\": \"\\u201cKi,\\u201d like \\u201cKey,\\u201d on the previous album is an introduction to the album. But this time it\\u2019s not quiet, somber and welcoming, but dark and foreboding.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.jpg\", \"music_url\": \"http://localhost:9000/music/volume-beta/ki.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
         "node_tag_links": [],
         "node_author_links": [
             "1"
@@ -320,7 +320,7 @@
         "node_id": "19",
         "node_name": "Alpha",
         "node_type": "Music",
-        "node_content": "{\"music_id\": \"19\", \"music_name\": \"Alpha\", \"music_description\": \"\\u201cAlpha\\u201d is a medley of past songs. It acts as the score that plays when you \\u201cbeat\\u201d Minecraft, but it also acts as a celebration of past music from Volume Alpha.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.png\", \"music_url\": \"http://localhost:9000/music/volume-beta/alpha.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
+        "node_content": "{\"music_id\": \"19\", \"music_name\": \"Alpha\", \"music_description\": \"\\u201cAlpha\\u201d is a medley of past songs. It acts as the score that plays when you \\u201cbeat\\u201d Minecraft, but it also acts as a celebration of past music from Volume Alpha.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.jpg\", \"music_url\": \"http://localhost:9000/music/volume-beta/alpha.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
         "node_tag_links": [],
         "node_author_links": [
             "1"
@@ -335,7 +335,7 @@
         "node_id": "20",
         "node_name": "Blind Spots",
         "node_type": "Music",
-        "node_content": "{\"music_id\": \"20\", \"music_name\": \"Blind Spots\", \"music_description\": \"\\u201cBlind Spots\\u201d is the first song I wrote with the clear intention of having a unique soundtrack for Minecraft\\u2019s \\u201ccreative mode\\u201d. I tried to create a piece that doesn\\u2019t particularly change much, but keeps reiterating on itself, like a constant remixing of its core theme. As the piece ends, it becomes very melancholic and solemn, but quickly returns to being positive. Things end, but that\\u2019s not bad.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.png\", \"music_url\": \"http://localhost:9000/music/volume-beta/blind-spots.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
+        "node_content": "{\"music_id\": \"20\", \"music_name\": \"Blind Spots\", \"music_description\": \"\\u201cBlind Spots\\u201d is the first song I wrote with the clear intention of having a unique soundtrack for Minecraft\\u2019s \\u201ccreative mode\\u201d. I tried to create a piece that doesn\\u2019t particularly change much, but keeps reiterating on itself, like a constant remixing of its core theme. As the piece ends, it becomes very melancholic and solemn, but quickly returns to being positive. Things end, but that\\u2019s not bad.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.jpg\", \"music_url\": \"http://localhost:9000/music/volume-beta/blind-spots.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
         "node_tag_links": [],
         "node_author_links": [
             "1"
@@ -350,7 +350,7 @@
         "node_id": "21",
         "node_name": "Moog City 2",
         "node_type": "Music",
-        "node_content": "{\"music_id\": \"21\", \"music_name\": \"Moog City 2\", \"music_description\": \"\\u201cMoog City 2\\u201d is a recreation of \\u201cMoog City\\u201d from Minecraft Alpha. However this time I actually did use Moog synthesisers, along a lot of other synths that I acquired over the course of making this album.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.png\", \"music_url\": \"http://localhost:9000/music/volume-beta/moog-city-2.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
+        "node_content": "{\"music_id\": \"21\", \"music_name\": \"Moog City 2\", \"music_description\": \"\\u201cMoog City 2\\u201d is a recreation of \\u201cMoog City\\u201d from Minecraft Alpha. However this time I actually did use Moog synthesisers, along a lot of other synths that I acquired over the course of making this album.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.jpg\", \"music_url\": \"http://localhost:9000/music/volume-beta/moog-city-2.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
         "node_tag_links": [],
         "node_author_links": [
             "1"
@@ -365,7 +365,7 @@
         "node_id": "22",
         "node_name": "Biome Fest",
         "node_type": "Music",
-        "node_content": "{\"music_id\": \"22\", \"music_name\": \"Biome Fest\", \"music_description\": \"\\u201cBiome Fest\\u201d is a song that I created when Minecraft Alpha was done, but I felt it had no place anywhere in the game, until the creative mode was sort of reintroduced to the game. It\\u2019s one of my favourite songs I\\u2019ve ever created. I do love minimalism and achieving tones with just very few notes, and I think this song does that extremely well.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.png\", \"music_url\": \"http://localhost:9000/music/volume-beta/biome-fest.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
+        "node_content": "{\"music_id\": \"22\", \"music_name\": \"Biome Fest\", \"music_description\": \"\\u201cBiome Fest\\u201d is a song that I created when Minecraft Alpha was done, but I felt it had no place anywhere in the game, until the creative mode was sort of reintroduced to the game. It\\u2019s one of my favourite songs I\\u2019ve ever created. I do love minimalism and achieving tones with just very few notes, and I think this song does that extremely well.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.jpg\", \"music_url\": \"http://localhost:9000/music/volume-beta/biome-fest.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
         "node_tag_links": [],
         "node_author_links": [
             "1"
@@ -380,7 +380,7 @@
         "node_id": "23",
         "node_name": "Haunt Muskie",
         "node_type": "Music",
-        "node_content": "{\"music_id\": \"23\", \"music_name\": \"Haunt Muskie\", \"music_description\": \"\\u201cHaunt Muskie\\u201d, if I remember correctly, an anagram for Hatsune Miku. Not entirely sure why anymore, but there you go. This song is very nostalgic for me, and I didn\\u2019t expect anyone to like it but just me. It turns out it is a little bit popular though. There was this fairly old video game I used to like. Some game where you solve puzzles of broken rollercoasters you have to fix. The music wasn\\u2019t particularly good, but the emotion it carried was something I always remembered. \\u201cHaunt Muskie\\u201d is what I remember that music to be.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.png\", \"music_url\": \"http://localhost:9000/music/volume-beta/haunt-muskie.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
+        "node_content": "{\"music_id\": \"23\", \"music_name\": \"Haunt Muskie\", \"music_description\": \"\\u201cHaunt Muskie\\u201d, if I remember correctly, an anagram for Hatsune Miku. Not entirely sure why anymore, but there you go. This song is very nostalgic for me, and I didn\\u2019t expect anyone to like it but just me. It turns out it is a little bit popular though. There was this fairly old video game I used to like. Some game where you solve puzzles of broken rollercoasters you have to fix. The music wasn\\u2019t particularly good, but the emotion it carried was something I always remembered. \\u201cHaunt Muskie\\u201d is what I remember that music to be.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.jpg\", \"music_url\": \"http://localhost:9000/music/volume-beta/haunt-muskie.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
         "node_tag_links": [],
         "node_author_links": [
             "1"
@@ -395,7 +395,7 @@
         "node_id": "24",
         "node_name": "Warmth",
         "node_type": "Music",
-        "node_content": "{\"music_id\": \"24\", \"music_name\": \"Warmth\", \"music_description\": \"\\u201cWarmth\\u201d plays in the game\\u2019s hell. Or as it is called in Minecraft,  \\u201cNether\\u201d. This song tries to play with the idea that even hell isn\\u2019t all bad, and there\\u2019s good things to be found. But it\\u2019s still a very harsh environment.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.png\", \"music_url\": \"http://localhost:9000/music/volume-beta/warmth.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
+        "node_content": "{\"music_id\": \"24\", \"music_name\": \"Warmth\", \"music_description\": \"\\u201cWarmth\\u201d plays in the game\\u2019s hell. Or as it is called in Minecraft,  \\u201cNether\\u201d. This song tries to play with the idea that even hell isn\\u2019t all bad, and there\\u2019s good things to be found. But it\\u2019s still a very harsh environment.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.jpg\", \"music_url\": \"http://localhost:9000/music/volume-beta/warmth.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
         "node_tag_links": [],
         "node_author_links": [
             "1"
@@ -410,7 +410,7 @@
         "node_id": "25",
         "node_name": "Aria Math",
         "node_type": "Music",
-        "node_content": "{\"music_id\": \"25\", \"music_name\": \"Aria Math\", \"music_description\": \"\\u201cAria Math\\u201d is a song full of Pan Drums and old synthesisers rhythmically dancing to ping pong delays. It\\u2019s also one of the creative mode songs. I wrote it with the beauty of the more extreme creations in Minecraft. Gigantic statues, entire cities, paintings, people, all recreated in this game. It\\u2019s awe inspiring, and that\\u2019s what I wanted to kind of symbolise. Not sure if I succeeded?\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.png\", \"music_url\": \"http://localhost:9000/music/volume-beta/aria-math.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
+        "node_content": "{\"music_id\": \"25\", \"music_name\": \"Aria Math\", \"music_description\": \"\\u201cAria Math\\u201d is a song full of Pan Drums and old synthesisers rhythmically dancing to ping pong delays. It\\u2019s also one of the creative mode songs. I wrote it with the beauty of the more extreme creations in Minecraft. Gigantic statues, entire cities, paintings, people, all recreated in this game. It\\u2019s awe inspiring, and that\\u2019s what I wanted to kind of symbolise. Not sure if I succeeded?\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.jpg\", \"music_url\": \"http://localhost:9000/music/volume-beta/aria-math.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
         "node_tag_links": [],
         "node_author_links": [
             "1"
@@ -425,7 +425,7 @@
         "node_id": "26",
         "node_name": "Taswell",
         "node_type": "Music",
-        "node_content": "{\"music_id\": \"26\", \"music_name\": \"Taswell\", \"music_description\": \"\\u201cTaswell\\u201d is a farewell to a friend I only met for a little bit, but they passed away faster than anyone could have imagined. It was shocking, but I didn\\u2019t want to remember them for their death, but the happiness they showed every day of their life.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.png\", \"music_url\": \"http://localhost:9000/music/volume-beta/taswell.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
+        "node_content": "{\"music_id\": \"26\", \"music_name\": \"Taswell\", \"music_description\": \"\\u201cTaswell\\u201d is a farewell to a friend I only met for a little bit, but they passed away faster than anyone could have imagined. It was shocking, but I didn\\u2019t want to remember them for their death, but the happiness they showed every day of their life.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.jpg\", \"music_url\": \"http://localhost:9000/music/volume-beta/taswell.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
         "node_tag_links": [],
         "node_author_links": [
             "1"
@@ -440,7 +440,7 @@
         "node_id": "27",
         "node_name": "Beginning 2",
         "node_type": "Music",
-        "node_content": "{\"music_id\": \"27\", \"music_name\": \"Beginning 2\", \"music_description\": \"\\u201cBeginning 2\\u201d is just like \\u201cBeginning\\u201d on Alpha, perhaps the end to the album, or just the beginning. This album is now in the progress of changing tone rapidly, but not before going to \\u201cThe End.\\u201d\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.png\", \"music_url\": \"http://localhost:9000/music/volume-beta/beginning-2.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
+        "node_content": "{\"music_id\": \"27\", \"music_name\": \"Beginning 2\", \"music_description\": \"\\u201cBeginning 2\\u201d is just like \\u201cBeginning\\u201d on Alpha, perhaps the end to the album, or just the beginning. This album is now in the progress of changing tone rapidly, but not before going to \\u201cThe End.\\u201d\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.jpg\", \"music_url\": \"http://localhost:9000/music/volume-beta/beginning-2.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
         "node_tag_links": [],
         "node_author_links": [
             "1"
@@ -455,7 +455,7 @@
         "node_id": "28",
         "node_name": "Dreiton",
         "node_type": "Music",
-        "node_content": "{\"music_id\": \"28\", \"music_name\": \"Dreiton\", \"music_description\": \"\\u201cDreiton\\u201d is a remembrance of the times when I wrote albums like Zweitonegoismus. When I was still scared to embrace minimalism and simplicity in music. When I was still keen on making my music as crazy and varied as possible. Turns out there was no reason to have such a fear. And with \\u201cDreiton\\u201d, the are essentially only two sections on a song that clocks in at over 8 minutes. I hope I accomplished to have repetition that nonetheless isn\\u2019t boring in any way. Like all the other \\u201ccreative mode\\u201d songs, this one is also about the awe of the creativity to be found in Minecraft. At minute 7, the song abruptly builds up to nothing and fades away. Sometimes creativity doesn\\u2019t need to have a reason. Sometimes you just build.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.png\", \"music_url\": \"http://localhost:9000/music/volume-beta/dreiton.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
+        "node_content": "{\"music_id\": \"28\", \"music_name\": \"Dreiton\", \"music_description\": \"\\u201cDreiton\\u201d is a remembrance of the times when I wrote albums like Zweitonegoismus. When I was still scared to embrace minimalism and simplicity in music. When I was still keen on making my music as crazy and varied as possible. Turns out there was no reason to have such a fear. And with \\u201cDreiton\\u201d, the are essentially only two sections on a song that clocks in at over 8 minutes. I hope I accomplished to have repetition that nonetheless isn\\u2019t boring in any way. Like all the other \\u201ccreative mode\\u201d songs, this one is also about the awe of the creativity to be found in Minecraft. At minute 7, the song abruptly builds up to nothing and fades away. Sometimes creativity doesn\\u2019t need to have a reason. Sometimes you just build.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.jpg\", \"music_url\": \"http://localhost:9000/music/volume-beta/dreiton.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
         "node_tag_links": [],
         "node_author_links": [
             "1"
@@ -470,7 +470,7 @@
         "node_id": "29",
         "node_name": "The End",
         "node_type": "Music",
-        "node_content": "{\"music_id\": \"29\", \"music_name\": \"The End\", \"music_description\": \"\\u201cThe End\\u201d is a 15 minute piece for the namesake in Minecraft, a place called \\u201cThe End\\u201d, a dark and sinister place full of creepy things called Endermen. Oh, and there\\u2019s a dragon. Since The End is also the final stage the player has to go to to \\u201cbeat\\u201d the game, this piece contains a lot of references to past songs. If you listen closely, you can essentially hear most of Volume Alpha embedded within. After building up the drone, the song breaks, as if some sort of audio device couldn\\u2019t handle it anymore. Lastly you hear someone fixing it, and it starts from the beginning. At least in the game. On the album we then go to\\u2026\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.png\", \"music_url\": \"http://localhost:9000/music/volume-beta/the-end.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
+        "node_content": "{\"music_id\": \"29\", \"music_name\": \"The End\", \"music_description\": \"\\u201cThe End\\u201d is a 15 minute piece for the namesake in Minecraft, a place called \\u201cThe End\\u201d, a dark and sinister place full of creepy things called Endermen. Oh, and there\\u2019s a dragon. Since The End is also the final stage the player has to go to to \\u201cbeat\\u201d the game, this piece contains a lot of references to past songs. If you listen closely, you can essentially hear most of Volume Alpha embedded within. After building up the drone, the song breaks, as if some sort of audio device couldn\\u2019t handle it anymore. Lastly you hear someone fixing it, and it starts from the beginning. At least in the game. On the album we then go to\\u2026\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.jpg\", \"music_url\": \"http://localhost:9000/music/volume-beta/the-end.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
         "node_tag_links": [],
         "node_author_links": [
             "1"
@@ -485,7 +485,7 @@
         "node_id": "30",
         "node_name": "Chirp",
         "node_type": "Music",
-        "node_content": "{\"music_id\": \"30\", \"music_name\": \"Chirp\", \"music_description\": \"\\u201cChirp\\u201d, which is where we switch to the records you can find in Minecraft as collectibles. Until we get to\\u2026\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.png\", \"music_url\": \"http://localhost:9000/music/volume-beta/chirp.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
+        "node_content": "{\"music_id\": \"30\", \"music_name\": \"Chirp\", \"music_description\": \"\\u201cChirp\\u201d, which is where we switch to the records you can find in Minecraft as collectibles. Until we get to\\u2026\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.jpg\", \"music_url\": \"http://localhost:9000/music/volume-beta/chirp.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
         "node_tag_links": [],
         "node_author_links": [
             "1"
@@ -500,7 +500,7 @@
         "node_id": "31",
         "node_name": "Intro",
         "node_type": "Music",
-        "node_content": "{\"music_id\": \"31\", \"music_name\": \"Intro\", \"music_description\": \"\\u201cIntro,\\u201d an improv piece to say goodbye. Or hello?\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.png\", \"music_url\": \"http://localhost:9000/music/volume-beta/intro.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
+        "node_content": "{\"music_id\": \"31\", \"music_name\": \"Intro\", \"music_description\": \"\\u201cIntro,\\u201d an improv piece to say goodbye. Or hello?\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.jpg\", \"music_url\": \"http://localhost:9000/music/volume-beta/intro.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
         "node_tag_links": [],
         "node_author_links": [
             "1"
@@ -514,7 +514,7 @@
         "node_id": "32",
         "node_name": "Dead Voxel",
         "node_type": "Music",
-        "node_content": "{\"music_id\": \"32\", \"music_name\": \"Dead Voxel\", \"music_description\": \"“Dead Voxel” is a song from Minecraft Volume Beta.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.png\", \"music_url\": \"http://localhost:9000/music/volume-beta/dead-voxel.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
+        "node_content": "{\"music_id\": \"32\", \"music_name\": \"Dead Voxel\", \"music_description\": \"“Dead Voxel” is a song from Minecraft Volume Beta.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.jpg\", \"music_url\": \"http://localhost:9000/music/volume-beta/dead-voxel.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
         "node_tag_links": [],
         "node_author_links": [
             "1"
@@ -529,7 +529,7 @@
         "node_id": "33",
         "node_name": "Flake",
         "node_type": "Music",
-        "node_content": "{\"music_id\": \"33\", \"music_name\": \"Flake\", \"music_description\": \"“Flake” is a song from Minecraft Volume Beta.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.png\", \"music_url\": \"http://localhost:9000/music/volume-beta/flake.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
+        "node_content": "{\"music_id\": \"33\", \"music_name\": \"Flake\", \"music_description\": \"“Flake” is a song from Minecraft Volume Beta.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.jpg\", \"music_url\": \"http://localhost:9000/music/volume-beta/flake.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
         "node_tag_links": [],
         "node_author_links": [
             "1"
@@ -544,7 +544,7 @@
         "node_id": "34",
         "node_name": "Concrete Halls",
         "node_type": "Music",
-        "node_content": "{\"music_id\": \"34\", \"music_name\": \"Concrete Halls\", \"music_description\": \"“Concrete Halls” is a song from Minecraft Volume Beta.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.png\", \"music_url\": \"http://localhost:9000/music/volume-beta/concrete-halls.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
+        "node_content": "{\"music_id\": \"34\", \"music_name\": \"Concrete Halls\", \"music_description\": \"“Concrete Halls” is a song from Minecraft Volume Beta.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.jpg\", \"music_url\": \"http://localhost:9000/music/volume-beta/concrete-halls.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
         "node_tag_links": [],
         "node_author_links": [
             "1"
@@ -559,7 +559,7 @@
         "node_id": "35",
         "node_name": "Mutation",
         "node_type": "Music",
-        "node_content": "{\"music_id\": \"35\", \"music_name\": \"Mutation\", \"music_description\": \"“Mutation” is a song from Minecraft Volume Beta.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.png\", \"music_url\": \"http://localhost:9000/music/volume-beta/mutation.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
+        "node_content": "{\"music_id\": \"35\", \"music_name\": \"Mutation\", \"music_description\": \"“Mutation” is a song from Minecraft Volume Beta.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.jpg\", \"music_url\": \"http://localhost:9000/music/volume-beta/mutation.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
         "node_tag_links": [],
         "node_author_links": [
             "1"
@@ -574,7 +574,7 @@
         "node_id": "36",
         "node_name": "Floating Trees",
         "node_type": "Music",
-        "node_content": "{\"music_id\": \"36\", \"music_name\": \"Floating Trees\", \"music_description\": \"“Floating Trees” is a song from Minecraft Volume Beta.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.png\", \"music_url\": \"http://localhost:9000/music/volume-beta/floating-trees.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
+        "node_content": "{\"music_id\": \"36\", \"music_name\": \"Floating Trees\", \"music_description\": \"“Floating Trees” is a song from Minecraft Volume Beta.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.jpg\", \"music_url\": \"http://localhost:9000/music/volume-beta/floating-trees.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
         "node_tag_links": [],
         "node_author_links": [
             "1"
@@ -589,7 +589,7 @@
         "node_id": "37",
         "node_name": "Kyoto",
         "node_type": "Music",
-        "node_content": "{\"music_id\": \"37\", \"music_name\": \"Kyoto\", \"music_description\": \"“Kyoto” is a song from Minecraft Volume Beta.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.png\", \"music_url\": \"http://localhost:9000/music/volume-beta/kyoto.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
+        "node_content": "{\"music_id\": \"37\", \"music_name\": \"Kyoto\", \"music_description\": \"“Kyoto” is a song from Minecraft Volume Beta.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.jpg\", \"music_url\": \"http://localhost:9000/music/volume-beta/kyoto.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
         "node_tag_links": [],
         "node_author_links": [
             "1"
@@ -604,7 +604,7 @@
         "node_id": "38",
         "node_name": "Ballad of the Cats",
         "node_type": "Music",
-        "node_content": "{\"music_id\": \"38\", \"music_name\": \"Ballad of the Cats\", \"music_description\": \"“Ballad of the Cats” is a song from Minecraft Volume Beta.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.png\", \"music_url\": \"http://localhost:9000/music/volume-beta/ballad-of-the-cats.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
+        "node_content": "{\"music_id\": \"38\", \"music_name\": \"Ballad of the Cats\", \"music_description\": \"“Ballad of the Cats” is a song from Minecraft Volume Beta.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.jpg\", \"music_url\": \"http://localhost:9000/music/volume-beta/ballad-of-the-cats.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
         "node_tag_links": [],
         "node_author_links": [
             "1"
@@ -619,7 +619,7 @@
         "node_id": "39",
         "node_name": "Wait",
         "node_type": "Music",
-        "node_content": "{\"music_id\": \"39\", \"music_name\": \"Wait\", \"music_description\": \"“Wait” is a song from Minecraft Volume Beta.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.png\", \"music_url\": \"http://localhost:9000/music/volume-beta/wait.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
+        "node_content": "{\"music_id\": \"39\", \"music_name\": \"Wait\", \"music_description\": \"“Wait” is a song from Minecraft Volume Beta.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.jpg\", \"music_url\": \"http://localhost:9000/music/volume-beta/wait.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
         "node_tag_links": [],
         "node_author_links": [
             "1"
@@ -634,7 +634,7 @@
         "node_id": "40",
         "node_name": "Mellohi",
         "node_type": "Music",
-        "node_content": "{\"music_id\": \"40\", \"music_name\": \"Mellohi\", \"music_description\": \"“Mellohi” is a song from Minecraft Volume Beta.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.png\", \"music_url\": \"http://localhost:9000/music/volume-beta/mellohi.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
+        "node_content": "{\"music_id\": \"40\", \"music_name\": \"Mellohi\", \"music_description\": \"“Mellohi” is a song from Minecraft Volume Beta.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.jpg\", \"music_url\": \"http://localhost:9000/music/volume-beta/mellohi.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
         "node_tag_links": [],
         "node_author_links": [
             "1"
@@ -649,7 +649,7 @@
         "node_id": "41",
         "node_name": "Stal",
         "node_type": "Music",
-        "node_content": "{\"music_id\": \"41\", \"music_name\": \"Stal\", \"music_description\": \"“Stal” is a song from Minecraft Volume Beta.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.png\", \"music_url\": \"http://localhost:9000/music/volume-beta/stal.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
+        "node_content": "{\"music_id\": \"41\", \"music_name\": \"Stal\", \"music_description\": \"“Stal” is a song from Minecraft Volume Beta.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.jpg\", \"music_url\": \"http://localhost:9000/music/volume-beta/stal.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
         "node_tag_links": [],
         "node_author_links": [
             "1"
@@ -664,7 +664,7 @@
         "node_id": "42",
         "node_name": "Strad",
         "node_type": "Music",
-        "node_content": "{\"music_id\": \"42\", \"music_name\": \"Strad\", \"music_description\": \"“Strad” is a song from Minecraft Volume Beta.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.png\", \"music_url\": \"http://localhost:9000/music/volume-beta/strad.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
+        "node_content": "{\"music_id\": \"42\", \"music_name\": \"Strad\", \"music_description\": \"“Strad” is a song from Minecraft Volume Beta.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.jpg\", \"music_url\": \"http://localhost:9000/music/volume-beta/strad.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
         "node_tag_links": [],
         "node_author_links": [
             "1"
@@ -679,7 +679,7 @@
         "node_id": "43",
         "node_name": "Eleven",
         "node_type": "Music",
-        "node_content": "{\"music_id\": \"43\", \"music_name\": \"Eleven\", \"music_description\": \"“Eleven” is a song from Minecraft Volume Beta.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.png\", \"music_url\": \"http://localhost:9000/music/volume-beta/eleven.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
+        "node_content": "{\"music_id\": \"43\", \"music_name\": \"Eleven\", \"music_description\": \"“Eleven” is a song from Minecraft Volume Beta.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.jpg\", \"music_url\": \"http://localhost:9000/music/volume-beta/eleven.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
         "node_tag_links": [],
         "node_author_links": [
             "1"
@@ -694,7 +694,7 @@
         "node_id": "44",
         "node_name": "Ward",
         "node_type": "Music",
-        "node_content": "{\"music_id\": \"44\", \"music_name\": \"Ward\", \"music_description\": \"“Ward” is a song from Minecraft Volume Beta.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.png\", \"music_url\": \"http://localhost:9000/music/volume-beta/ward.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
+        "node_content": "{\"music_id\": \"44\", \"music_name\": \"Ward\", \"music_description\": \"“Ward” is a song from Minecraft Volume Beta.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.jpg\", \"music_url\": \"http://localhost:9000/music/volume-beta/ward.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
         "node_tag_links": [],
         "node_author_links": [
             "1"
@@ -709,7 +709,7 @@
         "node_id": "45",
         "node_name": "Mall",
         "node_type": "Music",
-        "node_content": "{\"music_id\": \"45\", \"music_name\": \"Mall\", \"music_description\": \"“Mall” is a song from Minecraft Volume Beta.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.png\", \"music_url\": \"http://localhost:9000/music/volume-beta/mall.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
+        "node_content": "{\"music_id\": \"45\", \"music_name\": \"Mall\", \"music_description\": \"“Mall” is a song from Minecraft Volume Beta.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.jpg\", \"music_url\": \"http://localhost:9000/music/volume-beta/mall.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
         "node_tag_links": [],
         "node_author_links": [
             "1"
@@ -724,7 +724,7 @@
         "node_id": "46",
         "node_name": "Blocks",
         "node_type": "Music",
-        "node_content": "{\"music_id\": \"46\", \"music_name\": \"Blocks\", \"music_description\": \"“Blocks” is a song from Minecraft Volume Beta.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.png\", \"music_url\": \"http://localhost:9000/music/volume-beta/blocks.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
+        "node_content": "{\"music_id\": \"46\", \"music_name\": \"Blocks\", \"music_description\": \"“Blocks” is a song from Minecraft Volume Beta.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.jpg\", \"music_url\": \"http://localhost:9000/music/volume-beta/blocks.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
         "node_tag_links": [],
         "node_author_links": [
             "1"
@@ -739,7 +739,7 @@
         "node_id": "47",
         "node_name": "Far",
         "node_type": "Music",
-        "node_content": "{\"music_id\": \"47\", \"music_name\": \"Far\", \"music_description\": \"“Far” is a song from Minecraft Volume Beta.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.png\", \"music_url\": \"http://localhost:9000/music/volume-beta/far.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
+        "node_content": "{\"music_id\": \"47\", \"music_name\": \"Far\", \"music_description\": \"“Far” is a song from Minecraft Volume Beta.\", \"music_author\": \"C418\", \"music_cover_url\": \"http://localhost:9000/music-cover/volume-beta.jpg\", \"music_url\": \"http://localhost:9000/music/volume-beta/far.mp3\", \"music_album\": \"Volume Beta\", \"likes\": 0, \"views\": 0, \"shares\": 0, \"comments\": 0}",
         "node_tag_links": [],
         "node_author_links": [
             "1"

@@ -1,11 +1,13 @@
 import { useEffect, useRef } from 'react'
 import * as d3 from 'd3'
 import type { NodeDatum, LinkDatum, GraphConfig } from '../types/graph'
+import type { Music } from '../types/music'
 
 interface Props {
   nodes: NodeDatum[]
   links: LinkDatum[]
   config: GraphConfig
+  onTrackChange: (track: Music) => void
 }
 
 const BASE_COLOR = '#2a2a2a'
@@ -13,7 +15,7 @@ const SELECTED_COLOR = '#ab90df'
 const LINK_BASE = '#b0aca6'
 const LINK_SELECTED = '#ab90df'
 
-export default function GraphView({ nodes, links, config }: Props) {
+export default function GraphView({ nodes, links, config, onTrackChange }: Props) {
   const svgRef = useRef<SVGSVGElement>(null)
   const simulationRef = useRef<d3.Simulation<NodeDatum, undefined> | null>(null)
   const gRef = useRef<d3.Selection<SVGGElement, unknown, null, undefined> | null>(null)
@@ -21,10 +23,13 @@ export default function GraphView({ nodes, links, config }: Props) {
   const labelSelectionRef = useRef<d3.Selection<SVGTextElement, NodeDatum, SVGGElement, unknown> | null>(null)
   const linkSelectionRef = useRef<d3.Selection<SVGLineElement, any, SVGGElement, unknown> | null>(null)
   const selectedRef = useRef<string | null>(null)
-
+  const onTrackChangeRef = useRef(onTrackChange)
   const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null)
 
-  // Initialize SVG and Simulation
+  useEffect(() => {
+    onTrackChangeRef.current = onTrackChange
+  }, [onTrackChange])
+
   useEffect(() => {
     const svgEl = svgRef.current
     if (!svgEl) return
@@ -42,7 +47,7 @@ export default function GraphView({ nodes, links, config }: Props) {
     const zoom = d3.zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.1, 8])
       .on('zoom', (event) => g.attr('transform', event.transform))
-    
+
     zoomRef.current = zoom
     svg.call(zoom)
 
@@ -59,13 +64,11 @@ export default function GraphView({ nodes, links, config }: Props) {
           .attr('x2', d => (d.target as any).x ?? 0)
           .attr('y2', d => (d.target as any).y ?? 0)
       }
-
       if (nodeSelectionRef.current) {
         nodeSelectionRef.current
           .attr('cx', d => d.x ?? 0)
           .attr('cy', d => d.y ?? 0)
       }
-
       if (labelSelectionRef.current) {
         labelSelectionRef.current
           .attr('x', d => d.x ?? 0)
@@ -75,32 +78,23 @@ export default function GraphView({ nodes, links, config }: Props) {
 
     simulationRef.current = simulation
 
-    return () => {
-      simulation.stop()
-    }
+    return () => { simulation.stop() }
   }, [])
 
-  // Update Data and Configuration
   useEffect(() => {
     const simulation = simulationRef.current
     const g = gRef.current
     if (!simulation || !g || !nodes.length) return
 
-    // 1. Update Simulation Forces with Config
     const linkForce = simulation.force<d3.ForceLink<NodeDatum, any>>('link')
-    if (linkForce) {
-      linkForce.strength(config.linkForce).distance(config.linkDistance)
-    }
-    const chargeForce = simulation.force<d3.ForceManyBody<NodeDatum>>('charge')
-    if (chargeForce) {
-      chargeForce.strength(config.repelForce * config.repelForcePercentage)
-    }
-    const centerForce = simulation.force<d3.ForceCenter<NodeDatum>>('center')
-    if (centerForce) {
-      centerForce.strength(config.centerForce)
-    }
+    if (linkForce) linkForce.strength(config.linkForce).distance(config.linkDistance)
 
-    // 2. Process Nodes (Preserve existing positions)
+    const chargeForce = simulation.force<d3.ForceManyBody<NodeDatum>>('charge')
+    if (chargeForce) chargeForce.strength(config.repelForce * config.repelForcePercentage)
+
+    const centerForce = simulation.force<d3.ForceCenter<NodeDatum>>('center')
+    if (centerForce) centerForce.strength(config.centerForce)
+
     const oldNodes = simulation.nodes()
     const nodeMap = new Map(oldNodes.map(n => [n.id, n]))
     const newNodes = nodes.map(n => {
@@ -108,25 +102,16 @@ export default function GraphView({ nodes, links, config }: Props) {
       return old ? { ...old, ...n } : { ...n }
     })
 
-    // 3. Process Links
     const newLinks = links.map(l => ({ ...l }))
 
-    // 4. Update Selections
-    if (!g.select('.links-group').size()) {
-      g.append('g').attr('class', 'links-group')
-    }
-    if (!g.select('.nodes-group').size()) {
-      g.append('g').attr('class', 'nodes-group')
-    }
-    if (!g.select('.labels-group').size()) {
-      g.append('g').attr('class', 'labels-group')
-    }
+    if (!g.select('.links-group').size()) g.append('g').attr('class', 'links-group')
+    if (!g.select('.nodes-group').size()) g.append('g').attr('class', 'nodes-group')
+    if (!g.select('.labels-group').size()) g.append('g').attr('class', 'labels-group')
 
     const linkGroup = g.select<SVGGElement>('.links-group')
     const nodeGroup = g.select<SVGGElement>('.nodes-group')
     const labelGroup = g.select<SVGGElement>('.labels-group')
 
-    // Toggle label group visibility
     labelGroup.style('display', config.showLabels ? 'inline' : 'none')
 
     linkSelectionRef.current = linkGroup
@@ -160,13 +145,12 @@ export default function GraphView({ nodes, links, config }: Props) {
       }
 
       if (nodeSelectionRef.current) {
-        nodeSelectionRef.current.attr('fill', (n) => {
-          if (selId === null || nodeSet.has(n.id)) {
-            return n.color || (selId === null ? BASE_COLOR : SELECTED_COLOR)
-          }
-          return BASE_COLOR
-        })
-        .attr('opacity', (n) => (selId === null || nodeSet.has(n.id)) ? 1 : 0.3)
+        nodeSelectionRef.current
+          .attr('fill', (n) => {
+            if (selId === null || nodeSet.has(n.id)) return n.color || (selId === null ? BASE_COLOR : SELECTED_COLOR)
+            return BASE_COLOR
+          })
+          .attr('opacity', (n) => (selId === null || nodeSet.has(n.id)) ? 1 : 0.3)
       }
 
       if (labelSelectionRef.current) {
@@ -179,8 +163,7 @@ export default function GraphView({ nodes, links, config }: Props) {
           .attr('stroke', (l: any) => {
             const srcId = typeof l.source === 'object' ? l.source.id : l.source
             const tgtId = typeof l.target === 'object' ? l.target.id : l.target
-            const isRelated = selId !== null && (srcId === selId || tgtId === selId)
-            return isRelated ? LINK_SELECTED : LINK_BASE
+            return selId !== null && (srcId === selId || tgtId === selId) ? LINK_SELECTED : LINK_BASE
           })
           .attr('stroke-opacity', (l: any) => {
             const srcId = typeof l.source === 'object' ? l.source.id : l.source
@@ -203,17 +186,12 @@ export default function GraphView({ nodes, links, config }: Props) {
           .call(d3.drag<SVGCircleElement, NodeDatum>()
             .on('start', (event, d) => {
               if (!event.active) simulation.alphaTarget(0.3).restart()
-              d.fx = d.x
-              d.fy = d.y
+              d.fx = d.x; d.fy = d.y
             })
-            .on('drag', (event, d) => {
-              d.fx = event.x
-              d.fy = event.y
-            })
+            .on('drag', (event, d) => { d.fx = event.x; d.fy = event.y })
             .on('end', (event, d) => {
               if (!event.active) simulation.alphaTarget(0)
-              d.fx = null
-              d.fy = null
+              d.fx = null; d.fy = null
             })
           )
           .on('click', (event, d) => {
@@ -222,31 +200,33 @@ export default function GraphView({ nodes, links, config }: Props) {
             selectedRef.current = isSelected ? null : d.id
             updateHighlight()
 
-            // Notify backend about selection
             if (selectedRef.current) {
+              let content = d.content
+              if (typeof content === 'string') {
+                try { content = JSON.parse(content) } catch {}
+              }
+
+              if (content && (content as any).music_id) {
+                onTrackChangeRef.current(content as Music)
+              }
+
               fetch('/api/node-selected', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: d.id, name: d.name, content: d.content })
+                body: JSON.stringify({ id: d.id, name: d.name, content })
               }).catch(err => console.error('Failed to notify backend:', err))
-            }
 
-            if (selectedRef.current && svgRef.current && zoomRef.current) {
-              const svg = d3.select(svgRef.current)
-              const rect = svgRef.current.getBoundingClientRect()
-              const width = rect.width
-              const height = rect.height
-              
-              // Smoothly transition to center the node
-              svg.transition()
-                .duration(750)
-                .call(
+              if (svgRef.current && zoomRef.current) {
+                const svg = d3.select(svgRef.current)
+                const rect = svgRef.current.getBoundingClientRect()
+                svg.transition().duration(750).call(
                   zoomRef.current.transform,
                   d3.zoomIdentity
-                    .translate(width / 2, height / 2)
-                    .scale(1.5) // Adjust zoom level on focus
+                    .translate(rect.width / 2, rect.height / 2)
+                    .scale(1.5)
                     .translate(-(d.x ?? 0), -(d.y ?? 0))
                 )
+              }
             }
           }),
         update => update.attr('r', config.nodeSize),
@@ -268,18 +248,15 @@ export default function GraphView({ nodes, links, config }: Props) {
         exit => exit.remove()
       )
 
-    // Background click to deselect and reset view
     d3.select(svgRef.current).on('click', () => {
       selectedRef.current = null
       updateHighlight()
       if (zoomRef.current && svgRef.current) {
-        d3.select(svgRef.current).transition()
-          .duration(750)
+        d3.select(svgRef.current).transition().duration(750)
           .call(zoomRef.current.transform, d3.zoomIdentity)
       }
     })
 
-    // Apply simulation updates
     simulation.nodes(newNodes)
     const linkF = simulation.force<d3.ForceLink<NodeDatum, any>>('link')
     if (linkF) linkF.links(newLinks)
@@ -296,4 +273,3 @@ export default function GraphView({ nodes, links, config }: Props) {
     />
   )
 }
-
