@@ -1,4 +1,4 @@
-const API = '/user';
+const API = import.meta.env.VITE_API_BASE_URL || '/user';
 
 export function parseJwtSub(token: string): number | null {
   try {
