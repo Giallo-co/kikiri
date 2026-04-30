@@ -9,10 +9,19 @@ import interactionRoutes from './routes/interactionRoutes';
 import uploadRoutes from './routes/uploadRoutes';
 import userPostRoutes from './routes/userPostRoutes';
 import profilePictureRoutes from './routes/profilePicture';
+import cors from 'cors';
 
 const app = express();
 const PORT = config.port; 
 
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'https://TU-APP.amplifyapp.com'
+  ],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
