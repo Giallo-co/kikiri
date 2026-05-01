@@ -74,8 +74,10 @@ export default function App() {
   const handleNext = () => {
     if (!currentTrack || !rawNodes.length) return
     const currentNode = rawNodes.find(rn => rn.node_id === selectedNodeId)
+    if (!currentNode) return
 
-    if (currentNode && currentNode.node_album_links?.next?.length > 0) {
+    // Priority 1: Use specific next link
+    if (currentNode.node_album_links?.next?.length > 0) {
       const nextId = currentNode.node_album_links.next[0]
       const nextNode = rawNodes.find(rn => rn.node_id === nextId)
       if (nextNode) {
@@ -85,17 +87,24 @@ export default function App() {
         }
         if (nextContent && (nextContent as any).music_id) {
           handleTrackChange(nextContent as Music, nextNode.node_id)
+          return
         }
       }
     }
-    // Strict: No fallback/wrap-around
+
+    // Priority 2: Fallback to Author node
+    if (currentNode.node_author_links?.next?.length > 0) {
+      const authorId = currentNode.node_author_links.next[0]
+      setSelectedNodeId(authorId)
+    }
   }
 
   const handlePrevious = () => {
     if (!currentTrack || !rawNodes.length) return
     const currentNode = rawNodes.find(rn => rn.node_id === selectedNodeId)
+    if (!currentNode) return
 
-    if (currentNode && currentNode.node_album_links?.previous?.length > 0) {
+    if (currentNode.node_album_links?.previous?.length > 0) {
       const prevId = currentNode.node_album_links.previous[0]
       const prevNode = rawNodes.find(rn => rn.node_id === prevId)
       if (prevNode) {
@@ -105,10 +114,16 @@ export default function App() {
         }
         if (prevContent && (prevContent as any).music_id) {
           handleTrackChange(prevContent as Music, prevNode.node_id, false)
+          return
         }
       }
     }
-    // Strict: No session history fallback here as per "strict" request
+
+    // Fallback to Author node
+    if (currentNode.node_author_links?.next?.length > 0) {
+      const authorId = currentNode.node_author_links.next[0]
+      setSelectedNodeId(authorId)
+    }
   }
 
   useEffect(() => {

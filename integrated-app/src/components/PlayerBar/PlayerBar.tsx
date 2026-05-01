@@ -32,6 +32,14 @@ export default function PlayerBar({ track, autoPlay = false, onNext, onPrevious 
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
+  const handlePreviousClick = () => {
+    if (currentTime > 3) {
+      restart();
+    } else {
+      onPrevious?.();
+    }
+  };
+
   const handleProgressMouseDown = useCallback(
     (e: React.MouseEvent) => {
       const el = progressRef.current;
@@ -98,7 +106,7 @@ export default function PlayerBar({ track, autoPlay = false, onNext, onPrevious 
               <path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.45 20 9.5V4h-5.5zm.73 9.79l1.35 1.35 2.42-2.42 1.41 1.41-3.83 3.83-1.35-1.35-2.42 2.42-1.41-1.41 3.83-3.83z" />
             </svg>
           </button>
-          <button className="ctrl-btn icon-btn" onClick={onPrevious} aria-label="Previous">
+          <button className="ctrl-btn icon-btn" onClick={handlePreviousClick} aria-label="Previous">
             <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
               <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
             </svg>
