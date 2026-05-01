@@ -6,6 +6,8 @@ import "./PlayerBar.css";
 interface Props {
   track: Music | null;
   autoPlay?: boolean;
+  onNext?: () => void;
+  onPrevious?: () => void;
 }
 
 function formatTime(s: number): string {
@@ -20,8 +22,8 @@ function calcRatio(e: MouseEvent | React.MouseEvent, el: HTMLElement): number {
   return Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
 }
 
-export default function PlayerBar({ track, autoPlay = false }: Props) {
-  const { isPlaying, currentTime, duration, volume, isMuted, togglePlay, seek, changeVolume, toggleMute } =
+export default function PlayerBar({ track, autoPlay = false, onNext, onPrevious }: Props) {
+  const { isPlaying, currentTime, duration, volume, isMuted, togglePlay, seek, changeVolume, toggleMute, restart } =
     useAudioPlayer(track, autoPlay);
   const [imgError, setImgError] = useState(false);
 
@@ -91,25 +93,35 @@ export default function PlayerBar({ track, autoPlay = false }: Props) {
 
       <div className="player-center">
         <div className="player-controls">
-          <button className="ctrl-btn" aria-label="Previous">
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M6 6h2v12H6zm3.5 6 8.5 6V6z" />
+          <button className="ctrl-btn icon-btn" aria-label="Shuffle">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+              <path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.45 20 9.5V4h-5.5zm.73 9.79l1.35 1.35 2.42-2.42 1.41 1.41-3.83 3.83-1.35-1.35-2.42 2.42-1.41-1.41 3.83-3.83z" />
+            </svg>
+          </button>
+          <button className="ctrl-btn icon-btn" onClick={onPrevious} aria-label="Previous">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+              <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
             </svg>
           </button>
           <button className="ctrl-btn play-btn" onClick={togglePlay} aria-label={isPlaying ? "Pause" : "Play"}>
             {isPlaying ? (
-              <svg viewBox="0 0 24 24" fill="currentColor">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
                 <path d="M6 19h4V5H6zm8-14v14h4V5z" />
               </svg>
             ) : (
-              <svg viewBox="0 0 24 24" fill="currentColor">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
                 <path d="M8 5v14l11-7z" />
               </svg>
             )}
           </button>
-          <button className="ctrl-btn" aria-label="Next">
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M6 18l8.5-6L6 6zm2.5-6 8.5 6V6z" />
+          <button className="ctrl-btn icon-btn" onClick={onNext} aria-label="Next">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+              <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
+            </svg>
+          </button>
+          <button className="ctrl-btn icon-btn" onClick={restart} aria-label="Repeat">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+              <path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z" />
             </svg>
           </button>
         </div>

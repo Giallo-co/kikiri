@@ -76,5 +76,15 @@ export function useAudioPlayer(track: Music | null, autoPlay = false) {
     audio.volume = next ? 0 : volumeRef.current;
   }, [isMuted]);
 
-  return { isPlaying, currentTime, duration, volume, isMuted, togglePlay, seek, changeVolume, toggleMute };
+  const restart = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.currentTime = 0;
+    setCurrentTime(0);
+    if (!isPlaying) {
+      audio.play().then(() => setIsPlaying(true)).catch(() => {});
+    }
+  }, [isPlaying]);
+
+  return { isPlaying, currentTime, duration, volume, isMuted, togglePlay, seek, changeVolume, toggleMute, restart };
 }

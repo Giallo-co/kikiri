@@ -13,10 +13,22 @@ export interface RawNode {
   node_id: string
   node_name: string
   color: string
-  node_tag_links: string[]
-  node_music_links: string[]
-  node_author_links: string[]
-  node_album_links: string[]
+  node_tag_links: {
+    next: string[]
+    previous: string[]
+  }
+  node_music_links: {
+    next: string[]
+    previous: string[]
+  }
+  node_author_links: {
+    next: string[]
+    previous: string[]
+  }
+  node_album_links: {
+    next: string[]
+    previous: string[]
+  }
   [key: string]: any
 }
 

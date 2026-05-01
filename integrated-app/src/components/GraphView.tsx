@@ -7,7 +7,9 @@ interface Props {
   nodes: NodeDatum[]
   links: LinkDatum[]
   config: GraphConfig
-  onTrackChange: (track: Music) => void
+  selectedId?: string | null
+  onNodeClick: (nodeId: string, content: any) => void
+  onDeselect?: () => void
 }
 
 const BASE_COLOR = '#2a2a2a'
@@ -15,20 +17,19 @@ const SELECTED_COLOR = '#ab90df'
 const LINK_BASE = '#b0aca6'
 const LINK_SELECTED = '#ab90df'
 
-export default function GraphView({ nodes, links, config, onTrackChange }: Props) {
+export default function GraphView({ nodes, links, config, selectedId, onNodeClick, onDeselect }: Props) {
   const svgRef = useRef<SVGSVGElement>(null)
   const simulationRef = useRef<d3.Simulation<NodeDatum, undefined> | null>(null)
   const gRef = useRef<d3.Selection<SVGGElement, unknown, null, undefined> | null>(null)
   const nodeSelectionRef = useRef<d3.Selection<SVGCircleElement, NodeDatum, SVGGElement, unknown> | null>(null)
   const labelSelectionRef = useRef<d3.Selection<SVGTextElement, NodeDatum, SVGGElement, unknown> | null>(null)
   const linkSelectionRef = useRef<d3.Selection<SVGLineElement, any, SVGGElement, unknown> | null>(null)
-  const selectedRef = useRef<string | null>(null)
-  const onTrackChangeRef = useRef(onTrackChange)
+  const onNodeClickRef = useRef(onNodeClick)
   const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null)
 
   useEffect(() => {
-    onTrackChangeRef.current = onTrackChange
-  }, [onTrackChange])
+    onNodeClickRef.current = onNodeClick
+  }, [onNodeClick])
 
   useEffect(() => {
     const svgEl = svgRef.current
@@ -127,9 +128,8 @@ export default function GraphView({ nodes, links, config, onTrackChange }: Props
       )
 
     const updateHighlight = () => {
-      const selId = selectedRef.current
+      const selId = selectedId ?? null
       const nodeSet = new Set<string>()
-      const linkSet = new Set<string>()
 
       if (selId !== null) {
         nodeSet.add(selId)
@@ -137,7 +137,6 @@ export default function GraphView({ nodes, links, config, onTrackChange }: Props
           const srcId = typeof l.source === 'object' ? l.source.id : l.source
           const tgtId = typeof l.target === 'object' ? l.target.id : l.target
           if (srcId === selId || tgtId === selId) {
-            linkSet.add(`${srcId}-${tgtId}`)
             nodeSet.add(srcId)
             nodeSet.add(tgtId)
           }
@@ -146,6 +145,7 @@ export default function GraphView({ nodes, links, config, onTrackChange }: Props
 
       if (nodeSelectionRef.current) {
         nodeSelectionRef.current
+          .transition().duration(300)
           .attr('fill', (n) => {
             if (selId === null || nodeSet.has(n.id)) return n.color || (selId === null ? BASE_COLOR : SELECTED_COLOR)
             return BASE_COLOR
@@ -155,11 +155,13 @@ export default function GraphView({ nodes, links, config, onTrackChange }: Props
 
       if (labelSelectionRef.current) {
         labelSelectionRef.current
+          .transition().duration(300)
           .attr('opacity', (n) => (selId === null || nodeSet.has(n.id)) ? 1 : 0.1)
       }
 
       if (linkSelectionRef.current) {
         linkSelectionRef.current
+          .transition().duration(300)
           .attr('stroke', (l: any) => {
             const srcId = typeof l.source === 'object' ? l.source.id : l.source
             const tgtId = typeof l.target === 'object' ? l.target.id : l.target
@@ -172,6 +174,21 @@ export default function GraphView({ nodes, links, config, onTrackChange }: Props
             if (selId === null) return 0.7
             return isRelated ? 1 : 0.1
           })
+      }
+    }
+
+    const zoomToNode = (id: string) => {
+      const node = newNodes.find(n => n.id === id)
+      if (node && svgRef.current && zoomRef.current) {
+        const svg = d3.select(svgRef.current)
+        const rect = svgRef.current.getBoundingClientRect()
+        svg.transition().duration(750).call(
+          zoomRef.current.transform,
+          d3.zoomIdentity
+            .translate(rect.width / 2, rect.height / 2)
+            .scale(1.5)
+            .translate(-(node.x ?? 0), -(node.y ?? 0))
+        )
       }
     }
 
@@ -196,38 +213,19 @@ export default function GraphView({ nodes, links, config, onTrackChange }: Props
           )
           .on('click', (event, d) => {
             event.stopPropagation()
-            const isSelected = selectedRef.current === d.id
-            selectedRef.current = isSelected ? null : d.id
-            updateHighlight()
-
-            if (selectedRef.current) {
-              let content = d.content
-              if (typeof content === 'string') {
-                try { content = JSON.parse(content) } catch {}
-              }
-
-              if (content && (content as any).music_id) {
-                onTrackChangeRef.current(content as Music)
-              }
-
-              fetch('/api/node-selected', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: d.id, name: d.name, content })
-              }).catch(err => console.error('Failed to notify backend:', err))
-
-              if (svgRef.current && zoomRef.current) {
-                const svg = d3.select(svgRef.current)
-                const rect = svgRef.current.getBoundingClientRect()
-                svg.transition().duration(750).call(
-                  zoomRef.current.transform,
-                  d3.zoomIdentity
-                    .translate(rect.width / 2, rect.height / 2)
-                    .scale(1.5)
-                    .translate(-(d.x ?? 0), -(d.y ?? 0))
-                )
-              }
+            
+            let content = d.content
+            if (typeof content === 'string') {
+              try { content = JSON.parse(content) } catch {}
             }
+
+            onNodeClickRef.current(d.id, content)
+
+            fetch('/api/node-selected', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id: d.id, name: d.name, content })
+            }).catch(err => console.error('Failed to notify backend:', err))
           }),
         update => update.attr('r', config.nodeSize),
         exit => exit.remove()
@@ -249,8 +247,7 @@ export default function GraphView({ nodes, links, config, onTrackChange }: Props
       )
 
     d3.select(svgRef.current).on('click', () => {
-      selectedRef.current = null
-      updateHighlight()
+      onDeselect?.()
       if (zoomRef.current && svgRef.current) {
         d3.select(svgRef.current).transition().duration(750)
           .call(zoomRef.current.transform, d3.zoomIdentity)
@@ -264,7 +261,11 @@ export default function GraphView({ nodes, links, config, onTrackChange }: Props
     simulation.alpha(0.3).restart()
     updateHighlight()
 
-  }, [nodes, links, config])
+    if (selectedId) {
+      setTimeout(() => zoomToNode(selectedId), 50)
+    }
+
+  }, [nodes, links, config, selectedId])
 
   return (
     <svg

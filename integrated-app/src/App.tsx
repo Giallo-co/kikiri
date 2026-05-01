@@ -26,15 +26,89 @@ interface GraphData {
 
 export default function App() {
   const [graphData, setGraphData] = useState<GraphData | null>(null)
+  const [rawNodes, setRawNodes] = useState<RawNode[]>([])
   const [connected, setConnected] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [currentTrack, setCurrentTrack] = useState<Music>(DEFAULT_TRACK)
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
   const [autoPlay, setAutoPlay] = useState(false)
+  const [history, setHistory] = useState<string[]>([])
   const esRef = useRef<EventSource | null>(null)
 
-  const handleTrackChange = (track: Music) => {
+  const handleTrackChange = (track: Music, nodeId?: string, addToHistory = true) => {
+    let targetNodeId = nodeId
+
+    if (!targetNodeId) {
+      const currentNode = rawNodes.find(rn => {
+        let content = rn.node_content
+        if (typeof content === 'string') {
+          try { content = JSON.parse(content) } catch {}
+        }
+        return content && (content as any).music_id === track.music_id
+      })
+      if (currentNode) targetNodeId = currentNode.node_id
+    }
+
+    if (targetNodeId) {
+      if (addToHistory && currentTrack && selectedNodeId && selectedNodeId !== targetNodeId) {
+        setHistory(prev => [...prev, selectedNodeId])
+      }
+      setSelectedNodeId(targetNodeId)
+    }
+
     setAutoPlay(true)
     setCurrentTrack(track)
+  }
+
+  const handleNodeClick = (nodeId: string, content: any) => {
+    setSelectedNodeId(nodeId)
+    if (content && content.music_id) {
+      handleTrackChange(content as Music, nodeId)
+    }
+  }
+
+  const handleDeselect = () => {
+    setSelectedNodeId(null)
+  }
+
+  const handleNext = () => {
+    if (!currentTrack || !rawNodes.length) return
+    const currentNode = rawNodes.find(rn => rn.node_id === selectedNodeId)
+
+    if (currentNode && currentNode.node_album_links?.next?.length > 0) {
+      const nextId = currentNode.node_album_links.next[0]
+      const nextNode = rawNodes.find(rn => rn.node_id === nextId)
+      if (nextNode) {
+        let nextContent = nextNode.node_content
+        if (typeof nextContent === 'string') {
+          try { nextContent = JSON.parse(nextContent) } catch {}
+        }
+        if (nextContent && (nextContent as any).music_id) {
+          handleTrackChange(nextContent as Music, nextNode.node_id)
+        }
+      }
+    }
+    // Strict: No fallback/wrap-around
+  }
+
+  const handlePrevious = () => {
+    if (!currentTrack || !rawNodes.length) return
+    const currentNode = rawNodes.find(rn => rn.node_id === selectedNodeId)
+
+    if (currentNode && currentNode.node_album_links?.previous?.length > 0) {
+      const prevId = currentNode.node_album_links.previous[0]
+      const prevNode = rawNodes.find(rn => rn.node_id === prevId)
+      if (prevNode) {
+        let prevContent = prevNode.node_content
+        if (typeof prevContent === 'string') {
+          try { prevContent = JSON.parse(prevContent) } catch {}
+        }
+        if (prevContent && (prevContent as any).music_id) {
+          handleTrackChange(prevContent as Music, prevNode.node_id, false)
+        }
+      }
+    }
+    // Strict: No session history fallback here as per "strict" request
   }
 
   useEffect(() => {
@@ -59,9 +133,10 @@ export default function App() {
             return
           }
 
-          const rawNodes: RawNode[] = parsed
-          if (Array.isArray(rawNodes) && rawNodes.length) {
-            const nodes: NodeDatum[] = rawNodes.map(rn => {
+          const incomingNodes: RawNode[] = parsed
+          if (Array.isArray(incomingNodes) && incomingNodes.length) {
+            setRawNodes(incomingNodes)
+            const nodes: NodeDatum[] = incomingNodes.map(rn => {
               let content = rn.node_content
               if (typeof content === 'string') {
                 try { content = JSON.parse(content) } catch {}
@@ -75,14 +150,18 @@ export default function App() {
             })
 
             const links: LinkDatum[] = []
-            const nodeIds = new Set(rawNodes.map(rn => rn.node_id))
+            const nodeIds = new Set(incomingNodes.map(rn => rn.node_id))
 
-            rawNodes.forEach(rn => {
+            incomingNodes.forEach(rn => {
               const allLinks = [
-                ...(rn.node_tag_links || []),
-                ...(rn.node_music_links || []),
-                ...(rn.node_author_links || []),
-                ...(rn.node_album_links || [])
+                ...(rn.node_tag_links?.next || []),
+                ...(rn.node_tag_links?.previous || []),
+                ...(rn.node_music_links?.next || []),
+                ...(rn.node_music_links?.previous || []),
+                ...(rn.node_author_links?.next || []),
+                ...(rn.node_author_links?.previous || []),
+                ...(rn.node_album_links?.next || []),
+                ...(rn.node_album_links?.previous || [])
               ]
 
               allLinks.forEach(targetId => {
@@ -119,7 +198,9 @@ export default function App() {
             nodes={graphData.nodes}
             links={graphData.links}
             config={graphConfig}
-            onTrackChange={handleTrackChange}
+            selectedId={selectedNodeId}
+            onNodeClick={handleNodeClick}
+            onDeselect={handleDeselect}
           />
         )}
       </div>
@@ -148,7 +229,12 @@ export default function App() {
       )}
 
       <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', zIndex: 100 }}>
-        <PlayerBar track={currentTrack} autoPlay={autoPlay} />
+        <PlayerBar 
+          track={currentTrack} 
+          autoPlay={autoPlay} 
+          onNext={handleNext}
+          onPrevious={handlePrevious}
+        />
       </div>
     </div>
   )
