@@ -81,7 +81,7 @@ export default function PlayerBar({ track, autoPlay = false, onNext, onPrevious 
       <div className="player-track-info">
         <div className="player-cover">
           {track && !imgError ? (
-            <img src={track.music_cover_url} alt={track.music_album} onError={() => setImgError(true)} />
+            <img src={track.music_cover_url} alt={track.music_album} crossOrigin="anonymous" onError={() => setImgError(true)} />
           ) : (
             <div className="player-cover-placeholder">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">

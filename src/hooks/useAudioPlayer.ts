@@ -13,6 +13,7 @@ export function useAudioPlayer(track: Music | null, autoPlay = false) {
   useEffect(() => {
     if (!track) return;
     const audio = new Audio(track.music_url);
+    audio.crossOrigin = "anonymous";
     audioRef.current = audio;
     audio.volume = volumeRef.current;
 
