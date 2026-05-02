@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import type { Music } from "../types/music";
 
-export function useAudioPlayer(track: Music | null, autoPlay = false) {
+export function useAudioPlayer(track: Music | null, autoPlay = false, onEndedCallback?: () => void) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -24,7 +24,10 @@ export function useAudioPlayer(track: Music | null, autoPlay = false) {
         audio.play().then(() => setIsPlaying(true)).catch(() => {})
       }
     };
-    const onEnded = () => setIsPlaying(false);
+    const onEnded = () => {
+      setIsPlaying(false);
+      onEndedCallback?.();
+    };
 
     audio.addEventListener("timeupdate", onTimeUpdate);
     audio.addEventListener("loadedmetadata", onLoaded);
@@ -40,7 +43,7 @@ export function useAudioPlayer(track: Music | null, autoPlay = false) {
       audio.removeEventListener("loadedmetadata", onLoaded);
       audio.removeEventListener("ended", onEnded);
     };
-  }, [track?.music_url, autoPlay]);
+  }, [track?.music_url, autoPlay, onEndedCallback]);
 
   const togglePlay = useCallback(() => {
     const audio = audioRef.current;

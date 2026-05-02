@@ -24,7 +24,7 @@ function calcRatio(e: MouseEvent | React.MouseEvent, el: HTMLElement): number {
 
 export default function PlayerBar({ track, autoPlay = false, onNext, onPrevious }: Props) {
   const { isPlaying, currentTime, duration, volume, isMuted, togglePlay, seek, changeVolume, toggleMute, restart } =
-    useAudioPlayer(track, autoPlay);
+    useAudioPlayer(track, autoPlay, onNext);
   const [imgError, setImgError] = useState(false);
 
   const progressRef = useRef<HTMLDivElement>(null);
