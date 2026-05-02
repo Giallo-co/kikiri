@@ -1,0 +1,30 @@
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
+import * as fs from "fs";
+
+const client = new DynamoDBClient({
+  region: "us-east-1",
+  endpoint: "http://localhost:8002",
+  credentials: {
+    accessKeyId: "dummy",
+    secretAccessKey: "dummy"
+  }
+});
+
+const docClient = DynamoDBDocumentClient.from(client);
+
+async function run() {
+  const raw = fs.readFileSync("data/authors.json", "utf-8");
+  const items = JSON.parse(raw);
+
+  for (const item of items) {
+    await docClient.send(
+      new PutCommand({
+        TableName: "author",
+        Item: item
+      })
+    );
+  }
+}
+
+run();

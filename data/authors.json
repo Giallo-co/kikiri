@@ -4,6 +4,27 @@
         "author_name": "C418",
         "author_real_name": "Daniel Rosenfeld",
         "author_description": "Hi it's me your favourite music man, Daniel. You probably know me from Minecraft and then came to stay for all the other music that gets you working. Or you are just stopping by. Whatever it is, hi, I'm your favourite human, and occasional music man, Daniel. welcome.",
-        "author_profile_picture": "http://localhost:9000/profile-picture/C418.png"
+        "author_profile_picture": "http://localhost:9000/profile-picture/c418.jpg"
+    },
+    {
+        "author_id": "2",
+        "author_name": "Olivia Rodrigo",
+        "author_real_name": "Olivia Isabel Rodrigo",
+        "author_description": "",
+        "author_profile_picture": "http://localhost:9000/profile-picture/olivia-rodrigo.jpg"
+    },
+    {
+        "author_id": "3",
+        "author_name": "Rawayana",
+        "author_real_name": ["Alberto Horacio Rafael «Beto» Montenegro","Antonio «Tony» Casas","Andrés «Fofo» Story","Alejandro «Abeja» Abeijón"],
+        "author_description": "",
+        "author_profile_picture": "http://localhost:9000/profile-picture/rawayana.jpg"
+    },
+        {
+        "author_id": "4",
+        "author_name": "Tame Impala",
+        "author_real_name": "Kevin Parker",
+        "author_description": "",
+        "author_profile_picture": "http://localhost:9000/profile-picture/tame-impala.jpg"
     }
 ]

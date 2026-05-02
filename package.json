@@ -4,12 +4,13 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/create-node-table.js",
+    "tables": "ts-node src/create-tables.ts",
     "table:node": "ts-node src/create-node-table.ts",
     "table:music": "ts-node src/create-music-table.ts",
     "table:author": "ts-node src/create-author-table.ts",
     "seed:nodes": "ts-node src/seed-nodes.ts",
     "seed:music": "ts-node src/seed-music.ts",
-    "seed:authors": "ts-node src/seed-authors.ts"
+    "seed:authors": "ts-node src/seed-author.ts"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.1037.0",
