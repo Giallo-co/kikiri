@@ -31,10 +31,13 @@ const generateInitialNodes = (count: number): GraphData => {
   const nodes: NodeDatum[] = [];
   const links: LinkDatum[] = [];
   for (let i = 0; i < count; i++) {
+    // Random grayscale shades
+    const v = Math.floor(Math.random() * 150) + 50;
+    const color = `rgb(${v},${v},${v})`;
     nodes.push({
       id: `initial-${i}`,
       name: `Node ${i}`,
-      color: '#444'
+      color: color
     });
   }
   for (let i = 0; i < count; i++) {
@@ -51,7 +54,7 @@ const generateInitialNodes = (count: number): GraphData => {
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [isTransitioning, setIsTransitioning] = useState(false)
-  const [graphData, setGraphData] = useState<GraphData | null>(null)
+  const [graphData, setGraphData] = useState<GraphData | null>(() => generateInitialNodes(200))
   const [rawNodes, setRawNodes] = useState<RawNode[]>([])
   const [connected, setConnected] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -368,12 +371,13 @@ export default function App() {
 
   useEffect(() => {
     if (!isLoggedIn) {
-      setGraphData(generateInitialNodes(200));
+      // Background nodes are initialized in state, but we ensure they stay if logged out
+      // (This can be empty or used to reset if needed)
     }
   }, [isLoggedIn]);
 
   return (
-    <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden', backgroundColor: '#f0eeeb' }}>
+    <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden', backgroundColor: '#111' }}>
       
       {(!isLoggedIn || isTransitioning) && (
         <Login onLogin={handleLoginSuccess} isTransitioning={isTransitioning} />

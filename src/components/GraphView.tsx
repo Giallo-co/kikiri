@@ -150,12 +150,12 @@ export default function GraphView({ nodes, links, config, selectedId, onNodeClic
           currentExclusionRadiusRef.current = Math.max(targetRadius, currentExclusionRadiusRef.current - EXCLUSION_TRANSITION_SPEED)
         }
 
-        // Update mask visually
+        // Update mask visually - Only show if not suppressed
         if (maskCircleRef.current) {
-          maskCircleRef.current.attr('r', currentExclusionRadiusRef.current)
+          maskCircleRef.current.attr('r', isRadiusSuppressedRef.current ? 0 : currentExclusionRadiusRef.current)
         }
 
-        if (currentExclusionRadiusRef.current <= 0) return
+        if (currentExclusionRadiusRef.current <= 0 || isRadiusSuppressedRef.current) return
 
         const cx = width / 2
         const cy = visualCenterY
@@ -174,6 +174,12 @@ export default function GraphView({ nodes, links, config, selectedId, onNodeClic
       })
 
     simulation.on('tick', () => {
+      // Oscillate gravity between 90% and 110%
+      const time = Date.now() / 1000
+      const oscillation = 1 + Math.sin(time * 2) * 0.1 // oscillate +/- 10%
+      const centerForce = simulation.force<d3.ForceCenter<NodeDatum>>('center')
+      if (centerForce) centerForce.strength(config.centerForce * oscillation)
+
       if (linkSelectionRef.current) {
         linkSelectionRef.current
           .attr('x1', d => (d.source as any).x ?? 0)
