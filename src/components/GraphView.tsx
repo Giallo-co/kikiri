@@ -20,7 +20,11 @@ const FOCUS_ZOOM_LEVEL = 3.5 // variable to control zoom depth
 const DESELECT_ZOOM_LEVEL = 0.4 // variable to control zoom when deselecting
 const CENTER_EXCLUSION_RADIUS = 400 // radius of the "invisible wall" in the center
 const EXCLUSION_ACTIVATION_DELAY = 2000 // ms to wait before activating the exclusion zone
-const LINK_EXCLUSION_OPACITY = 0.3 // opacity of links when passing through the center (0 to 1)
+const LINK_EXCLUSION_OPACITY = 0.2 // opacity of links when passing through the center (0 to 1)
+const EXCLUSION_TRANSITION_SPEED = 200 // speed at which the exclusion radius changes (pixels per tick)
+const ENABLE_DYNAMIC_EXCLUSION = true // true: radius changes on selection, false: radius is constant
+
+
 
 
 
@@ -34,6 +38,13 @@ export default function GraphView({ nodes, links, config, selectedId, onNodeClic
   const onNodeClickRef = useRef(onNodeClick)
   const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null)
   const exclusionActiveRef = useRef(false)
+  const currentExclusionRadiusRef = useRef(0)
+  const isSelectedRef = useRef(false)
+  const maskCircleRef = useRef<d3.Selection<SVGCircleElement, unknown, null, undefined> | null>(null)
+
+  useEffect(() => {
+    isSelectedRef.current = !!selectedId
+  }, [selectedId])
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -81,10 +92,10 @@ export default function GraphView({ nodes, links, config, selectedId, onNodeClic
 
     const v = Math.floor(LINK_EXCLUSION_OPACITY * 255)
     const maskColor = `rgb(${v},${v},${v})`
-    mask.append('circle')
+    maskCircleRef.current = mask.append('circle')
       .attr('cx', width / 2)
       .attr('cy', visualCenterY)
-      .attr('r', CENTER_EXCLUSION_RADIUS)
+      .attr('r', 0)
       .attr('fill', maskColor)
 
     const g = svg.append('g')
@@ -112,6 +123,22 @@ export default function GraphView({ nodes, links, config, selectedId, onNodeClic
       .force('center', d3.forceCenter(width / 2, visualCenterY))
       .force('exclusion', () => {
         if (!exclusionActiveRef.current) return
+        
+        const targetRadius = (ENABLE_DYNAMIC_EXCLUSION && isSelectedRef.current) ? 0 : CENTER_EXCLUSION_RADIUS
+        
+        if (currentExclusionRadiusRef.current < targetRadius) {
+          currentExclusionRadiusRef.current = Math.min(targetRadius, currentExclusionRadiusRef.current + EXCLUSION_TRANSITION_SPEED)
+        } else if (currentExclusionRadiusRef.current > targetRadius) {
+          currentExclusionRadiusRef.current = Math.max(targetRadius, currentExclusionRadiusRef.current - EXCLUSION_TRANSITION_SPEED)
+        }
+
+        // Update mask visually
+        if (maskCircleRef.current) {
+          maskCircleRef.current.attr('r', currentExclusionRadiusRef.current)
+        }
+
+        if (currentExclusionRadiusRef.current <= 0) return
+
         const cx = width / 2
         const cy = visualCenterY
         const currentNodes = simulation.nodes()
@@ -120,8 +147,8 @@ export default function GraphView({ nodes, links, config, selectedId, onNodeClic
           const dx = (node.x || 0) - cx
           const dy = (node.y || 0) - cy
           const dist = Math.sqrt(dx * dx + dy * dy)
-          if (dist < CENTER_EXCLUSION_RADIUS) {
-            const ratio = CENTER_EXCLUSION_RADIUS / (dist || 1)
+          if (dist < currentExclusionRadiusRef.current) {
+            const ratio = currentExclusionRadiusRef.current / (dist || 1)
             node.x = cx + dx * ratio
             node.y = cy + dy * ratio
           }
