@@ -36,14 +36,31 @@ export default function GraphView({ nodes, links, config, selectedId, onNodeClic
   const labelSelectionRef = useRef<d3.Selection<SVGTextElement, NodeDatum, SVGGElement, unknown> | null>(null)
   const linkSelectionRef = useRef<d3.Selection<SVGLineElement, any, SVGGElement, unknown> | null>(null)
   const onNodeClickRef = useRef(onNodeClick)
+  const onDeselectRef = useRef(onDeselect)
   const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null)
   const exclusionActiveRef = useRef(false)
   const currentExclusionRadiusRef = useRef(0)
   const isSelectedRef = useRef(false)
+  const isRadiusSuppressedRef = useRef(false)
   const maskCircleRef = useRef<d3.Selection<SVGCircleElement, unknown, null, undefined> | null>(null)
 
   useEffect(() => {
+    const wasSelected = isSelectedRef.current
     isSelectedRef.current = !!selectedId
+
+    if (selectedId) {
+      isRadiusSuppressedRef.current = true
+    } else if (wasSelected && !selectedId) {
+      // Delay expanding the radius to allow zoom-out to complete first
+      setTimeout(() => {
+        if (!isSelectedRef.current) {
+          isRadiusSuppressedRef.current = false
+          if (simulationRef.current) simulationRef.current.alpha(0.1).restart()
+        }
+      }, 750) // Match zoom transition duration
+    } else {
+      isRadiusSuppressedRef.current = false
+    }
   }, [selectedId])
 
   useEffect(() => {
@@ -56,7 +73,8 @@ export default function GraphView({ nodes, links, config, selectedId, onNodeClic
 
   useEffect(() => {
     onNodeClickRef.current = onNodeClick
-  }, [onNodeClick])
+    onDeselectRef.current = onDeselect
+  }, [onNodeClick, onDeselect])
 
   useEffect(() => {
     const svgEl = svgRef.current
@@ -124,7 +142,7 @@ export default function GraphView({ nodes, links, config, selectedId, onNodeClic
       .force('exclusion', () => {
         if (!exclusionActiveRef.current) return
         
-        const targetRadius = (ENABLE_DYNAMIC_EXCLUSION && isSelectedRef.current) ? 0 : CENTER_EXCLUSION_RADIUS
+        const targetRadius = (ENABLE_DYNAMIC_EXCLUSION && isRadiusSuppressedRef.current) ? 0 : CENTER_EXCLUSION_RADIUS
         
         if (currentExclusionRadiusRef.current < targetRadius) {
           currentExclusionRadiusRef.current = Math.min(targetRadius, currentExclusionRadiusRef.current + EXCLUSION_TRANSITION_SPEED)
@@ -355,7 +373,7 @@ export default function GraphView({ nodes, links, config, selectedId, onNodeClic
       )
 
     d3.select(svgRef.current).on('click', () => {
-      onDeselect?.()
+      onDeselectRef.current?.()
       if (zoomRef.current && svgRef.current) {
         const rect = svgRef.current.getBoundingClientRect()
         d3.select(svgRef.current).transition().duration(750)
