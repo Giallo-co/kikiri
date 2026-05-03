@@ -16,6 +16,7 @@ const BASE_COLOR = '#2a2a2a'
 const SELECTED_COLOR = '#ab90df'
 const LINK_BASE = '#b0aca6'
 const LINK_SELECTED = '#ab90df'
+const FOCUS_ZOOM_LEVEL = 1.8 // variable to control zoom depth
 
 export default function GraphView({ nodes, links, config, selectedId, onNodeClick, onDeselect }: Props) {
   const svgRef = useRef<SVGSVGElement>(null)
@@ -182,12 +183,18 @@ export default function GraphView({ nodes, links, config, selectedId, onNodeClic
       if (node && svgRef.current && zoomRef.current) {
         const svg = d3.select(svgRef.current)
         const rect = svgRef.current.getBoundingClientRect()
+        const width = rect.width
+        const height = rect.height
+
+        const x = node.x ?? width / 2
+        const y = node.y ?? height / 2
+
         svg.transition().duration(750).call(
           zoomRef.current.transform,
           d3.zoomIdentity
-            .translate(rect.width / 2, rect.height / 2)
-            .scale(1.5)
-            .translate(-(node.x ?? 0), -(node.y ?? 0))
+            .translate(width / 2, height / 2)
+            .scale(FOCUS_ZOOM_LEVEL)
+            .translate(-x, -y)
         )
       }
     }

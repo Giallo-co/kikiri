@@ -8,6 +8,7 @@ interface Props {
   autoPlay?: boolean;
   onNext?: () => void;
   onPrevious?: () => void;
+  onShuffle?: () => void;
 }
 
 function formatTime(s: number): string {
@@ -22,7 +23,7 @@ function calcRatio(e: MouseEvent | React.MouseEvent, el: HTMLElement): number {
   return Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
 }
 
-export default function PlayerBar({ track, autoPlay = false, onNext, onPrevious }: Props) {
+export default function PlayerBar({ track, autoPlay = false, onNext, onPrevious, onShuffle }: Props) {
   const { isPlaying, currentTime, duration, volume, isMuted, togglePlay, seek, changeVolume, toggleMute, restart } =
     useAudioPlayer(track, autoPlay, onNext);
   const [imgError, setImgError] = useState(false);
@@ -101,7 +102,7 @@ export default function PlayerBar({ track, autoPlay = false, onNext, onPrevious 
 
       <div className="player-center">
         <div className="player-controls">
-          <button className="ctrl-btn icon-btn" aria-label="Shuffle">
+          <button className="ctrl-btn icon-btn" onClick={onShuffle} aria-label="Shuffle">
             <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
               <path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.45 20 9.5V4h-5.5zm.73 9.79l1.35 1.35 2.42-2.42 1.41 1.41-3.83 3.83-1.35-1.35-2.42 2.42-1.41-1.41 3.83-3.83z" />
             </svg>

@@ -19,6 +19,8 @@ const DEFAULT_TRACK: Music = {
   comments: 0,
 }
 
+const SHUFFLE_STEP_DELAY = 700; // ms between steps
+
 interface GraphData {
   nodes: NodeDatum[]
   links: LinkDatum[]
@@ -123,6 +125,131 @@ export default function App() {
     if (currentNode.node_author_links?.next?.length > 0) {
       const authorId = currentNode.node_author_links.next[0]
       setSelectedNodeId(authorId)
+    }
+  }
+
+  const handleShuffle = async () => {
+    if (!rawNodes.length) return
+
+    const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+    
+    const getRandom = <T,>(arr: T[]): T | null => arr.length > 0 ? arr[Math.floor(Math.random() * arr.length)] : null
+
+    const findMusicFromAuthor = (authorNode: RawNode) => {
+      const musicIds = authorNode.node_music_links?.next || []
+      const musics = rawNodes.filter(n => musicIds.includes(n.node_id) && n.node_type === "Music")
+      return getRandom(musics)
+    }
+
+    const findAuthorFromTag = (tagNode: RawNode) => {
+      const authorIds = tagNode.node_author_links?.next || []
+      const authors = rawNodes.filter(n => authorIds.includes(n.node_id) && n.node_type === "Author")
+      return getRandom(authors)
+    }
+
+    let currentNode = selectedNodeId ? rawNodes.find(n => n.node_id === selectedNodeId) : null
+
+    // Helper to execute the full Tag -> Author -> Music flow
+    const startFullFlow = async () => {
+      const tags = rawNodes.filter(n => n.node_type === "Tag" && (n.node_author_links?.next?.length ?? 0) > 0)
+      const randomTag = getRandom(tags.length > 0 ? tags : rawNodes.filter(n => n.node_type === "Tag"))
+      if (!randomTag) return false
+
+      setSelectedNodeId(randomTag.node_id)
+      await delay(SHUFFLE_STEP_DELAY)
+
+      const randomAuthor = findAuthorFromTag(randomTag)
+      if (!randomAuthor) return await startFullFlow() // Retry if tag has no authors
+
+      setSelectedNodeId(randomAuthor.node_id)
+      await delay(SHUFFLE_STEP_DELAY)
+
+      const randomMusic = findMusicFromAuthor(randomAuthor)
+      if (!randomMusic) return await startFullFlow() // Retry if author has no music
+
+      const content = typeof randomMusic.node_content === 'string' ? JSON.parse(randomMusic.node_content) : randomMusic.node_content
+      handleTrackChange(content, randomMusic.node_id)
+      return true
+    }
+
+    // --- CASE 1: No node selected ---
+    if (!currentNode) {
+      await startFullFlow()
+      return
+    }
+
+    // --- CASE 2: Tag selected ---
+    if (currentNode.node_type === "Tag") {
+      const randomAuthor = findAuthorFromTag(currentNode)
+      if (!randomAuthor) {
+        await startFullFlow() // Fallback to full flow if current tag is empty
+        return
+      }
+      
+      setSelectedNodeId(randomAuthor.node_id)
+      await delay(SHUFFLE_STEP_DELAY)
+      
+      const randomMusic = findMusicFromAuthor(randomAuthor)
+      if (!randomMusic) {
+        await startFullFlow()
+        return
+      }
+      
+      const content = typeof randomMusic.node_content === 'string' ? JSON.parse(randomMusic.node_content) : randomMusic.node_content
+      handleTrackChange(content, randomMusic.node_id)
+      return
+    }
+
+    // --- CASE 3: Author selected ---
+    if (currentNode.node_type === "Author") {
+      const randomMusic = findMusicFromAuthor(currentNode)
+      if (!randomMusic) {
+        await startFullFlow()
+        return
+      }
+      
+      const content = typeof randomMusic.node_content === 'string' ? JSON.parse(randomMusic.node_content) : randomMusic.node_content
+      handleTrackChange(content, randomMusic.node_id)
+      return
+    }
+
+    // --- CASE 4: Music selected ---
+    if (currentNode.node_type === "Music") {
+      const relatedIds = [
+        ...(currentNode.node_tag_links?.next || []),
+        ...(currentNode.node_author_links?.next || [])
+      ]
+      const relatedNodes = rawNodes.filter(n => relatedIds.includes(n.node_id))
+      const randomRelated = getRandom(relatedNodes)
+      
+      if (!randomRelated) {
+        await startFullFlow()
+        return
+      }
+
+      setSelectedNodeId(randomRelated.node_id)
+      await delay(SHUFFLE_STEP_DELAY)
+
+      if (randomRelated.node_type === "Tag") {
+        const randomAuthor = findAuthorFromTag(randomRelated)
+        if (!randomAuthor) { await startFullFlow(); return }
+
+        setSelectedNodeId(randomAuthor.node_id)
+        await delay(SHUFFLE_STEP_DELAY)
+
+        const randomMusic = findMusicFromAuthor(randomAuthor)
+        if (!randomMusic) { await startFullFlow(); return }
+
+        const content = typeof randomMusic.node_content === 'string' ? JSON.parse(randomMusic.node_content) : randomMusic.node_content
+        handleTrackChange(content, randomMusic.node_id)
+      } else if (randomRelated.node_type === "Author") {
+        const randomMusic = findMusicFromAuthor(randomRelated)
+        if (!randomMusic) { await startFullFlow(); return }
+
+        const content = typeof randomMusic.node_content === 'string' ? JSON.parse(randomMusic.node_content) : randomMusic.node_content
+        handleTrackChange(content, randomMusic.node_id)
+      }
+      return
     }
   }
 
@@ -249,6 +376,7 @@ export default function App() {
           autoPlay={autoPlay} 
           onNext={handleNext}
           onPrevious={handlePrevious}
+          onShuffle={handleShuffle}
         />
       </div>
     </div>
