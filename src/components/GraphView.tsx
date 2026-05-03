@@ -16,7 +16,13 @@ const BASE_COLOR = '#2a2a2a'
 const SELECTED_COLOR = '#ab90df'
 const LINK_BASE = '#b0aca6'
 const LINK_SELECTED = '#ab90df'
-const FOCUS_ZOOM_LEVEL = 1.8 // variable to control zoom depth
+const FOCUS_ZOOM_LEVEL = 3.5 // variable to control zoom depth
+const DESELECT_ZOOM_LEVEL = 0.4 // variable to control zoom when deselecting
+const CENTER_EXCLUSION_RADIUS = 400 // radius of the "invisible wall" in the center
+const EXCLUSION_ACTIVATION_DELAY = 2000 // ms to wait before activating the exclusion zone
+const LINK_EXCLUSION_OPACITY = 0.3 // opacity of links when passing through the center (0 to 1)
+
+
 
 export default function GraphView({ nodes, links, config, selectedId, onNodeClick, onDeselect }: Props) {
   const svgRef = useRef<SVGSVGElement>(null)
@@ -27,6 +33,15 @@ export default function GraphView({ nodes, links, config, selectedId, onNodeClic
   const linkSelectionRef = useRef<d3.Selection<SVGLineElement, any, SVGGElement, unknown> | null>(null)
   const onNodeClickRef = useRef(onNodeClick)
   const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null)
+  const exclusionActiveRef = useRef(false)
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      exclusionActiveRef.current = true
+      if (simulationRef.current) simulationRef.current.alpha(0.1).restart()
+    }, EXCLUSION_ACTIVATION_DELAY)
+    return () => clearTimeout(timer)
+  }, [])
 
   useEffect(() => {
     onNodeClickRef.current = onNodeClick
@@ -39,9 +54,38 @@ export default function GraphView({ nodes, links, config, selectedId, onNodeClic
     const rect = svgEl.getBoundingClientRect()
     const width = rect.width || window.innerWidth
     const height = rect.height || window.innerHeight
+    
+    // Adjust visual center to account for PlayerBar (approx 100px)
+    const playerBarHeight = 100
+    const visualCenterY = (height - playerBarHeight) / 2
 
     const svg = d3.select(svgEl)
     svg.selectAll('*').remove()
+
+    // Add mask definition
+    const defs = svg.append('defs')
+    const mask = defs.append('mask')
+      .attr('id', 'exclusion-mask')
+      .attr('maskUnits', 'userSpaceOnUse')
+      .attr('x', -5000)
+      .attr('y', -5000)
+      .attr('width', 10000)
+      .attr('height', 10000)
+
+    mask.append('rect')
+      .attr('x', -5000)
+      .attr('y', -5000)
+      .attr('width', 10000)
+      .attr('height', 10000)
+      .attr('fill', 'white')
+
+    const v = Math.floor(LINK_EXCLUSION_OPACITY * 255)
+    const maskColor = `rgb(${v},${v},${v})`
+    mask.append('circle')
+      .attr('cx', width / 2)
+      .attr('cy', visualCenterY)
+      .attr('r', CENTER_EXCLUSION_RADIUS)
+      .attr('fill', maskColor)
 
     const g = svg.append('g')
     gRef.current = g
@@ -53,10 +97,36 @@ export default function GraphView({ nodes, links, config, selectedId, onNodeClic
     zoomRef.current = zoom
     svg.call(zoom)
 
+    // Set initial zoom level
+    svg.call(
+      zoom.transform,
+      d3.zoomIdentity
+        .translate(width / 2, visualCenterY)
+        .scale(DESELECT_ZOOM_LEVEL)
+        .translate(-width / 2, -visualCenterY)
+    )
+
     const simulation = d3.forceSimulation<NodeDatum>()
       .force('link', d3.forceLink<NodeDatum, any>().id(d => d.id))
       .force('charge', d3.forceManyBody())
-      .force('center', d3.forceCenter(width / 2, height / 2))
+      .force('center', d3.forceCenter(width / 2, visualCenterY))
+      .force('exclusion', () => {
+        if (!exclusionActiveRef.current) return
+        const cx = width / 2
+        const cy = visualCenterY
+        const currentNodes = simulation.nodes()
+        for (let i = 0, n = currentNodes.length; i < n; ++i) {
+          const node = currentNodes[i]
+          const dx = (node.x || 0) - cx
+          const dy = (node.y || 0) - cy
+          const dist = Math.sqrt(dx * dx + dy * dy)
+          if (dist < CENTER_EXCLUSION_RADIUS) {
+            const ratio = CENTER_EXCLUSION_RADIUS / (dist || 1)
+            node.x = cx + dx * ratio
+            node.y = cy + dy * ratio
+          }
+        }
+      })
 
     simulation.on('tick', () => {
       if (linkSelectionRef.current) {
@@ -106,7 +176,11 @@ export default function GraphView({ nodes, links, config, selectedId, onNodeClic
 
     const newLinks = links.map(l => ({ ...l }))
 
-    if (!g.select('.links-group').size()) g.append('g').attr('class', 'links-group')
+    if (!g.select('.links-group').size()) {
+      g.append('g')
+        .attr('class', 'links-group')
+        .attr('mask', 'url(#exclusion-mask)')
+    }
     if (!g.select('.nodes-group').size()) g.append('g').attr('class', 'nodes-group')
     if (!g.select('.labels-group').size()) g.append('g').attr('class', 'labels-group')
 
@@ -256,8 +330,15 @@ export default function GraphView({ nodes, links, config, selectedId, onNodeClic
     d3.select(svgRef.current).on('click', () => {
       onDeselect?.()
       if (zoomRef.current && svgRef.current) {
+        const rect = svgRef.current.getBoundingClientRect()
         d3.select(svgRef.current).transition().duration(750)
-          .call(zoomRef.current.transform, d3.zoomIdentity)
+          .call(
+            zoomRef.current.transform, 
+            d3.zoomIdentity
+              .translate(rect.width / 2, rect.height / 2)
+              .scale(DESELECT_ZOOM_LEVEL)
+              .translate(-rect.width / 2, -rect.height / 2)
+          )
       }
     })
 

@@ -19,7 +19,7 @@ const DEFAULT_TRACK: Music = {
   comments: 0,
 }
 
-const SHUFFLE_STEP_DELAY = 700; // ms between steps
+const SHUFFLE_STEP_DELAY = 900; // ms between steps
 
 interface GraphData {
   nodes: NodeDatum[]
