@@ -396,6 +396,17 @@ export default function GraphView({ nodes, links, config, selectedId, onNodeClic
 
     if (selectedId) {
       setTimeout(() => zoomToNode(selectedId), 50)
+    } else if (svgRef.current && zoomRef.current) {
+      // Reset zoom to center when no node is selected and nodes change (e.g. after login)
+      const rect = svgRef.current.getBoundingClientRect()
+      const visualCenterY = (rect.height - 100) / 2
+      d3.select(svgRef.current).transition().duration(750).call(
+        zoomRef.current.transform,
+        d3.zoomIdentity
+          .translate(rect.width / 2, visualCenterY)
+          .scale(DESELECT_ZOOM_LEVEL)
+          .translate(-rect.width / 2, -visualCenterY)
+      )
     }
 
   }, [nodes, links, config, selectedId])

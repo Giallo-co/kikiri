@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import GraphView from './components/GraphView'
 import PlayerBar from "./components/PlayerBar/PlayerBar";
+import Login from "./components/Login/Login";
 import { graphConfig } from './graphConfig'
 import type { NodeDatum, LinkDatum, RawNode } from './types/graph'
 import type { Music } from "./types/music";
@@ -26,7 +27,30 @@ interface GraphData {
   links: LinkDatum[]
 }
 
+const generateInitialNodes = (count: number): GraphData => {
+  const nodes: NodeDatum[] = [];
+  const links: LinkDatum[] = [];
+  for (let i = 0; i < count; i++) {
+    nodes.push({
+      id: `initial-${i}`,
+      name: `Node ${i}`,
+      color: '#444'
+    });
+  }
+  for (let i = 0; i < count; i++) {
+    if (Math.random() > 0.7) {
+      const target = Math.floor(Math.random() * count);
+      if (target !== i) {
+        links.push({ source: `initial-${i}`, target: `initial-${target}` });
+      }
+    }
+  }
+  return { nodes, links };
+};
+
 export default function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [isTransitioning, setIsTransitioning] = useState(false)
   const [graphData, setGraphData] = useState<GraphData | null>(null)
   const [rawNodes, setRawNodes] = useState<RawNode[]>([])
   const [connected, setConnected] = useState(false)
@@ -71,6 +95,15 @@ export default function App() {
 
   const handleDeselect = () => {
     setSelectedNodeId(null)
+  }
+
+  const handleLoginSuccess = () => {
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setIsLoggedIn(true);
+      setIsTransitioning(false);
+      setSelectedNodeId(null); 
+    }, 800);
   }
 
   const handleNext = () => {
@@ -254,6 +287,7 @@ export default function App() {
   }
 
   useEffect(() => {
+    if (!isLoggedIn) return;
     const connect = () => {
       const es = new EventSource('/api/nodes/stream')
       esRef.current = es
@@ -330,10 +364,21 @@ export default function App() {
 
     connect()
     return () => { esRef.current?.close() }
-  }, [])
+  }, [isLoggedIn])
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      setGraphData(generateInitialNodes(200));
+    }
+  }, [isLoggedIn]);
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden', backgroundColor: '#f0eeeb' }}>
+      
+      {(!isLoggedIn || isTransitioning) && (
+        <Login onLogin={handleLoginSuccess} isTransitioning={isTransitioning} />
+      )}
+
       <div style={{ width: '100%', height: '100%' }}>
         {graphData && (
           <GraphView
@@ -347,38 +392,42 @@ export default function App() {
         )}
       </div>
 
-      <div style={{
-        position: 'absolute', top: 12, right: 16, fontSize: 11,
-        fontFamily: 'monospace', color: connected ? '#6dbf8a' : '#cf6679',
-        letterSpacing: '0.05em', zIndex: 10,
-      }}>
-        {connected ? 'live' : 'reconnecting...'}
-      </div>
+      {isLoggedIn && (
+        <>
+          <div style={{
+            position: 'absolute', top: 12, right: 16, fontSize: 11,
+            fontFamily: 'monospace', color: connected ? '#6dbf8a' : '#cf6679',
+            letterSpacing: '0.05em', zIndex: 10,
+          }}>
+            {connected ? 'live' : 'reconnecting...'}
+          </div>
 
-      {error && (
-        <div style={{
-          position: 'absolute', top: 30, right: 16,
-          fontSize: 10, fontFamily: 'monospace', color: '#cf6679', zIndex: 10
-        }}>{error}</div>
+          {error && (
+            <div style={{
+              position: 'absolute', top: 30, right: 16,
+              fontSize: 10, fontFamily: 'monospace', color: '#cf6679', zIndex: 10
+            }}>{error}</div>
+          )}
+
+          <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', zIndex: 100 }}>
+            <PlayerBar 
+              track={currentTrack} 
+              autoPlay={autoPlay} 
+              onNext={handleNext}
+              onPrevious={handlePrevious}
+              onShuffle={handleShuffle}
+            />
+          </div>
+        </>
       )}
 
-      {!graphData && (
+      {!graphData && !isLoggedIn && (
         <div style={{
           position: 'absolute', top: '50%', left: '50%',
           transform: 'translate(-50%,-50%)',
           fontSize: 12, fontFamily: 'monospace', color: '#999'
-        }}>waiting for data...</div>
+        }}>generating background...</div>
       )}
-
-      <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', zIndex: 100 }}>
-        <PlayerBar 
-          track={currentTrack} 
-          autoPlay={autoPlay} 
-          onNext={handleNext}
-          onPrevious={handlePrevious}
-          onShuffle={handleShuffle}
-        />
-      </div>
     </div>
   )
 }
