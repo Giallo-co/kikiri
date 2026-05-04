@@ -8,6 +8,7 @@ interface Props {
   links: LinkDatum[]
   config: GraphConfig
   selectedId?: string | null
+  isLoggedIn?: boolean
   onNodeClick: (nodeId: string, content: any) => void
   onDeselect?: () => void
 }
@@ -19,6 +20,7 @@ const LINK_SELECTED = '#ab90df'
 const FOCUS_ZOOM_LEVEL = 3.5 // variable to control zoom depth
 const DESELECT_ZOOM_LEVEL = 0.4 // variable to control zoom when deselecting
 const CENTER_EXCLUSION_RADIUS = 400 // radius of the "invisible wall" in the center
+const ENABLE_CENTER_EXCLUSION = false // Global toggle for the center circle
 const EXCLUSION_ACTIVATION_DELAY = 2000 // ms to wait before activating the exclusion zone
 const LINK_EXCLUSION_OPACITY = 0.2 // opacity of links when passing through the center (0 to 1)
 const EXCLUSION_TRANSITION_SPEED = 200 // speed at which the exclusion radius changes (pixels per tick)
@@ -28,7 +30,7 @@ const ENABLE_DYNAMIC_EXCLUSION = true // true: radius changes on selection, fals
 
 
 
-export default function GraphView({ nodes, links, config, selectedId, onNodeClick, onDeselect }: Props) {
+export default function GraphView({ nodes, links, config, selectedId, isLoggedIn, onNodeClick, onDeselect }: Props) {
   const svgRef = useRef<SVGSVGElement>(null)
   const simulationRef = useRef<d3.Simulation<NodeDatum, undefined> | null>(null)
   const gRef = useRef<d3.Selection<SVGGElement, unknown, null, undefined> | null>(null)
@@ -48,20 +50,20 @@ export default function GraphView({ nodes, links, config, selectedId, onNodeClic
     const wasSelected = isSelectedRef.current
     isSelectedRef.current = !!selectedId
 
-    if (selectedId) {
+    if (selectedId || !isLoggedIn) {
       isRadiusSuppressedRef.current = true
     } else if (wasSelected && !selectedId) {
       // Delay expanding the radius to allow zoom-out to complete first
       setTimeout(() => {
-        if (!isSelectedRef.current) {
+        if (!isSelectedRef.current && isLoggedIn) {
           isRadiusSuppressedRef.current = false
           if (simulationRef.current) simulationRef.current.alpha(0.1).restart()
         }
       }, 750) // Match zoom transition duration
     } else {
-      isRadiusSuppressedRef.current = false
+      isRadiusSuppressedRef.current = !isLoggedIn
     }
-  }, [selectedId])
+  }, [selectedId, isLoggedIn])
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -142,7 +144,7 @@ export default function GraphView({ nodes, links, config, selectedId, onNodeClic
       .force('exclusion', () => {
         if (!exclusionActiveRef.current) return
         
-        const targetRadius = (ENABLE_DYNAMIC_EXCLUSION && isRadiusSuppressedRef.current) ? 0 : CENTER_EXCLUSION_RADIUS
+        const targetRadius = (ENABLE_CENTER_EXCLUSION && !isRadiusSuppressedRef.current) ? CENTER_EXCLUSION_RADIUS : 0
         
         if (currentExclusionRadiusRef.current < targetRadius) {
           currentExclusionRadiusRef.current = Math.min(targetRadius, currentExclusionRadiusRef.current + EXCLUSION_TRANSITION_SPEED)

@@ -1,35 +1,37 @@
 :root {
-  /* Overlay & Glass Effect - Neutral white/gray for no tint */
-  --login-overlay-bg: rgba(0, 0, 0, 0.1);
+  /* Overlay & Glass Effect - Modifiable color and transparency */
+  --login-glass-color: 255, 255, 255;
+  --login-glass-opacity: 0.001;
+  --login-overlay-bg: rgba(var(--login-glass-color), var(--login-glass-opacity));
   --login-glass-blur: 20px;
   
-  /* Text Colors - High contrast for the tech look */
-  --login-text-main: #ffffff;
-  --login-text-title: #ffffff;
-  --login-text-subtitle: #cccccc;
+  /* Text Colors - High contrast */
+  --login-text-main: #333333;
+  --login-text-title: #000000;
+  --login-text-subtitle: #666666;
   --login-text-muted: #888888;
   --login-text-error: #ff4d4d;
   
   /* Decorative Elements */
-  --login-marker-color: rgba(255, 255, 255, 0.4);
+  --login-marker-color: rgba(0, 0, 0, 0.2);
   
   /* Inputs - Glassy neutral */
-  --login-input-bg: rgba(255, 255, 255, 0.05);
-  --login-input-border: rgba(255, 255, 255, 0.15);
-  --login-input-text: #ffffff;
-  --login-input-placeholder: rgba(255, 255, 255, 0.3);
-  --login-input-focus-bg: rgba(255, 255, 255, 0.1);
-  --login-input-focus-border: rgba(255, 255, 255, 0.4);
+  --login-input-bg: rgba(0, 0, 0, 0.03);
+  --login-input-border: rgba(0, 0, 0, 0.1);
+  --login-input-text: #000000;
+  --login-input-placeholder: rgba(0, 0, 0, 0.3);
+  --login-input-focus-bg: rgba(0, 0, 0, 0.05);
+  --login-input-focus-border: rgba(0, 0, 0, 0.2);
   
   /* Button */
-  --login-btn-bg: rgba(255, 255, 255, 0.08);
-  --login-btn-border: rgba(255, 255, 255, 0.2);
-  --login-btn-text: #ffffff;
-  --login-btn-hover-bg: rgba(255, 255, 255, 0.15);
+  --login-btn-bg: rgba(0, 0, 0, 0.05);
+  --login-btn-border: rgba(0, 0, 0, 0.1);
+  --login-btn-text: #000000;
+  --login-btn-hover-bg: rgba(0, 0, 0, 0.1);
   
   /* Links */
   --login-link-color: #888888;
-  --login-link-hover: #cccccc;
+  --login-link-hover: #444444;
 }
 
 .login-container {

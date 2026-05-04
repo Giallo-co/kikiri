@@ -31,8 +31,8 @@ const generateInitialNodes = (count: number): GraphData => {
   const nodes: NodeDatum[] = [];
   const links: LinkDatum[] = [];
   for (let i = 0; i < count; i++) {
-    // Random grayscale shades
-    const v = Math.floor(Math.random() * 150) + 50;
+    // Darker grayscale for visibility on white background
+    const v = Math.floor(Math.random() * 100) + 20;
     const color = `rgb(${v},${v},${v})`;
     nodes.push({
       id: `initial-${i}`,
@@ -377,7 +377,7 @@ export default function App() {
   }, [isLoggedIn]);
 
   return (
-    <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden', backgroundColor: '#111' }}>
+    <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden', backgroundColor: '#ebebeb' }}>
       
       {(!isLoggedIn || isTransitioning) && (
         <Login onLogin={handleLoginSuccess} isTransitioning={isTransitioning} />
@@ -390,6 +390,7 @@ export default function App() {
             links={graphData.links}
             config={graphConfig}
             selectedId={selectedNodeId}
+            isLoggedIn={isLoggedIn}
             onNodeClick={handleNodeClick}
             onDeselect={handleDeselect}
           />
