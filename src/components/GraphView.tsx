@@ -91,8 +91,8 @@ export default function GraphView({ nodes, links, config, selectedId, isLoggedIn
     const width = rect.width || window.innerWidth
     const height = rect.height || window.innerHeight
     
-    // Adjust visual center to account for PlayerBar (approx 100px)
-    const playerBarHeight = 100
+    // Adjust visual center to account for PlayerBar (72px)
+    const playerBarHeight = 72
     const visualCenterY = (height - playerBarHeight) / 2
 
     const svg = d3.select(svgEl)
@@ -234,7 +234,7 @@ export default function GraphView({ nodes, links, config, selectedId, isLoggedIn
       const time = Date.now() / 1000
       const oscillation = 1 + Math.sin(time * 2) * 0.1 // oscillate +/- 10%
       const centerForce = simulation.force<d3.ForceCenter<NodeDatum>>('center')
-      if (centerForce) centerForce.strength(config.centerForce * oscillation)
+      if (centerForce) centerForce.strength(configRef.current.centerForce * oscillation)
 
       if (linkSelectionRef.current) {
         linkSelectionRef.current
@@ -251,7 +251,7 @@ export default function GraphView({ nodes, links, config, selectedId, isLoggedIn
       if (labelSelectionRef.current) {
         labelSelectionRef.current
           .attr('x', d => d.x ?? 0)
-          .attr('y', d => (d.y ?? 0) + (config.nodeSize + 12))
+          .attr('y', d => (d.y ?? 0) + (configRef.current.nodeSize + 12))
       }
     })
 
@@ -286,8 +286,12 @@ export default function GraphView({ nodes, links, config, selectedId, isLoggedIn
     if (!g.select('.links-group').size()) {
       g.append('g')
         .attr('class', 'links-group')
-        .attr('mask', 'url(#exclusion-mask)')
     }
+    
+    // Update mask application based on config
+    g.select('.links-group')
+      .attr('mask', config.enableMasking ? 'url(#exclusion-mask)' : null)
+
     if (!g.select('.nodes-group').size()) g.append('g').attr('class', 'nodes-group')
     if (!g.select('.labels-group').size()) g.append('g').attr('class', 'labels-group')
 
@@ -366,14 +370,15 @@ export default function GraphView({ nodes, links, config, selectedId, isLoggedIn
         const rect = svgRef.current.getBoundingClientRect()
         const width = rect.width
         const height = rect.height
+        const visualCenterY = (height - 72) / 2
 
         const x = node.x ?? width / 2
-        const y = node.y ?? height / 2
+        const y = node.y ?? visualCenterY
 
         svg.transition().duration(750).call(
           zoomRef.current.transform,
           d3.zoomIdentity
-            .translate(width / 2, height / 2)
+            .translate(width / 2, visualCenterY)
             .scale(FOCUS_ZOOM_LEVEL)
             .translate(-x, -y)
         )
@@ -438,13 +443,14 @@ export default function GraphView({ nodes, links, config, selectedId, isLoggedIn
       onDeselectRef.current?.()
       if (zoomRef.current && svgRef.current) {
         const rect = svgRef.current.getBoundingClientRect()
+        const visualCenterY = (rect.height - 72) / 2
         d3.select(svgRef.current).transition().duration(750)
           .call(
             zoomRef.current.transform, 
             d3.zoomIdentity
-              .translate(rect.width / 2, rect.height / 2)
+              .translate(rect.width / 2, visualCenterY)
               .scale(DESELECT_ZOOM_LEVEL)
-              .translate(-rect.width / 2, -rect.height / 2)
+              .translate(-rect.width / 2, -visualCenterY)
           )
       }
     })
@@ -461,7 +467,7 @@ export default function GraphView({ nodes, links, config, selectedId, isLoggedIn
     } else if (svgRef.current && zoomRef.current) {
       // Reset zoom to center when no node is selected and nodes change (e.g. after login)
       const rect = svgRef.current.getBoundingClientRect()
-      const visualCenterY = (rect.height - 100) / 2
+      const visualCenterY = (rect.height - 72) / 2
       d3.select(svgRef.current).transition().duration(750).call(
         zoomRef.current.transform,
         d3.zoomIdentity
