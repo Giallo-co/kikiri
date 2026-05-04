@@ -19,9 +19,9 @@ const LINK_BASE = '#b0aca6'
 const LINK_SELECTED = '#ab90df'
 const FOCUS_ZOOM_LEVEL = 3.5 // variable to control zoom depth
 const DESELECT_ZOOM_LEVEL = 0.4 // variable to control zoom when deselecting
-const EXCLUSION_ACTIVATION_DELAY = 2000 // ms to wait before activating the exclusion zone
 const LINK_EXCLUSION_OPACITY = 0.2 // opacity of links when passing through the center (0 to 1)
 const EXCLUSION_TRANSITION_SPEED = 200 // speed at which the exclusion radius changes (pixels per tick)
+const OUTER_EXCLUSION_TRANSITION_SPEED = 1000 // speed at which the outer radius returns
 const ENABLE_DYNAMIC_EXCLUSION = true // true: radius changes on selection, false: radius is constant
 
 
@@ -40,6 +40,7 @@ export default function GraphView({ nodes, links, config, selectedId, isLoggedIn
   const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null)
   const exclusionActiveRef = useRef(false)
   const currentExclusionRadiusRef = useRef(0)
+  const currentOuterExclusionRadiusRef = useRef(10000)
   const isSelectedRef = useRef(false)
   const isRadiusSuppressedRef = useRef(false)
   const maskCircleRef = useRef<d3.Selection<SVGCircleElement, unknown, null, undefined> | null>(null)
@@ -54,27 +55,27 @@ export default function GraphView({ nodes, links, config, selectedId, isLoggedIn
     const wasSelected = isSelectedRef.current
     isSelectedRef.current = !!selectedId
 
+    // 1. Update suppression state IMMEDIATELY
     if (selectedId || !isLoggedIn) {
       isRadiusSuppressedRef.current = true
-    } else if (wasSelected && !selectedId) {
-      // Delay expanding the radius to allow zoom-out to complete first
-      setTimeout(() => {
-        if (!isSelectedRef.current && isLoggedIn) {
-          isRadiusSuppressedRef.current = false
-          if (simulationRef.current) simulationRef.current.alpha(0.1).restart()
-        }
-      }, 750) // Match zoom transition duration
     } else {
-      isRadiusSuppressedRef.current = !isLoggedIn
+      isRadiusSuppressedRef.current = false
+    }
+
+    // 2. Restart simulation IMMEDIATELY with high alpha to overcome friction
+    if (simulationRef.current) {
+      simulationRef.current.alpha(0.5).restart()
+    }
+
+    // 3. Handle specific transitions
+    if (wasSelected && !selectedId) {
+      // No extra logic needed here as step 1 & 2 handle it immediately
     }
   }, [selectedId, isLoggedIn])
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      exclusionActiveRef.current = true
-      if (simulationRef.current) simulationRef.current.alpha(0.1).restart()
-    }, EXCLUSION_ACTIVATION_DELAY)
-    return () => clearTimeout(timer)
+    exclusionActiveRef.current = true
+    if (simulationRef.current) simulationRef.current.alpha(0.1).restart()
   }, [])
 
   useEffect(() => {
@@ -157,26 +158,42 @@ export default function GraphView({ nodes, links, config, selectedId, isLoggedIn
         if (!exclusionActiveRef.current) return
         
         const targetRadius = !isRadiusSuppressedRef.current ? configRef.current.innerExclusionRadius : 0
+        const targetOuterRadius = !isRadiusSuppressedRef.current ? configRef.current.outerExclusionRadius : 10000
         
+        // If we just reactivated, jump start the radius so the animation is visible immediately
+        if (!isRadiusSuppressedRef.current && currentExclusionRadiusRef.current === 0) {
+          currentExclusionRadiusRef.current = 10 
+        }
+
+        // Animate Inner Radius
         if (currentExclusionRadiusRef.current < targetRadius) {
           currentExclusionRadiusRef.current = Math.min(targetRadius, currentExclusionRadiusRef.current + EXCLUSION_TRANSITION_SPEED)
         } else if (currentExclusionRadiusRef.current > targetRadius) {
           currentExclusionRadiusRef.current = Math.max(targetRadius, currentExclusionRadiusRef.current - EXCLUSION_TRANSITION_SPEED)
         }
 
-        // Update mask visually - Only show if not suppressed
+        // Animate Outer Radius
+        if (currentOuterExclusionRadiusRef.current < targetOuterRadius) {
+          currentOuterExclusionRadiusRef.current = Math.min(targetOuterRadius, currentOuterExclusionRadiusRef.current + OUTER_EXCLUSION_TRANSITION_SPEED)
+        } else if (currentOuterExclusionRadiusRef.current > targetOuterRadius) {
+          currentOuterExclusionRadiusRef.current = Math.max(targetOuterRadius, currentOuterExclusionRadiusRef.current - OUTER_EXCLUSION_TRANSITION_SPEED)
+        }
+
+        // Update mask visually
         if (maskCircleRef.current) {
           maskCircleRef.current.attr('r', isRadiusSuppressedRef.current ? 0 : currentExclusionRadiusRef.current)
         }
         if (maskOuterCircleRef.current) {
-          maskOuterCircleRef.current.attr('r', isRadiusSuppressedRef.current ? 0 : configRef.current.outerExclusionRadius + 5000)
+          // The outer mask should also fade in/out smoothly or stay hidden if suppressed
+          const visualOuterR = isRadiusSuppressedRef.current ? 0 : currentOuterExclusionRadiusRef.current
+          maskOuterCircleRef.current.attr('r', visualOuterR > 0 ? visualOuterR + 5000 : 0)
         }
 
         const cx = width / 2
         const cy = visualCenterY
         const currentNodes = simulation.nodes()
-        const innerRadius = isRadiusSuppressedRef.current ? 0 : currentExclusionRadiusRef.current
-        const outerRadius = isRadiusSuppressedRef.current ? Infinity : configRef.current.outerExclusionRadius
+        const innerRadius = currentExclusionRadiusRef.current
+        const outerRadius = currentOuterExclusionRadiusRef.current
 
         for (let i = 0, n = currentNodes.length; i < n; ++i) {
           const node = currentNodes[i]
@@ -199,7 +216,7 @@ export default function GraphView({ nodes, links, config, selectedId, isLoggedIn
           }
 
           // Outer exclusion (pull in)
-          if (configRef.current.enableOuterExclusion && outerRadius !== Infinity && dist > outerRadius) {
+          if (configRef.current.enableOuterExclusion && outerRadius < 10000 && dist > outerRadius) {
             const ratio = outerRadius / dist
             node.x = cx + dx * ratio
             node.y = cy + dy * ratio
