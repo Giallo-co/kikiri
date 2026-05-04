@@ -5,7 +5,7 @@
     "node_type": "Tag",
     "color": "#e91e63",
     "node_tag_links": { "next": [], "previous": [] },
-    "node_music_links": { "next": ["music-01"], "previous": [] },
+    "node_music_links": { "next": ["music-01", "music-02"], "previous": [] },
     "node_author_links": { "next": ["author-01"], "previous": [] },
     "node_album_links": { "next": [], "previous": [] }
   },
@@ -15,27 +15,53 @@
     "node_type": "Author",
     "color": "#007bff",
     "node_tag_links": { "next": [], "previous": ["tag-rock"] },
-    "node_music_links": { "next": ["music-01"], "previous": [] },
+    "node_music_links": { "next": ["music-01", "music-02"], "previous": [] },
     "node_author_links": { "next": [], "previous": [] },
     "node_album_links": { "next": [], "previous": [] }
   },
   {
     "node_id": "music-01",
-    "node_name": "Mi Gran Hit",
+    "node_name": "Feel",
     "node_type": "Music",
     "color": "#00f2ff",
     "node_content": {
-      "music_id": "track-test",
+      "music_id": "track-01",
       "music_name": "Feel",
       "music_author": "None",
       "music_album": "Lies of P",
       "music_genre": "rainy-day jazz",
-      "music_year": 2023,
+      "music_year": 2027,
       "music_url": "http://localhost:5002/content/test.mp3",
       "music_cover_url": "https://www.iam8bit.com/cdn/shop/files/Lies_of_P_7__Vinyl_Lifestyle_0002.jpg?v=1749744424&width=768"
     },
     "node_tag_links": { "next": [], "previous": ["tag-rock"] },
-    "node_music_links": { "next": [], "previous": [] },
+    "node_music_links": { 
+      "next": ["music-02"], 
+      "previous": [] 
+    },
+    "node_author_links": { "next": [], "previous": ["author-01"] },
+    "node_album_links": { "next": [], "previous": [] }
+  },
+  {
+    "node_id": "music-02",
+    "node_name": "Mi Gran Hit",
+    "node_type": "Music",
+    "color": "#ab90df",
+    "node_content": {
+      "music_id": "track-02",
+      "music_name": "Mi Gran Hit",
+      "music_author": "Tu Artista",
+      "music_album": "Demo Album",
+      "music_genre": "Alternative Rock",
+      "music_year": 2026,
+      "music_url": "http://localhost:5002/content/test2.mp3",
+      "music_cover_url": "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=500" 
+    },
+    "node_tag_links": { "next": [], "previous": ["tag-rock"] },
+    "node_music_links": { 
+      "next": [], 
+      "previous": ["music-01"] 
+    },
     "node_author_links": { "next": [], "previous": ["author-01"] },
     "node_album_links": { "next": [], "previous": [] }
   }
