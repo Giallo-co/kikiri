@@ -1,0 +1,65 @@
+.orbital-menu {
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 100; /* Para estar por encima del grafo */
+}
+
+.menu-container {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  padding: 30px 20px;
+  background: rgba(15, 15, 15, 0.6); /* Fondo oscuro translúcido */
+  backdrop-filter: blur(10px); /* El efecto de desenfoque */
+  border-radius: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  cursor: pointer;
+  color: #888;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.menu-item:hover {
+  color: #fff;
+  transform: translateX(5px);
+}
+
+.menu-icon {
+  font-size: 1.2rem;
+  width: 24px;
+  text-align: center;
+}
+
+.menu-text {
+  font-family: 'Inter', sans-serif; /* O la que uses */
+  font-weight: 300;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+}
+
+/* El punto brillante que viste en tu boceto */
+.menu-item:hover .active-dot {
+  opacity: 1;
+}
+
+.active-dot {
+  position: absolute;
+  left: -25px;
+  width: 6px;
+  height: 6px;
+  background: #00f2ff; /* El cian de tu app */
+  border-radius: 50%;
+  box-shadow: 0 0 10px #00f2ff;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}

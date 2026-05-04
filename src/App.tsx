@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import GraphView from './components/GraphView'
 import PlayerBar from "./components/PlayerBar/PlayerBar";
 import Login from "./components/Login/Login";
+import Navigation from './components/Navigation/Navigation'; // Importación del nuevo menú
 import { graphConfig } from './graphConfig'
 import type { NodeDatum, LinkDatum, RawNode } from './types/graph'
 import type { Music } from "./types/music";
@@ -31,7 +32,6 @@ const generateInitialNodes = (count: number): GraphData => {
   const nodes: NodeDatum[] = [];
   const links: LinkDatum[] = [];
   for (let i = 0; i < count; i++) {
-    // Random grayscale shades
     const v = Math.floor(Math.random() * 150) + 50;
     const color = `rgb(${v},${v},${v})`;
     nodes.push({
@@ -114,7 +114,6 @@ export default function App() {
     const currentNode = rawNodes.find(rn => rn.node_id === selectedNodeId)
     if (!currentNode) return
 
-    // Priority 1: Use specific next link
     if (currentNode.node_album_links?.next?.length > 0) {
       const nextId = currentNode.node_album_links.next[0]
       const nextNode = rawNodes.find(rn => rn.node_id === nextId)
@@ -130,7 +129,6 @@ export default function App() {
       }
     }
 
-    // Priority 2: Fallback to Author node
     if (currentNode.node_author_links?.next?.length > 0) {
       const authorId = currentNode.node_author_links.next[0]
       setSelectedNodeId(authorId)
@@ -157,7 +155,6 @@ export default function App() {
       }
     }
 
-    // Fallback to Author node
     if (currentNode.node_author_links?.next?.length > 0) {
       const authorId = currentNode.node_author_links.next[0]
       setSelectedNodeId(authorId)
@@ -168,7 +165,6 @@ export default function App() {
     if (!rawNodes.length) return
 
     const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
-    
     const getRandom = <T,>(arr: T[]): T | null => arr.length > 0 ? arr[Math.floor(Math.random() * arr.length)] : null
 
     const findMusicFromAuthor = (authorNode: RawNode) => {
@@ -185,7 +181,6 @@ export default function App() {
 
     let currentNode = selectedNodeId ? rawNodes.find(n => n.node_id === selectedNodeId) : null
 
-    // Helper to execute the full Tag -> Author -> Music flow
     const startFullFlow = async () => {
       const tags = rawNodes.filter(n => n.node_type === "Tag" && (n.node_author_links?.next?.length ?? 0) > 0)
       const randomTag = getRandom(tags.length > 0 ? tags : rawNodes.filter(n => n.node_type === "Tag"))
@@ -195,61 +190,53 @@ export default function App() {
       await delay(SHUFFLE_STEP_DELAY)
 
       const randomAuthor = findAuthorFromTag(randomTag)
-      if (!randomAuthor) return await startFullFlow() // Retry if tag has no authors
+      if (!randomAuthor) return await startFullFlow() 
 
       setSelectedNodeId(randomAuthor.node_id)
       await delay(SHUFFLE_STEP_DELAY)
 
       const randomMusic = findMusicFromAuthor(randomAuthor)
-      if (!randomMusic) return await startFullFlow() // Retry if author has no music
+      if (!randomMusic) return await startFullFlow() 
 
       const content = typeof randomMusic.node_content === 'string' ? JSON.parse(randomMusic.node_content) : randomMusic.node_content
       handleTrackChange(content, randomMusic.node_id)
       return true
     }
 
-    // --- CASE 1: No node selected ---
     if (!currentNode) {
       await startFullFlow()
       return
     }
 
-    // --- CASE 2: Tag selected ---
     if (currentNode.node_type === "Tag") {
       const randomAuthor = findAuthorFromTag(currentNode)
       if (!randomAuthor) {
-        await startFullFlow() // Fallback to full flow if current tag is empty
+        await startFullFlow() 
         return
       }
-      
       setSelectedNodeId(randomAuthor.node_id)
       await delay(SHUFFLE_STEP_DELAY)
-      
       const randomMusic = findMusicFromAuthor(randomAuthor)
       if (!randomMusic) {
         await startFullFlow()
         return
       }
-      
       const content = typeof randomMusic.node_content === 'string' ? JSON.parse(randomMusic.node_content) : randomMusic.node_content
       handleTrackChange(content, randomMusic.node_id)
       return
     }
 
-    // --- CASE 3: Author selected ---
     if (currentNode.node_type === "Author") {
       const randomMusic = findMusicFromAuthor(currentNode)
       if (!randomMusic) {
         await startFullFlow()
         return
       }
-      
       const content = typeof randomMusic.node_content === 'string' ? JSON.parse(randomMusic.node_content) : randomMusic.node_content
       handleTrackChange(content, randomMusic.node_id)
       return
     }
 
-    // --- CASE 4: Music selected ---
     if (currentNode.node_type === "Music") {
       const relatedIds = [
         ...(currentNode.node_tag_links?.next || []),
@@ -257,31 +244,24 @@ export default function App() {
       ]
       const relatedNodes = rawNodes.filter(n => relatedIds.includes(n.node_id))
       const randomRelated = getRandom(relatedNodes)
-      
       if (!randomRelated) {
         await startFullFlow()
         return
       }
-
       setSelectedNodeId(randomRelated.node_id)
       await delay(SHUFFLE_STEP_DELAY)
-
       if (randomRelated.node_type === "Tag") {
         const randomAuthor = findAuthorFromTag(randomRelated)
         if (!randomAuthor) { await startFullFlow(); return }
-
         setSelectedNodeId(randomAuthor.node_id)
         await delay(SHUFFLE_STEP_DELAY)
-
         const randomMusic = findMusicFromAuthor(randomAuthor)
         if (!randomMusic) { await startFullFlow(); return }
-
         const content = typeof randomMusic.node_content === 'string' ? JSON.parse(randomMusic.node_content) : randomMusic.node_content
         handleTrackChange(content, randomMusic.node_id)
       } else if (randomRelated.node_type === "Author") {
         const randomMusic = findMusicFromAuthor(randomRelated)
         if (!randomMusic) { await startFullFlow(); return }
-
         const content = typeof randomMusic.node_content === 'string' ? JSON.parse(randomMusic.node_content) : randomMusic.node_content
         handleTrackChange(content, randomMusic.node_id)
       }
@@ -294,16 +274,13 @@ export default function App() {
     const connect = () => {
       const es = new EventSource('/api/nodes/stream')
       esRef.current = es
-
       es.onopen = () => {
         setConnected(true)
         setError(null)
       }
-
       es.onmessage = (event) => {
         try {
           const parsed = JSON.parse(event.data)
-
           if (parsed.__type === 'track') {
             const track = parsed.track as Music
             if (track && track.music_id) {
@@ -311,7 +288,6 @@ export default function App() {
             }
             return
           }
-
           const incomingNodes: RawNode[] = parsed
           if (Array.isArray(incomingNodes) && incomingNodes.length) {
             setRawNodes(incomingNodes)
@@ -327,10 +303,8 @@ export default function App() {
                 content
               }
             })
-
             const links: LinkDatum[] = []
             const nodeIds = new Set(incomingNodes.map(rn => rn.node_id))
-
             incomingNodes.forEach(rn => {
               const allLinks = [
                 ...(rn.node_tag_links?.next || []),
@@ -342,21 +316,18 @@ export default function App() {
                 ...(rn.node_album_links?.next || []),
                 ...(rn.node_album_links?.previous || [])
               ]
-
               allLinks.forEach(targetId => {
                 if (nodeIds.has(targetId)) {
                   links.push({ source: rn.node_id, target: targetId })
                 }
               })
             })
-
             setGraphData({ nodes, links })
           }
         } catch (e) {
           setError('parse error')
         }
       }
-
       es.onerror = () => {
         setConnected(false)
         setError('connection error')
@@ -364,17 +335,9 @@ export default function App() {
         setTimeout(connect, 2000)
       }
     }
-
     connect()
     return () => { esRef.current?.close() }
   }, [isLoggedIn])
-
-  useEffect(() => {
-    if (!isLoggedIn) {
-      // Background nodes are initialized in state, but we ensure they stay if logged out
-      // (This can be empty or used to reset if needed)
-    }
-  }, [isLoggedIn]);
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden', backgroundColor: '#111' }}>
@@ -398,6 +361,9 @@ export default function App() {
 
       {isLoggedIn && (
         <>
+          {/* Menu de Navegación Orbital/Flotante */}
+          <Navigation />
+
           <div style={{
             position: 'absolute', top: 12, right: 16, fontSize: 11,
             fontFamily: 'monospace', color: connected ? '#6dbf8a' : '#cf6679',
