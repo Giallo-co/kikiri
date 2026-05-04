@@ -12,4 +12,5 @@ export interface Music {
   views: number;
   shares: number;
   comments: number;
+  isLiked?: boolean;
 }

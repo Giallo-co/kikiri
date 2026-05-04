@@ -7,35 +7,61 @@ interface Props {
 }
 
 const MOCK_COLLECTIONS = [
-  { id: 'col-1', name: 'Me gusta', count: 0, color: '#ff4b4b', icon: '❤️' },
-  { id: 'col-2', name: 'Rock Classics', count: 12, color: '#ff9800', icon: '🎸' },
-  { id: 'col-3', name: 'Ambient Focus', count: 8, color: '#00bcd4', icon: '☁️' },
+  { id: 'col-1', name: 'Me gusta', count: 0, color: '#ff5f56', icon: '❤️', type: 'likes' },
+  { id: 'col-2', name: 'Rock Classics', count: 12, color: '#ffbd2e', icon: '🎸', type: 'genre' },
+  { id: 'col-3', name: 'Ambient Focus', count: 8, color: '#27c93f', icon: '☁️', type: 'genre' },
 ];
 
-export default function LibraryView({ likedSongs }: Props) {
+export default function LibraryView({ likedSongs, onNodeClick }: Props) {
+  
+  const handleCollectionClick = (col: any) => {
+    if (col.type === 'likes' && likedSongs.length > 0) {
+      const firstSong = likedSongs[0];
+      let content = firstSong.node_content;
+      if (typeof content === 'string') try { content = JSON.parse(content) } catch {}
+      onNodeClick(firstSong.node_id, content);
+    }
+  };
+
   return (
     <div className="library-container">
-      <div className="library-grid">
-        {/* SVG para las líneas de interconexión (estilo grafo) */}
-        <svg className="library-connections">
-          <line x1="20%" y1="50%" x2="50%" y2="50%" stroke="rgba(255,255,255,0.1)" />
-          <line x1="50%" y1="50%" x2="80%" y2="50%" stroke="rgba(255,255,255,0.1)" />
-        </svg>
+      <svg className="library-connections" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <line x1="50%" y1="25%" x2="75%" y2="65%" stroke="rgba(255,255,255,0.1)" strokeWidth="0.5" />
+        <line x1="50%" y1="25%" x2="25%" y2="65%" stroke="rgba(255,255,255,0.1)" strokeWidth="0.5" />
+      </svg>
 
-        {MOCK_COLLECTIONS.map((col) => (
-          <div key={col.id} className="library-card" style={{ '--card-color': col.color } as any}>
-            <div className="card-content">
-              <span className="card-icon">{col.id === 'col-1' ? '❤️' : col.icon}</span>
-              <h3>{col.name}</h3>
-              <p>{col.id === 'col-1' ? likedSongs.length : col.count} elementos</p>
+      <div className="library-nodes-wrapper">
+        {MOCK_COLLECTIONS.map((col, index) => {
+          const positionClass = index === 0 ? 'pos-top' : index === 1 ? 'pos-right' : 'pos-left';
+          
+          return (
+            <div 
+              key={col.id} 
+              className={`macos-window ${positionClass}`} 
+              onClick={() => handleCollectionClick(col)}
+            >
+              {/* Barra de Título estilo macOS */}
+              <div className="window-header">
+                <div className="header-buttons">
+                  <span className="dot close"></span>
+                  <span className="dot minimize"></span>
+                  <span className="dot expand"></span>
+                </div>
+                <span className="window-title-text">{col.id === 'col-1' ? 'System' : 'Folder'}</span>
+              </div>
+
+              <div className="window-content" style={{ '--window-accent': col.color } as any}>
+                <div className="icon-main">{col.icon}</div>
+                <h3>{col.name}</h3>
+                <p>{col.id === 'col-1' ? likedSongs.length : col.count} elementos</p>
+              </div>
             </div>
-            <div className="card-glow" />
-          </div>
-        ))}
+          );
+        })}
       </div>
       
       <div className="library-hint">
-        Selecciona una colección para explorar sus nodos
+        ✦ Selecciona una ventana para entrar en su red
       </div>
     </div>
   );

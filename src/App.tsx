@@ -121,6 +121,10 @@ export default function App() {
   }
 
   const handleNodeClick = (nodeId: string, content: any) => {
+    // Si estamos en la biblioteca y hacemos clic en una canción, volvemos al home
+    if (view === 'library') {
+        setView('home');
+    }
     setSelectedNodeId(nodeId)
     if (content && content.music_id) {
       handleTrackChange(content as Music, nodeId)
@@ -270,7 +274,8 @@ export default function App() {
           <Navigation 
             onHomeClick={handleGoHome} 
             onSearchClick={() => setIsSearchOpen(true)}
-            onLibraryClick={handleGoLibrary} 
+            onLibraryClick={handleGoLibrary}
+            currentView={view} // Pasamos la vista actual para el puntito celeste
           />
 
           <SearchModal 
