@@ -7,9 +7,9 @@ import type { NodeDatum, LinkDatum, RawNode } from './types/graph'
 import type { Music } from "./types/music";
 
 const DEFAULT_TRACK: Music = {
-  music_id: "1",
+  music_id: "59",
   music_name: "Key",
-  music_description: '"key" is the song that sort of introduces you to the album',
+  music_description: "Key from C418",
   music_author: "C418",
   music_cover_url: "http://localhost:9000/music-cover/c418/volume-alpha.jpg",
   music_url: "http://localhost:9000/music/c418/volume-alpha/01-key.mp3",
@@ -68,13 +68,7 @@ export default function App() {
     let targetNodeId = nodeId
 
     if (!targetNodeId) {
-      const currentNode = rawNodes.find(rn => {
-        let content = rn.node_content
-        if (typeof content === 'string') {
-          try { content = JSON.parse(content) } catch {}
-        }
-        return content && (content as any).music_id === track.music_id
-      })
+      const currentNode = rawNodes.find(rn => rn.music_id === track.music_id)
       if (currentNode) targetNodeId = currentNode.node_id
     }
 
@@ -115,24 +109,18 @@ export default function App() {
     if (!currentNode) return
 
     // Priority 1: Use specific next link
-    if (currentNode.node_album_links?.next?.length > 0) {
-      const nextId = currentNode.node_album_links.next[0]
+    if (currentNode.node_album_links_next?.length > 0) {
+      const nextId = currentNode.node_album_links_next[0]
       const nextNode = rawNodes.find(rn => rn.node_id === nextId)
-      if (nextNode) {
-        let nextContent = nextNode.node_content
-        if (typeof nextContent === 'string') {
-          try { nextContent = JSON.parse(nextContent) } catch {}
-        }
-        if (nextContent && (nextContent as any).music_id) {
-          handleTrackChange(nextContent as Music, nextNode.node_id)
-          return
-        }
+      if (nextNode && nextNode.node_type === "Music") {
+        handleTrackChange(nextNode as unknown as Music, nextNode.node_id)
+        return
       }
     }
 
     // Priority 2: Fallback to Author node
-    if (currentNode.node_author_links?.next?.length > 0) {
-      const authorId = currentNode.node_author_links.next[0]
+    if (currentNode.node_author_links_next?.length > 0) {
+      const authorId = currentNode.node_author_links_next[0]
       setSelectedNodeId(authorId)
     }
   }
@@ -142,24 +130,18 @@ export default function App() {
     const currentNode = rawNodes.find(rn => rn.node_id === selectedNodeId)
     if (!currentNode) return
 
-    if (currentNode.node_album_links?.previous?.length > 0) {
-      const prevId = currentNode.node_album_links.previous[0]
+    if (currentNode.node_album_links_previous?.length > 0) {
+      const prevId = currentNode.node_album_links_previous[0]
       const prevNode = rawNodes.find(rn => rn.node_id === prevId)
-      if (prevNode) {
-        let prevContent = prevNode.node_content
-        if (typeof prevContent === 'string') {
-          try { prevContent = JSON.parse(prevContent) } catch {}
-        }
-        if (prevContent && (prevContent as any).music_id) {
-          handleTrackChange(prevContent as Music, prevNode.node_id, false)
-          return
-        }
+      if (prevNode && prevNode.node_type === "Music") {
+        handleTrackChange(prevNode as unknown as Music, prevNode.node_id, false)
+        return
       }
     }
 
     // Fallback to Author node
-    if (currentNode.node_author_links?.next?.length > 0) {
-      const authorId = currentNode.node_author_links.next[0]
+    if (currentNode.node_author_links_next?.length > 0) {
+      const authorId = currentNode.node_author_links_next[0]
       setSelectedNodeId(authorId)
     }
   }
@@ -172,13 +154,13 @@ export default function App() {
     const getRandom = <T,>(arr: T[]): T | null => arr.length > 0 ? arr[Math.floor(Math.random() * arr.length)] : null
 
     const findMusicFromAuthor = (authorNode: RawNode) => {
-      const musicIds = authorNode.node_music_links?.next || []
+      const musicIds = authorNode.node_music_links_next || []
       const musics = rawNodes.filter(n => musicIds.includes(n.node_id) && n.node_type === "Music")
       return getRandom(musics)
     }
 
     const findAuthorFromTag = (tagNode: RawNode) => {
-      const authorIds = tagNode.node_author_links?.next || []
+      const authorIds = tagNode.node_author_links_next || []
       const authors = rawNodes.filter(n => authorIds.includes(n.node_id) && n.node_type === "Author")
       return getRandom(authors)
     }
@@ -187,7 +169,7 @@ export default function App() {
 
     // Helper to execute the full Tag -> Author -> Music flow
     const startFullFlow = async () => {
-      const tags = rawNodes.filter(n => n.node_type === "Tag" && (n.node_author_links?.next?.length ?? 0) > 0)
+      const tags = rawNodes.filter(n => n.node_type === "Tag" && (n.node_author_links_next?.length ?? 0) > 0)
       const randomTag = getRandom(tags.length > 0 ? tags : rawNodes.filter(n => n.node_type === "Tag"))
       if (!randomTag) return false
 
@@ -203,8 +185,7 @@ export default function App() {
       const randomMusic = findMusicFromAuthor(randomAuthor)
       if (!randomMusic) return await startFullFlow() // Retry if author has no music
 
-      const content = typeof randomMusic.node_content === 'string' ? JSON.parse(randomMusic.node_content) : randomMusic.node_content
-      handleTrackChange(content, randomMusic.node_id)
+      handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id)
       return true
     }
 
@@ -231,8 +212,7 @@ export default function App() {
         return
       }
       
-      const content = typeof randomMusic.node_content === 'string' ? JSON.parse(randomMusic.node_content) : randomMusic.node_content
-      handleTrackChange(content, randomMusic.node_id)
+      handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id)
       return
     }
 
@@ -244,16 +224,15 @@ export default function App() {
         return
       }
       
-      const content = typeof randomMusic.node_content === 'string' ? JSON.parse(randomMusic.node_content) : randomMusic.node_content
-      handleTrackChange(content, randomMusic.node_id)
+      handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id)
       return
     }
 
     // --- CASE 4: Music selected ---
     if (currentNode.node_type === "Music") {
       const relatedIds = [
-        ...(currentNode.node_tag_links?.next || []),
-        ...(currentNode.node_author_links?.next || [])
+        ...(currentNode.node_tag_links_next || []),
+        ...(currentNode.node_author_links_next || [])
       ]
       const relatedNodes = rawNodes.filter(n => relatedIds.includes(n.node_id))
       const randomRelated = getRandom(relatedNodes)
@@ -276,14 +255,12 @@ export default function App() {
         const randomMusic = findMusicFromAuthor(randomAuthor)
         if (!randomMusic) { await startFullFlow(); return }
 
-        const content = typeof randomMusic.node_content === 'string' ? JSON.parse(randomMusic.node_content) : randomMusic.node_content
-        handleTrackChange(content, randomMusic.node_id)
+        handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id)
       } else if (randomRelated.node_type === "Author") {
         const randomMusic = findMusicFromAuthor(randomRelated)
         if (!randomMusic) { await startFullFlow(); return }
 
-        const content = typeof randomMusic.node_content === 'string' ? JSON.parse(randomMusic.node_content) : randomMusic.node_content
-        handleTrackChange(content, randomMusic.node_id)
+        handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id)
       }
       return
     }
@@ -316,15 +293,12 @@ export default function App() {
           if (Array.isArray(incomingNodes) && incomingNodes.length) {
             setRawNodes(incomingNodes)
             const nodes: NodeDatum[] = incomingNodes.map(rn => {
-              let content = rn.node_content
-              if (typeof content === 'string') {
-                try { content = JSON.parse(content) } catch {}
-              }
+              // Pass the whole node as content if it's a Music or Author node.
               return {
                 id: rn.node_id,
                 name: rn.node_name,
-                color: rn.color,
-                content
+                color: rn.node_color,
+                content: (rn.node_type === "Music" || rn.node_type === "Author") ? rn : null
               }
             })
 
@@ -333,14 +307,14 @@ export default function App() {
 
             incomingNodes.forEach(rn => {
               const allLinks = [
-                ...(rn.node_tag_links?.next || []),
-                ...(rn.node_tag_links?.previous || []),
-                ...(rn.node_music_links?.next || []),
-                ...(rn.node_music_links?.previous || []),
-                ...(rn.node_author_links?.next || []),
-                ...(rn.node_author_links?.previous || []),
-                ...(rn.node_album_links?.next || []),
-                ...(rn.node_album_links?.previous || [])
+                ...(rn.node_tag_links_next || []),
+                ...(rn.node_tag_links_previous || []),
+                ...(rn.node_music_links_next || []),
+                ...(rn.node_music_links_previous || []),
+                ...(rn.node_author_links_next || []),
+                ...(rn.node_author_links_previous || []),
+                ...(rn.node_album_links_next || []),
+                ...(rn.node_album_links_previous || [])
               ]
 
               allLinks.forEach(targetId => {

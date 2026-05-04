@@ -2,7 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import { createServer } from 'http'
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb"
-import { DynamoDBDocumentClient, ScanCommand } from "@aws-sdk/lib-dynamodb"
+import { DynamoDBDocumentClient, ScanCommand, PutCommand } from "@aws-sdk/lib-dynamodb"
 
 const app = express()
 const PORT = 5002
@@ -113,6 +113,22 @@ app.post('/api/node-selected', (req, res) => {
   }
 
   res.sendStatus(200)
+})
+
+app.post('/api/music', async (req, res) => {
+  try {
+    const item = req.body
+    const command = new PutCommand({
+      TableName: "node",
+      Item: item,
+    })
+    await docClient.send(command)
+    console.log(`[Backend] Music item added to node table: ${item.music_name || item.node_name}`)
+    res.status(201).json({ message: 'Music item created successfully in node table', item })
+  } catch (error) {
+    console.error("Error creating music item in node table:", error)
+    res.status(500).json({ error: 'Failed to create music item' })
+  }
 })
 
 createServer(app).listen(PORT, () => {
