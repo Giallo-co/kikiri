@@ -1,12 +1,25 @@
 import express from 'express'
 import cors from 'cors'
-import fs from 'fs'
-import path from 'path'
 import { createServer } from 'http'
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb"
+import { DynamoDBDocumentClient, ScanCommand } from "@aws-sdk/lib-dynamodb"
 
 const app = express()
 const PORT = 5002
-const NODES_FILE = path.resolve('./nodes.json')
+
+// DynamoDB Configuration
+// These can be moved to environment variables for easy AWS migration
+const dynamoConfig = {
+  region: "us-east-1",
+  endpoint: process.env.DYNAMODB_ENDPOINT || "http://localhost:8002",
+  credentials: {
+    accessKeyId: process.env.S3_ACCESS_KEY || "minioadmin",
+    secretAccessKey: process.env.S3_SECRET_KEY || "minioadmin123",
+  },
+}
+
+const client = new DynamoDBClient(dynamoConfig)
+const docClient = DynamoDBDocumentClient.from(client)
 
 app.use(cors())
 app.use(express.json())
@@ -15,9 +28,17 @@ const clients = new Set<express.Response>()
 
 let lastTrack: object | null = null
 
-const readNodes = () => {
-  const raw = fs.readFileSync(NODES_FILE, 'utf-8')
-  return JSON.stringify(JSON.parse(raw))
+const fetchNodesFromDynamo = async () => {
+  try {
+    const command = new ScanCommand({
+      TableName: "node",
+    })
+    const response = await docClient.send(command)
+    return JSON.stringify(response.Items || [])
+  } catch (error) {
+    console.error("Error fetching from DynamoDB:", error)
+    return "[]"
+  }
 }
 
 const broadcast = (line: string) => {
@@ -30,32 +51,33 @@ const broadcastTrack = (track: object) => {
 }
 
 let lastContent = ''
-setInterval(() => {
+setInterval(async () => {
   try {
-    const current = readNodes()
+    const current = await fetchNodesFromDynamo()
     if (current !== lastContent) {
       lastContent = current
       broadcast(current)
     }
   } catch {}
-}, 500)
+}, 1000) // Increased interval slightly for DynamoDB scan
 
-app.get('/api/nodes', (_req, res) => {
+app.get('/api/nodes', async (_req, res) => {
   try {
-    res.json(JSON.parse(readNodes()))
+    const nodes = await fetchNodesFromDynamo()
+    res.json(JSON.parse(nodes))
   } catch {
-    res.status(500).json({ error: 'Failed to read nodes.json' })
+    res.status(500).json({ error: 'Failed to fetch nodes from DynamoDB' })
   }
 })
 
-app.get('/api/nodes/stream', (req, res) => {
+app.get('/api/nodes/stream', async (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream')
   res.setHeader('Cache-Control', 'no-cache')
   res.setHeader('Connection', 'keep-alive')
   res.flushHeaders()
 
   try {
-    const line = readNodes()
+    const line = await fetchNodesFromDynamo()
     lastContent = line
     res.write(`data: ${line}\n\n`)
   } catch {}

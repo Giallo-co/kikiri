@@ -22,7 +22,7 @@ const DESELECT_ZOOM_LEVEL = 0.4 // variable to control zoom when deselecting
 const LINK_EXCLUSION_OPACITY = 0.2 // opacity of links when passing through the center (0 to 1)
 const EXCLUSION_TRANSITION_SPEED = 200 // speed at which the exclusion radius changes (pixels per tick)
 const OUTER_EXCLUSION_TRANSITION_SPEED = 1000 // speed at which the outer radius returns
-const ENABLE_DYNAMIC_EXCLUSION = true // true: radius changes on selection, false: radius is constant
+const ENABLE_DYNAMIC_EXCLUSION = false // true: radius changes on selection, false: radius is constant
 
 
 
@@ -158,7 +158,11 @@ export default function GraphView({ nodes, links, config, selectedId, isLoggedIn
         if (!exclusionActiveRef.current) return
         
         const targetRadius = !isRadiusSuppressedRef.current ? configRef.current.innerExclusionRadius : 0
-        const targetOuterRadius = !isRadiusSuppressedRef.current ? configRef.current.outerExclusionRadius : 10000
+        
+        // Target outer radius depends on whether it's dynamic or constant
+        const targetOuterRadius = (configRef.current.isOuterBoundaryDynamic && isRadiusSuppressedRef.current) 
+          ? 10000 
+          : configRef.current.outerExclusionRadius
         
         // If we just reactivated, jump start the radius so the animation is visible immediately
         if (!isRadiusSuppressedRef.current && currentExclusionRadiusRef.current === 0) {
@@ -184,8 +188,9 @@ export default function GraphView({ nodes, links, config, selectedId, isLoggedIn
           maskCircleRef.current.attr('r', isRadiusSuppressedRef.current ? 0 : currentExclusionRadiusRef.current)
         }
         if (maskOuterCircleRef.current) {
-          // The outer mask should also fade in/out smoothly or stay hidden if suppressed
-          const visualOuterR = isRadiusSuppressedRef.current ? 0 : currentOuterExclusionRadiusRef.current
+          // If not dynamic, always show mask. If dynamic, follow suppression
+          const shouldHideMask = configRef.current.isOuterBoundaryDynamic && isRadiusSuppressedRef.current
+          const visualOuterR = shouldHideMask ? 0 : currentOuterExclusionRadiusRef.current
           maskOuterCircleRef.current.attr('r', visualOuterR > 0 ? visualOuterR + 5000 : 0)
         }
 

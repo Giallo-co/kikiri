@@ -49,4 +49,5 @@ export interface GraphConfig {
   innerExclusionRadius: number
   outerExclusionRadius: number
   enableOuterExclusion: boolean
+  isOuterBoundaryDynamic: boolean
 }
