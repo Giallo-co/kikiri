@@ -5,25 +5,34 @@ interface NavigationProps {
   onHomeClick: () => void;
   onSearchClick: () => void;
   onLibraryClick: () => void;
-  currentView: 'home' | 'library'; // Sincronizado con el estado de App.tsx
+  onProfileClick: () => void; // Nueva prop para abrir el perfil
+  currentView: 'home' | 'library' | 'profile'; // Añadimos profile a los posibles estados
 }
 
 const Navigation: React.FC<NavigationProps> = ({ 
   onHomeClick, 
   onSearchClick, 
   onLibraryClick, 
+  onProfileClick,
   currentView 
 }) => {
   
-  // Mapeamos el estado interno de App a los nombres del menú
-  const activeName = currentView === 'home' ? 'Inicio' : 'Biblioteca';
+  // Mapeamos el estado actual para resaltar el botón correcto
+  const getActiveName = () => {
+    if (currentView === 'home') return 'Inicio';
+    if (currentView === 'library') return 'Biblioteca';
+    if (currentView === 'profile') return 'Perfil';
+    return '';
+  };
+
+  const activeName = getActiveName();
 
   const menuItems = [
     { name: 'Inicio', icon: '◈', action: onHomeClick },
     { name: 'Explorar', icon: '◎', action: () => {} }, 
     { name: 'Buscar', icon: '◇', action: onSearchClick },
-    { name: 'Biblioteca', icon: '▢', action: onLibraryClick }, // Ahora ejecuta la acción
-    { name: 'Perfil', icon: '○', action: () => {} },
+    { name: 'Biblioteca', icon: '▢', action: onLibraryClick },
+    { name: 'Perfil', icon: '○', action: onProfileClick }, // Vinculado a onProfileClick
   ];
 
   return (
@@ -39,7 +48,7 @@ const Navigation: React.FC<NavigationProps> = ({
             <span className="menu-icon">{item.icon}</span>
             <span className="menu-text">{item.name}</span>
             
-            {/* El puntito celeste que pediste */}
+            {/* El puntito celeste indicador de sección activa */}
             {activeName === item.name && <div className="active-dot" />}
           </div>
         ))}

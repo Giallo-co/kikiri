@@ -6,6 +6,7 @@ import Navigation from './components/Navigation/Navigation';
 import NodeInfoPanel from './components/NodeInfoPanels/NodeInfoPanel';
 import SearchModal from './components/Search/SearchModal';
 import LibraryView from './components/Library/LibraryView'; 
+import ProfileView from './components/Profile/ProfileView'; // Importamos el nuevo perfil
 import { graphConfig } from './graphConfig'
 import type { NodeDatum, LinkDatum, RawNode } from './types/graph'
 import type { Music } from "./types/music";
@@ -66,22 +67,30 @@ export default function App() {
   const [autoPlay, setAutoPlay] = useState(false)
   const [history, setHistory] = useState<string[]>([])
   const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [isProfileOpen, setIsProfileOpen] = useState(false) // Nuevo estado Perfil
   
-  // --- ESTADOS DE VISTA Y LIKES ---
   const [view, setView] = useState<'home' | 'library'>('home')
+  const [activeLibraryCollection, setActiveLibraryCollection] = useState<string | null>(null);
   const [likedSongIds, setLikedSongIds] = useState<Set<string>>(new Set())
   
   const esRef = useRef<EventSource | null>(null)
   const selectedNode = rawNodes.find(n => n.node_id === selectedNodeId) || null;
 
-  // --- NAVEGACIÓN ---
   const handleGoHome = () => {
     setView('home');
     setSelectedNodeId(null);
+    setActiveLibraryCollection(null);
+    setIsProfileOpen(false);
   };
 
   const handleGoLibrary = () => {
     setView('library');
+    setActiveLibraryCollection(null);
+    setIsProfileOpen(false);
+  };
+
+  const handleEnterCollection = (collectionId: string) => {
+    setActiveLibraryCollection(collectionId);
   };
 
   const handleToggleLike = (track: Music) => {
@@ -121,19 +130,40 @@ export default function App() {
   }
 
   const handleNodeClick = (nodeId: string, content: any) => {
-    // Si estamos en la biblioteca y hacemos clic en una canción, volvemos al home
-    if (view === 'library') {
-        setView('home');
+    if (nodeId.startsWith('col-')) {
+        handleEnterCollection(nodeId);
+        return; 
+    }
+    if (content?.music_id) {
+        handleTrackChange(content as Music, nodeId)
     }
     setSelectedNodeId(nodeId)
-    if (content && content.music_id) {
-      handleTrackChange(content as Music, nodeId)
-    }
   }
 
   const handleDeselect = () => {
     setSelectedNodeId(null)
   }
+
+  const getFilteredGraphData = (): GraphData | null => {
+    if (!graphData) return null;
+    
+    if (activeLibraryCollection === 'col-1') {
+      const filteredNodes = graphData.nodes.filter(node => {
+        const content = node.content as any;
+        return content && content.music_id && likedSongIds.has(content.music_id);
+      });
+
+      const nodeIds = new Set(filteredNodes.map(n => n.id));
+      const filteredLinks = graphData.links.filter(l => {
+        const sourceId = typeof l.source === 'string' ? l.source : (l.source as any).id;
+        const targetId = typeof l.target === 'string' ? l.target : (l.target as any).id;
+        return nodeIds.has(sourceId) && nodeIds.has(targetId);
+      });
+
+      return { nodes: filteredNodes, links: filteredLinks };
+    }
+    return graphData;
+  };
 
   const handleLoginSuccess = () => {
     setIsTransitioning(true);
@@ -144,7 +174,6 @@ export default function App() {
     }, 800);
   }
 
-  // --- REPRODUCTOR ---
   const handleNext = () => {
     if (!currentTrack || !rawNodes.length) return
     const currentNode = rawNodes.find(rn => rn.node_id === selectedNodeId)
@@ -238,6 +267,17 @@ export default function App() {
     connect(); return () => { esRef.current?.close() }
   }, [isLoggedIn])
 
+  // --- LÓGICA DE FILTRADO PARA LA VISTA Y BÚSQUEDA ---
+  const currentDisplayData = activeLibraryCollection ? getFilteredGraphData() : graphData;
+
+  const searchNodes = activeLibraryCollection && currentDisplayData 
+    ? rawNodes.filter(rn => {
+        const isInView = currentDisplayData.nodes.some(n => n.id === rn.node_id);
+        const isMusic = rn.node_type === 'Music'; 
+        return isInView && isMusic;
+      })
+    : rawNodes;
+
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden', backgroundColor: '#111' }}>
       
@@ -246,16 +286,33 @@ export default function App() {
       )}
 
       <div style={{ width: '100%', height: '100%' }}>
-        {view === 'home' ? (
-          graphData && (
-            <GraphView
-              nodes={graphData.nodes}
-              links={graphData.links}
-              config={graphConfig}
-              selectedId={selectedNodeId}
-              onNodeClick={handleNodeClick}
-              onDeselect={handleDeselect}
-            />
+        {view === 'home' || activeLibraryCollection ? (
+          currentDisplayData && (
+            <>
+              <GraphView
+                nodes={currentDisplayData.nodes}
+                links={currentDisplayData.links}
+                config={graphConfig}
+                selectedId={selectedNodeId}
+                onNodeClick={handleNodeClick}
+                onDeselect={handleDeselect}
+              />
+              {activeLibraryCollection && (
+                <button 
+                  onClick={handleGoLibrary}
+                  style={{
+                    position: 'absolute', top: '20px', left: '50%', transform: 'translateX(-50%)',
+                    zIndex: 200, padding: '10px 20px', borderRadius: '20px',
+                    backgroundColor: 'rgba(20, 20, 20, 0.8)', color: 'white', 
+                    border: '1px solid rgba(0, 242, 255, 0.5)',
+                    cursor: 'pointer', backdropFilter: 'blur(10px)',
+                    fontSize: '12px', letterSpacing: '1px', textTransform: 'uppercase'
+                  }}
+                >
+                  ← Volver a Biblioteca
+                </button>
+              )}
+            </>
           )
         ) : (
           <LibraryView 
@@ -275,17 +332,33 @@ export default function App() {
             onHomeClick={handleGoHome} 
             onSearchClick={() => setIsSearchOpen(true)}
             onLibraryClick={handleGoLibrary}
-            currentView={view} // Pasamos la vista actual para el puntito celeste
+            onProfileClick={() => setIsProfileOpen(true)} // Nueva función
+            currentView={activeLibraryCollection ? 'library' : view} 
           />
 
           <SearchModal 
             isOpen={isSearchOpen} 
             onClose={() => setIsSearchOpen(false)}
-            nodes={rawNodes}
+            nodes={searchNodes} 
             onSelect={handleNodeClick}
+            currentView={activeLibraryCollection ? 'library' : view} 
           />
 
-          {view === 'home' && <NodeInfoPanel selectedNode={selectedNode} />}
+          {isProfileOpen && (
+            <ProfileView 
+              onClose={() => setIsProfileOpen(false)}
+              user={{
+                name: "Nebula User",
+                email: "user@nebula.ai",
+                stats: {
+                  likedCount: likedSongIds.size,
+                  collectionsCount: 3
+                }
+              }}
+            />
+          )}
+
+          {(view === 'home' || activeLibraryCollection) && <NodeInfoPanel selectedNode={selectedNode} />}
 
           <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', zIndex: 100 }}>
             <PlayerBar 
