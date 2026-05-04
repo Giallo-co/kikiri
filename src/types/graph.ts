@@ -46,4 +46,7 @@ export interface GraphConfig {
   linkForce: number
   linkDistance: number
   showLabels: boolean
+  innerExclusionRadius: number
+  outerExclusionRadius: number
+  enableOuterExclusion: boolean
 }

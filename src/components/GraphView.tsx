@@ -19,8 +19,6 @@ const LINK_BASE = '#b0aca6'
 const LINK_SELECTED = '#ab90df'
 const FOCUS_ZOOM_LEVEL = 3.5 // variable to control zoom depth
 const DESELECT_ZOOM_LEVEL = 0.4 // variable to control zoom when deselecting
-const CENTER_EXCLUSION_RADIUS = 400 // radius of the "invisible wall" in the center
-const ENABLE_CENTER_EXCLUSION = false // Global toggle for the center circle
 const EXCLUSION_ACTIVATION_DELAY = 2000 // ms to wait before activating the exclusion zone
 const LINK_EXCLUSION_OPACITY = 0.2 // opacity of links when passing through the center (0 to 1)
 const EXCLUSION_TRANSITION_SPEED = 200 // speed at which the exclusion radius changes (pixels per tick)
@@ -45,6 +43,12 @@ export default function GraphView({ nodes, links, config, selectedId, isLoggedIn
   const isSelectedRef = useRef(false)
   const isRadiusSuppressedRef = useRef(false)
   const maskCircleRef = useRef<d3.Selection<SVGCircleElement, unknown, null, undefined> | null>(null)
+  const maskOuterCircleRef = useRef<d3.Selection<SVGCircleElement, unknown, null, undefined> | null>(null)
+  const configRef = useRef(config)
+
+  useEffect(() => {
+    configRef.current = config
+  }, [config])
 
   useEffect(() => {
     const wasSelected = isSelectedRef.current
@@ -118,6 +122,14 @@ export default function GraphView({ nodes, links, config, selectedId, isLoggedIn
       .attr('r', 0)
       .attr('fill', maskColor)
 
+    maskOuterCircleRef.current = mask.append('circle')
+      .attr('cx', width / 2)
+      .attr('cy', visualCenterY)
+      .attr('r', config.outerExclusionRadius + 5000)
+      .attr('stroke-width', 10000)
+      .attr('stroke', maskColor)
+      .attr('fill', 'none')
+
     const g = svg.append('g')
     gRef.current = g
 
@@ -144,7 +156,7 @@ export default function GraphView({ nodes, links, config, selectedId, isLoggedIn
       .force('exclusion', () => {
         if (!exclusionActiveRef.current) return
         
-        const targetRadius = (ENABLE_CENTER_EXCLUSION && !isRadiusSuppressedRef.current) ? CENTER_EXCLUSION_RADIUS : 0
+        const targetRadius = !isRadiusSuppressedRef.current ? configRef.current.innerExclusionRadius : 0
         
         if (currentExclusionRadiusRef.current < targetRadius) {
           currentExclusionRadiusRef.current = Math.min(targetRadius, currentExclusionRadiusRef.current + EXCLUSION_TRANSITION_SPEED)
@@ -156,19 +168,39 @@ export default function GraphView({ nodes, links, config, selectedId, isLoggedIn
         if (maskCircleRef.current) {
           maskCircleRef.current.attr('r', isRadiusSuppressedRef.current ? 0 : currentExclusionRadiusRef.current)
         }
-
-        if (currentExclusionRadiusRef.current <= 0 || isRadiusSuppressedRef.current) return
+        if (maskOuterCircleRef.current) {
+          maskOuterCircleRef.current.attr('r', isRadiusSuppressedRef.current ? 0 : configRef.current.outerExclusionRadius + 5000)
+        }
 
         const cx = width / 2
         const cy = visualCenterY
         const currentNodes = simulation.nodes()
+        const innerRadius = isRadiusSuppressedRef.current ? 0 : currentExclusionRadiusRef.current
+        const outerRadius = isRadiusSuppressedRef.current ? Infinity : configRef.current.outerExclusionRadius
+
         for (let i = 0, n = currentNodes.length; i < n; ++i) {
           const node = currentNodes[i]
-          const dx = (node.x || 0) - cx
-          const dy = (node.y || 0) - cy
-          const dist = Math.sqrt(dx * dx + dy * dy)
-          if (dist < currentExclusionRadiusRef.current) {
-            const ratio = currentExclusionRadiusRef.current / (dist || 1)
+          let dx = (node.x || 0) - cx
+          let dy = (node.y || 0) - cy
+          let dist = Math.sqrt(dx * dx + dy * dy)
+
+          // If node is exactly at the center, nudge it slightly so forces can work
+          if (dist === 0) {
+            node.x = cx + (Math.random() - 0.5) * 2
+            node.y = cy + (Math.random() - 0.5) * 2
+            continue
+          }
+
+          // Inner exclusion (push out)
+          if (innerRadius > 0 && dist < innerRadius) {
+            const ratio = innerRadius / dist
+            node.x = cx + dx * ratio
+            node.y = cy + dy * ratio
+          }
+
+          // Outer exclusion (pull in)
+          if (configRef.current.enableOuterExclusion && outerRadius !== Infinity && dist > outerRadius) {
+            const ratio = outerRadius / dist
             node.x = cx + dx * ratio
             node.y = cy + dy * ratio
           }

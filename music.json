@@ -1805,7 +1805,7 @@
     "node_name": "Brutal",
     "node_type": "Music",
     "color": "#7775BF",
-    "node_content": "{\"music_id\":\"48\",\"music_name\":\"Brutal\",\"music_description\":\"Brutal from Olivia Rodrigo\",\"music_author\":\"Olivia Rodrigo\",\"music_cover_url\":\"http://localhost:9000/music-cover/olivia-rodrigo/sour.png\",\"music_url\":\"http://localhost:9000/music/olivia-rodrigo/sour/01-brutal.mp3\",\"music_album\":\"Sour\",\"likes\":0,\"views\":0,\"shares\":0,\"comments\":0}",
+    "node_content": "{\"music_id\":\"48\",\"music_name\":\"Brutal\",\"music_description\":\"Brutal from via Rodrigo\",\"music_author\":\"Olivia Rodrigo\",\"music_cover_url\":\"http://localhost:9000/music-cover/olivia-rodrigo/sour.png\",\"music_url\":\"http://localhost:9000/music/olivia-rodrigo/sour/01-brutal.mp3\",\"music_album\":\"Sour\",\"likes\":0,\"views\":0,\"shares\":0,\"comments\":0}",
     "node_tag_links": {
       "next": [],
       "previous": []

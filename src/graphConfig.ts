@@ -9,4 +9,7 @@ export const graphConfig: GraphConfig = {
   linkForce: 0.4,
   linkDistance: 60,
   showLabels: true,
+  innerExclusionRadius: 0,
+  outerExclusionRadius: 600,
+  enableOuterExclusion: true,
 }
