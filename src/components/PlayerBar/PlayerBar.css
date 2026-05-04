@@ -246,3 +246,25 @@
   transition: opacity 0.15s ease, transform 0.15s ease;
   pointer-events: none;
 }
+
+/* Estilos para el botón de Like */
+.player-social-btns .ctrl-btn {
+  color: #b3b3b3; /* Color gris base para que sea visible */
+  transition: color 0.2s ease, transform 0.1s ease;
+}
+
+/* Efecto hover (opcional, para feedback) */
+.player-social-btns .ctrl-btn:hover {
+  color: #ffffff;
+  transform: scale(1.05);
+}
+
+/* Clase que se activa cuando isLiked es true */
+.player-social-btns .ctrl-btn.active-like {
+  color: #ff4b4b; /* Color rojo brillante */
+}
+
+/* Efecto de pulsación al hacer clic */
+.player-social-btns .ctrl-btn:active {
+  transform: scale(0.95);
+}

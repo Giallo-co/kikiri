@@ -9,6 +9,9 @@ interface Props {
   onNext?: () => void;
   onPrevious?: () => void;
   onShuffle?: () => void;
+  // Propiedades para la funcionalidad de Biblioteca
+  isLiked?: boolean;
+  onToggleLike?: (track: Music) => void;
 }
 
 function formatTime(s: number): string {
@@ -23,7 +26,15 @@ function calcRatio(e: MouseEvent | React.MouseEvent, el: HTMLElement): number {
   return Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
 }
 
-export default function PlayerBar({ track, autoPlay = false, onNext, onPrevious, onShuffle }: Props) {
+export default function PlayerBar({ 
+  track, 
+  autoPlay = false, 
+  onNext, 
+  onPrevious, 
+  onShuffle,
+  isLiked = false,
+  onToggleLike 
+}: Props) {
   const { isPlaying, currentTime, duration, volume, isMuted, togglePlay, seek, changeVolume, toggleMute, restart } =
     useAudioPlayer(track, autoPlay, onNext);
   const [imgError, setImgError] = useState(false);
@@ -153,11 +164,27 @@ export default function PlayerBar({ track, autoPlay = false, onNext, onPrevious,
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
           </button>
-          <button className="ctrl-btn small-btn" aria-label="Like">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+          
+          {/* BOTÓN LIKE CORREGIDO */}
+          <button 
+            className={`ctrl-btn small-btn ${isLiked ? 'active-like' : ''}`} 
+            onClick={() => track && onToggleLike?.(track)}
+            aria-label="Like"
+            style={{ 
+              color: isLiked ? '#ff4b4b' : '#b3b3b3',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <svg 
+              viewBox="0 0 24 24" 
+              fill={isLiked ? "currentColor" : "none"} 
+              stroke="currentColor" 
+              strokeWidth="1.8"
+            >
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
             </svg>
           </button>
+
           <button className="ctrl-btn small-btn" aria-label="Share">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
               <circle cx="18" cy="5" r="3" />

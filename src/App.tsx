@@ -4,7 +4,8 @@ import PlayerBar from "./components/PlayerBar/PlayerBar";
 import Login from "./components/Login/Login";
 import Navigation from './components/Navigation/Navigation';
 import NodeInfoPanel from './components/NodeInfoPanels/NodeInfoPanel';
-import SearchModal from './components/Search/SearchModal'; // Asegúrate de crear este archivo
+import SearchModal from './components/Search/SearchModal';
+import LibraryView from './components/Library/LibraryView'; 
 import { graphConfig } from './graphConfig'
 import type { NodeDatum, LinkDatum, RawNode } from './types/graph'
 import type { Music } from "./types/music";
@@ -64,18 +65,35 @@ export default function App() {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
   const [autoPlay, setAutoPlay] = useState(false)
   const [history, setHistory] = useState<string[]>([])
-  const [isSearchOpen, setIsSearchOpen] = useState(false) // Estado para el buscador
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  
+  // --- ESTADOS DE VISTA Y LIKES ---
+  const [view, setView] = useState<'home' | 'library'>('home')
+  const [likedSongIds, setLikedSongIds] = useState<Set<string>>(new Set())
+  
   const esRef = useRef<EventSource | null>(null)
-
   const selectedNode = rawNodes.find(n => n.node_id === selectedNodeId) || null;
 
-  // --- LOGICA DE NAVEGACION ---
+  // --- NAVEGACIÓN ---
   const handleGoHome = () => {
-    setSelectedNodeId(null); // Esto dispara el zoom-out en GraphView
+    setView('home');
+    setSelectedNodeId(null);
   };
 
-  const handleOpenSearch = () => {
-    setIsSearchOpen(true);
+  const handleGoLibrary = () => {
+    setView('library');
+  };
+
+  const handleToggleLike = (track: Music) => {
+    setLikedSongIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(track.music_id)) {
+        newSet.delete(track.music_id);
+      } else {
+        newSet.add(track.music_id);
+      }
+      return newSet;
+    });
   };
 
   const handleTrackChange = (track: Music, nodeId?: string, addToHistory = true) => {
@@ -122,7 +140,7 @@ export default function App() {
     }, 800);
   }
 
-  // --- BOTONES DE REPRODUCTOR ---
+  // --- REPRODUCTOR ---
   const handleNext = () => {
     if (!currentTrack || !rawNodes.length) return
     const currentNode = rawNodes.find(rn => rn.node_id === selectedNodeId)
@@ -170,7 +188,6 @@ export default function App() {
       if (!randomTag) return
       setSelectedNodeId(randomTag.node_id)
       await delay(SHUFFLE_STEP_DELAY)
-      // Simulación de flujo simplificada para shuffle
     }
     await startFullFlow()
   }
@@ -225,14 +242,25 @@ export default function App() {
       )}
 
       <div style={{ width: '100%', height: '100%' }}>
-        {graphData && (
-          <GraphView
-            nodes={graphData.nodes}
-            links={graphData.links}
-            config={graphConfig}
-            selectedId={selectedNodeId}
+        {view === 'home' ? (
+          graphData && (
+            <GraphView
+              nodes={graphData.nodes}
+              links={graphData.links}
+              config={graphConfig}
+              selectedId={selectedNodeId}
+              onNodeClick={handleNodeClick}
+              onDeselect={handleDeselect}
+            />
+          )
+        ) : (
+          <LibraryView 
+            likedSongs={rawNodes.filter(n => {
+                let content = n.node_content;
+                if (typeof content === 'string') try { content = JSON.parse(content) } catch {}
+                return content && likedSongIds.has((content as any).music_id);
+            })}
             onNodeClick={handleNodeClick}
-            onDeselect={handleDeselect}
           />
         )}
       </div>
@@ -241,7 +269,8 @@ export default function App() {
         <>
           <Navigation 
             onHomeClick={handleGoHome} 
-            onSearchClick={handleOpenSearch} 
+            onSearchClick={() => setIsSearchOpen(true)}
+            onLibraryClick={handleGoLibrary} 
           />
 
           <SearchModal 
@@ -251,15 +280,7 @@ export default function App() {
             onSelect={handleNodeClick}
           />
 
-          <NodeInfoPanel selectedNode={selectedNode} />
-
-          <div style={{
-            position: 'absolute', top: 12, right: 16, fontSize: 11,
-            fontFamily: 'monospace', color: connected ? '#6dbf8a' : '#cf6679',
-            letterSpacing: '0.05em', zIndex: 10,
-          }}>
-            {connected ? 'live' : 'reconnecting...'}
-          </div>
+          {view === 'home' && <NodeInfoPanel selectedNode={selectedNode} />}
 
           <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', zIndex: 100 }}>
             <PlayerBar 
@@ -268,6 +289,8 @@ export default function App() {
               onNext={handleNext}
               onPrevious={handlePrevious}
               onShuffle={handleShuffle}
+              isLiked={likedSongIds.has(currentTrack?.music_id || "")}
+              onToggleLike={handleToggleLike}
             />
           </div>
         </>

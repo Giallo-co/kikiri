@@ -4,6 +4,7 @@ import './Navigation.css';
 interface NavigationProps {
   onHomeClick: () => void;
   onSearchClick: () => void;
+  onLibraryClick: () => void;
   activeSection?: string;
 }
 
