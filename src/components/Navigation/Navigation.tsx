@@ -1,25 +1,34 @@
 import React from 'react';
 import './Navigation.css';
 
-// Usaremos strings para los iconos si no tienes una librería de iconos instalada, 
-// o puedes usar Lucide-React que es muy limpia.
-const Navigation = () => {
+interface NavigationProps {
+  onHomeClick: () => void;
+  onSearchClick: () => void;
+  activeSection?: string;
+}
+
+const Navigation: React.FC<NavigationProps> = ({ onHomeClick, onSearchClick, activeSection = 'Inicio' }) => {
   const menuItems = [
-    { name: 'Inicio', icon: '◈' },
-    { name: 'Explorar', icon: '◎' },
-    { name: 'Buscar', icon: '◇' },
-    { name: 'Biblioteca', icon: '▢' },
-    { name: 'Perfil', icon: '○' },
+    { name: 'Inicio', icon: '◈', action: onHomeClick },
+    { name: 'Explorar', icon: '◎', action: () => {} }, // Por ahora vacíos
+    { name: 'Buscar', icon: '◇', action: onSearchClick },
+    { name: 'Biblioteca', icon: '▢', action: () => {} },
+    { name: 'Perfil', icon: '○', action: () => {} },
   ];
 
   return (
     <nav className="orbital-menu">
       <div className="menu-container">
         {menuItems.map((item) => (
-          <div key={item.name} className="menu-item">
+          <div 
+            key={item.name} 
+            className={`menu-item ${activeSection === item.name ? 'active' : ''}`}
+            onClick={item.action}
+            style={{ cursor: 'pointer' }}
+          >
             <span className="menu-icon">{item.icon}</span>
             <span className="menu-text">{item.name}</span>
-            <div className="active-dot" />
+            {activeSection === item.name && <div className="active-dot" />}
           </div>
         ))}
       </div>
