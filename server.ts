@@ -10,6 +10,7 @@ const NODES_FILE = path.resolve('./nodes.json')
 
 app.use(cors())
 app.use(express.json())
+app.use('/content', express.static(path.resolve('./uploads')));
 
 const clients = new Set<express.Response>()
 

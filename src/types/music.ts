@@ -6,6 +6,8 @@ export interface Music {
   music_cover_url: string;
   music_url: string;
   music_album: string;
+  music_genre?: string;
+  music_year?: number;
   likes: number;
   views: number;
   shares: number;

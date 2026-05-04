@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import GraphView from './components/GraphView'
 import PlayerBar from "./components/PlayerBar/PlayerBar";
 import Login from "./components/Login/Login";
-import Navigation from './components/Navigation/Navigation'; // Importación del nuevo menú
+import Navigation from './components/Navigation/Navigation';
+import NodeInfoPanel from './components/NodeInfoPanels/NodeInfoPanel'; // Importamos el panel de tarjetas
 import { graphConfig } from './graphConfig'
 import type { NodeDatum, LinkDatum, RawNode } from './types/graph'
 import type { Music } from "./types/music";
@@ -21,7 +22,7 @@ const DEFAULT_TRACK: Music = {
   comments: 0,
 }
 
-const SHUFFLE_STEP_DELAY = 900; // ms between steps
+const SHUFFLE_STEP_DELAY = 900;
 
 interface GraphData {
   nodes: NodeDatum[]
@@ -63,6 +64,9 @@ export default function App() {
   const [autoPlay, setAutoPlay] = useState(false)
   const [history, setHistory] = useState<string[]>([])
   const esRef = useRef<EventSource | null>(null)
+
+  // Buscamos el objeto de nodo completo basado en el ID seleccionado para las tarjetas
+  const selectedNode = rawNodes.find(n => n.node_id === selectedNodeId) || null;
 
   const handleTrackChange = (track: Music, nodeId?: string, addToHistory = true) => {
     let targetNodeId = nodeId
@@ -163,7 +167,6 @@ export default function App() {
 
   const handleShuffle = async () => {
     if (!rawNodes.length) return
-
     const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
     const getRandom = <T,>(arr: T[]): T | null => arr.length > 0 ? arr[Math.floor(Math.random() * arr.length)] : null
 
@@ -185,69 +188,40 @@ export default function App() {
       const tags = rawNodes.filter(n => n.node_type === "Tag" && (n.node_author_links?.next?.length ?? 0) > 0)
       const randomTag = getRandom(tags.length > 0 ? tags : rawNodes.filter(n => n.node_type === "Tag"))
       if (!randomTag) return false
-
       setSelectedNodeId(randomTag.node_id)
       await delay(SHUFFLE_STEP_DELAY)
-
       const randomAuthor = findAuthorFromTag(randomTag)
       if (!randomAuthor) return await startFullFlow() 
-
       setSelectedNodeId(randomAuthor.node_id)
       await delay(SHUFFLE_STEP_DELAY)
-
       const randomMusic = findMusicFromAuthor(randomAuthor)
       if (!randomMusic) return await startFullFlow() 
-
       const content = typeof randomMusic.node_content === 'string' ? JSON.parse(randomMusic.node_content) : randomMusic.node_content
       handleTrackChange(content, randomMusic.node_id)
       return true
     }
 
-    if (!currentNode) {
-      await startFullFlow()
-      return
-    }
+    if (!currentNode) { await startFullFlow(); return; }
 
     if (currentNode.node_type === "Tag") {
       const randomAuthor = findAuthorFromTag(currentNode)
-      if (!randomAuthor) {
-        await startFullFlow() 
-        return
-      }
+      if (!randomAuthor) { await startFullFlow(); return; }
       setSelectedNodeId(randomAuthor.node_id)
       await delay(SHUFFLE_STEP_DELAY)
       const randomMusic = findMusicFromAuthor(randomAuthor)
-      if (!randomMusic) {
-        await startFullFlow()
-        return
-      }
+      if (!randomMusic) { await startFullFlow(); return; }
       const content = typeof randomMusic.node_content === 'string' ? JSON.parse(randomMusic.node_content) : randomMusic.node_content
       handleTrackChange(content, randomMusic.node_id)
-      return
-    }
-
-    if (currentNode.node_type === "Author") {
+    } else if (currentNode.node_type === "Author") {
       const randomMusic = findMusicFromAuthor(currentNode)
-      if (!randomMusic) {
-        await startFullFlow()
-        return
-      }
+      if (!randomMusic) { await startFullFlow(); return; }
       const content = typeof randomMusic.node_content === 'string' ? JSON.parse(randomMusic.node_content) : randomMusic.node_content
       handleTrackChange(content, randomMusic.node_id)
-      return
-    }
-
-    if (currentNode.node_type === "Music") {
-      const relatedIds = [
-        ...(currentNode.node_tag_links?.next || []),
-        ...(currentNode.node_author_links?.next || [])
-      ]
+    } else if (currentNode.node_type === "Music") {
+      const relatedIds = [...(currentNode.node_tag_links?.next || []), ...(currentNode.node_author_links?.next || [])]
       const relatedNodes = rawNodes.filter(n => relatedIds.includes(n.node_id))
       const randomRelated = getRandom(relatedNodes)
-      if (!randomRelated) {
-        await startFullFlow()
-        return
-      }
+      if (!randomRelated) { await startFullFlow(); return; }
       setSelectedNodeId(randomRelated.node_id)
       await delay(SHUFFLE_STEP_DELAY)
       if (randomRelated.node_type === "Tag") {
@@ -265,7 +239,6 @@ export default function App() {
         const content = typeof randomMusic.node_content === 'string' ? JSON.parse(randomMusic.node_content) : randomMusic.node_content
         handleTrackChange(content, randomMusic.node_id)
       }
-      return
     }
   }
 
@@ -274,18 +247,13 @@ export default function App() {
     const connect = () => {
       const es = new EventSource('/api/nodes/stream')
       esRef.current = es
-      es.onopen = () => {
-        setConnected(true)
-        setError(null)
-      }
+      es.onopen = () => { setConnected(true); setError(null); }
       es.onmessage = (event) => {
         try {
           const parsed = JSON.parse(event.data)
           if (parsed.__type === 'track') {
             const track = parsed.track as Music
-            if (track && track.music_id) {
-              setCurrentTrack(track)
-            }
+            if (track && track.music_id) setCurrentTrack(track)
             return
           }
           const incomingNodes: RawNode[] = parsed
@@ -293,50 +261,27 @@ export default function App() {
             setRawNodes(incomingNodes)
             const nodes: NodeDatum[] = incomingNodes.map(rn => {
               let content = rn.node_content
-              if (typeof content === 'string') {
-                try { content = JSON.parse(content) } catch {}
-              }
-              return {
-                id: rn.node_id,
-                name: rn.node_name,
-                color: rn.color,
-                content
-              }
+              if (typeof content === 'string') { try { content = JSON.parse(content) } catch {} }
+              return { id: rn.node_id, name: rn.node_name, color: rn.color, content }
             })
             const links: LinkDatum[] = []
             const nodeIds = new Set(incomingNodes.map(rn => rn.node_id))
             incomingNodes.forEach(rn => {
               const allLinks = [
-                ...(rn.node_tag_links?.next || []),
-                ...(rn.node_tag_links?.previous || []),
-                ...(rn.node_music_links?.next || []),
-                ...(rn.node_music_links?.previous || []),
-                ...(rn.node_author_links?.next || []),
-                ...(rn.node_author_links?.previous || []),
-                ...(rn.node_album_links?.next || []),
-                ...(rn.node_album_links?.previous || [])
+                ...(rn.node_tag_links?.next || []), ...(rn.node_tag_links?.previous || []),
+                ...(rn.node_music_links?.next || []), ...(rn.node_music_links?.previous || []),
+                ...(rn.node_author_links?.next || []), ...(rn.node_author_links?.previous || []),
+                ...(rn.node_album_links?.next || []), ...(rn.node_album_links?.previous || [])
               ]
-              allLinks.forEach(targetId => {
-                if (nodeIds.has(targetId)) {
-                  links.push({ source: rn.node_id, target: targetId })
-                }
-              })
+              allLinks.forEach(targetId => { if (nodeIds.has(targetId)) links.push({ source: rn.node_id, target: targetId }) })
             })
             setGraphData({ nodes, links })
           }
-        } catch (e) {
-          setError('parse error')
-        }
+        } catch (e) { setError('parse error') }
       }
-      es.onerror = () => {
-        setConnected(false)
-        setError('connection error')
-        es.close()
-        setTimeout(connect, 2000)
-      }
+      es.onerror = () => { setConnected(false); setError('connection error'); es.close(); setTimeout(connect, 2000); }
     }
-    connect()
-    return () => { esRef.current?.close() }
+    connect(); return () => { esRef.current?.close() }
   }, [isLoggedIn])
 
   return (
@@ -361,8 +306,10 @@ export default function App() {
 
       {isLoggedIn && (
         <>
-          {/* Menu de Navegación Orbital/Flotante */}
           <Navigation />
+
+          {/* Renderizado de las Tarjetas Informativas */}
+          <NodeInfoPanel selectedNode={selectedNode} />
 
           <div style={{
             position: 'absolute', top: 12, right: 16, fontSize: 11,
