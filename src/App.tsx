@@ -430,14 +430,11 @@ export default function App() {
       const userNode = { ...newUserNodes[userIdx] }
       
       const likes = userNode.node_music_likes || []
-      const links = userNode.node_music_links_next || []
 
       if (likes.includes(trackId)) {
         userNode.node_music_likes = likes.filter((id: string) => id !== trackId)
-        userNode.node_music_links_next = links.filter((id: string) => id !== trackId)
       } else {
         userNode.node_music_likes = [...likes, trackId]
-        userNode.node_music_links_next = [...links, trackId]
       }
 
       newUserNodes[userIdx] = userNode

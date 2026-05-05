@@ -139,24 +139,21 @@ app.post('/api/like', async (req, res) => {
 
     const nodeId = userNode.node_id;
     let likes = userNode.node_music_likes || [];
-    let links = userNode.node_music_links_next || [];
 
     if (likes.includes(musicNodeId)) {
       likes = likes.filter((id: string) => id !== musicNodeId);
-      links = links.filter((id: string) => id !== musicNodeId);
     } else {
       likes.push(musicNodeId);
-      links.push(musicNodeId);
     }
 
     const putCommand = new PutCommand({
       TableName: "node",
-      Item: { ...userNode, node_music_likes: likes, node_music_links_next: links }
+      Item: { ...userNode, node_music_likes: likes }
     });
     await docClient.send(putCommand);
 
     console.log(`[Backend] User ${username} toggled like for music node ${musicNodeId}`);
-    res.json({ message: "Success", likes, links });
+    res.json({ message: "Success", likes });
   } catch (error) {
     console.error("Error toggling like in DynamoDB:", error);
     res.status(500).json({ error: "Failed to update likes" });
