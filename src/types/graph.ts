@@ -69,4 +69,5 @@ export interface GraphConfig {
   enableOuterExclusion: boolean
   isOuterBoundaryDynamic: boolean
   enableMasking: boolean
+  searchBarWidth: number
 }

@@ -1,7 +1,8 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import * as d3 from 'd3'
 import type { NodeDatum, LinkDatum, GraphConfig } from '../types/graph'
 import type { Music } from '../types/music'
+import './GraphView.css'
 
 interface Props {
   nodes: NodeDatum[]
@@ -49,6 +50,8 @@ export default function GraphView({ nodes, links, config, selectedId, fixedNodeI
   const maskOuterCircleRef = useRef<d3.Selection<SVGCircleElement, unknown, null, undefined> | null>(null)
   const configRef = useRef(config)
   const fixedNodeIdRef = useRef(fixedNodeId)
+  const [showSearchBar, setShowSearchBar] = useState(false)
+  const searchInputRef = useRef<HTMLInputElement>(null)
 
   // Variable para configurar el objetivo del enfoque. Si es null, se enfoca el centro visual.
   const focusTarget = { x: null, y: null };
@@ -57,6 +60,7 @@ export default function GraphView({ nodes, links, config, selectedId, fixedNodeI
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && (e.key === 'f' || e.key === 'F')) {
         e.preventDefault()
+        setShowSearchBar(true)
 
         // 1. Aumentar innerExclusionRadius a 400
         configRef.current = {
@@ -96,6 +100,11 @@ export default function GraphView({ nodes, links, config, selectedId, fixedNodeI
         if (simulationRef.current) {
           simulationRef.current.alpha(0.3).restart()
         }
+
+        // Focus the search input after a short delay
+        setTimeout(() => {
+          searchInputRef.current?.focus()
+        }, 100)
       }
     }
 
@@ -527,6 +536,7 @@ export default function GraphView({ nodes, links, config, selectedId, fixedNodeI
       clickTimer = setTimeout(() => {
         if (!event.defaultPrevented) {
           onDeselectRef.current?.()
+          setShowSearchBar(false)
 
           // Reset innerExclusionRadius to 0 on defocus
           configRef.current = {
@@ -595,9 +605,37 @@ export default function GraphView({ nodes, links, config, selectedId, fixedNodeI
   }, [nodes, links, config, selectedId, shouldFocus])
 
   return (
-    <svg
-      ref={svgRef}
-      style={{ width: '100%', height: '100%', display: 'block' }}
-    />
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      <svg
+        ref={svgRef}
+        style={{ width: '100%', height: '100%', display: 'block' }}
+      />
+      {showSearchBar && (
+        <div 
+          className="search-bar-container" 
+          style={{ width: config.searchBarWidth }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="search-input-wrapper">
+            <input 
+              ref={searchInputRef}
+              type="text" 
+              className="search-input" 
+              placeholder="Search"
+              autoFocus
+            />
+            <div className="search-icon">
+              <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </div>
+          </div>
+          <div className="search-subtitle">
+            Type keyword to search
+          </div>
+        </div>
+      )}
+    </div>
   )
 }

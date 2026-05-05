@@ -14,4 +14,5 @@ export const graphConfig: GraphConfig = {
   enableOuterExclusion: true,
   isOuterBoundaryDynamic: false, // Cámbialo a false para que la frontera sea permanente
   enableMasking: true,
-  }
+  searchBarWidth: 350,
+}
