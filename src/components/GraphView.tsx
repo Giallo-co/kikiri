@@ -442,31 +442,55 @@ export default function GraphView({ nodes, links, config, selectedId, shouldFocu
         exit => exit.remove()
       )
 
-    d3.select(svgRef.current).on('click', () => {
-      onDeselectRef.current?.()
-      if (zoomRef.current && svgRef.current) {
-        const rect = svgRef.current.getBoundingClientRect()
-        const visualCenterY = (rect.height - 72) / 2
-        d3.select(svgRef.current).transition().duration(750)
-          .call(
-            zoomRef.current.transform, 
-            d3.zoomIdentity
-              .translate(rect.width / 2, visualCenterY)
-              .scale(DESELECT_ZOOM_LEVEL)
-              .translate(-rect.width / 2, -visualCenterY)
-          )
+    const svg = d3.select(svgRef.current)
+    
+    // Clear any existing handlers
+    svg.on('click', null)
+    svg.on('dblclick', null)
+
+    let clickTimer: any = null
+
+    svg.on('click', (event) => {
+      // Small delay to see if a double click follows
+      if (clickTimer) {
+        clearTimeout(clickTimer)
+        clickTimer = null
+        return
       }
+
+      clickTimer = setTimeout(() => {
+        if (!event.defaultPrevented) {
+          onDeselectRef.current?.()
+          if (zoomRef.current && svgRef.current) {
+            const rect = svgRef.current.getBoundingClientRect()
+            const visualCenterY = (rect.height - 72) / 2
+            d3.select(svgRef.current).transition().duration(750)
+              .call(
+                zoomRef.current.transform, 
+                d3.zoomIdentity
+                  .translate(rect.width / 2, visualCenterY)
+                  .scale(DESELECT_ZOOM_LEVEL)
+                  .translate(-rect.width / 2, -visualCenterY)
+              )
+          }
+        }
+        clickTimer = null
+      }, 250) // Wait 250ms for a second click
     })
 
-    d3.select(svgRef.current).on('dblclick', (event) => {
+    svg.on('dblclick', (event) => {
       event.preventDefault()
+      if (clickTimer) {
+        clearTimeout(clickTimer)
+        clickTimer = null
+      }
+      
       if (selectedId) {
-        // Find current content of the selected node to re-trigger "manual" state in App
         const node = newNodes.find(n => n.id === selectedId)
         if (node) {
           onNodeClickRef.current(node.id, node.content)
+          zoomToNode(selectedId)
         }
-        zoomToNode(selectedId)
       }
     })
 
