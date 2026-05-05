@@ -50,6 +50,59 @@ export default function GraphView({ nodes, links, config, selectedId, fixedNodeI
   const configRef = useRef(config)
   const fixedNodeIdRef = useRef(fixedNodeId)
 
+  // Variable para configurar el objetivo del enfoque. Si es null, se enfoca el centro visual.
+  const focusTarget = { x: null, y: null };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'f' || e.key === 'F')) {
+        e.preventDefault()
+
+        // 1. Aumentar innerExclusionRadius a 400
+        configRef.current = {
+          ...configRef.current,
+          innerExclusionRadius: 400
+        }
+
+        // 2. Asegurarse de que el radio no esté suprimido (por ejemplo, deseleccionando)
+        if (selectedId) {
+          onDeselectRef.current?.()
+        }
+        isRadiusSuppressedRef.current = false
+
+        // 3. Enfocar el centro (o el objetivo configurable)
+        if (svgRef.current && zoomRef.current) {
+          const rect = svgRef.current.getBoundingClientRect()
+          const width = rect.width
+          const height = rect.height
+          const visualCenterY = (height - 72) / 2
+
+          const targetX = focusTarget.x ?? (width / 2)
+          const targetY = focusTarget.y ?? visualCenterY
+
+          d3.select(svgRef.current)
+            .transition()
+            .duration(750)
+            .call(
+              zoomRef.current.transform,
+              d3.zoomIdentity
+                .translate(width / 2, visualCenterY)
+                .scale(FOCUS_ZOOM_LEVEL)
+                .translate(-targetX, -targetY)
+            )
+        }
+
+        // 4. Reiniciar la simulación para aplicar el cambio de radio
+        if (simulationRef.current) {
+          simulationRef.current.alpha(0.3).restart()
+        }
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [selectedId])
+
   useEffect(() => {
     configRef.current = config
     fixedNodeIdRef.current = fixedNodeId
@@ -474,6 +527,16 @@ export default function GraphView({ nodes, links, config, selectedId, fixedNodeI
       clickTimer = setTimeout(() => {
         if (!event.defaultPrevented) {
           onDeselectRef.current?.()
+
+          // Reset innerExclusionRadius to 0 on defocus
+          configRef.current = {
+            ...configRef.current,
+            innerExclusionRadius: 0
+          }
+          if (simulationRef.current) {
+            simulationRef.current.alpha(0.3).restart()
+          }
+
           if (zoomRef.current && svgRef.current) {
             const rect = svgRef.current.getBoundingClientRect()
             const visualCenterY = (rect.height - 72) / 2

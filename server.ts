@@ -160,6 +160,76 @@ app.post('/api/like', async (req, res) => {
   }
 });
 
+app.post('/api/register', async (req, res) => {
+  const { username, realName, description } = req.body;
+  if (!username) {
+    return res.status(400).json({ error: 'Username is required' });
+  }
+
+  try {
+    const scanCommand = new ScanCommand({
+      TableName: "node",
+    });
+    const scanResult = await docClient.send(scanCommand);
+    const nodes = scanResult.Items || [];
+
+    // Check if user already exists
+    const exists = nodes.some(n => n.node_type === 'Author' && (n.node_name === username || n.author_name === username));
+    if (exists) {
+      return res.status(400).json({ error: 'User already exists' });
+    }
+
+    // Determine next IDs
+    let maxNodeId = 0;
+    let maxAuthorId = 0;
+    nodes.forEach(n => {
+      const nid = parseInt(n.node_id);
+      if (!isNaN(nid) && nid > maxNodeId) maxNodeId = nid;
+      
+      if (n.node_type === 'Author') {
+        const aid = parseInt(n.author_id);
+        if (!isNaN(aid) && aid > maxAuthorId) maxAuthorId = aid;
+      }
+    });
+
+    const newNodeId = String(maxNodeId + 1);
+    const newAuthorId = String(maxAuthorId + 1);
+
+    const newNode = {
+      "node_id": newNodeId,
+      "node_type": "Author",
+      "node_name": username,
+      "node_color": "#FF0000",
+      "node_music_links_next": [],
+      "node_music_links_previous": [],
+      "node_tag_links_next": [],
+      "node_tag_links_previous": [],
+      "node_author_links_next": [],
+      "node_author_links_previous": [],
+      "node_album_links_next": [],
+      "node_album_links_previous": [],
+      "author_id": newAuthorId,
+      "author_name": username,
+      "author_real_name": realName || username,
+      "author_description": description || "New user",
+      "author_profile_picture": "",
+      "node_music_likes": []
+    };
+
+    const putCommand = new PutCommand({
+      TableName: "node",
+      Item: newNode,
+    });
+    await docClient.send(putCommand);
+
+    console.log(`[Backend] New user registered and Author node created: ${username} (Node ID: ${newNodeId}, Author ID: ${newAuthorId})`);
+    res.status(201).json({ message: 'User registered successfully', node: newNode });
+  } catch (error) {
+    console.error("Error registering user in DynamoDB:", error);
+    res.status(500).json({ error: "Failed to register user" });
+  }
+});
+
 app.post('/api/music', async (req, res) => {
   try {
     const item = req.body

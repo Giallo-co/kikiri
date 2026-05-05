@@ -13,12 +13,40 @@ export default function Login({ onLogin, isTransitioning }: LoginProps) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (username && password === '123') {
-      onLogin(username);
+    setError('');
+
+    if (isRegister) {
+      try {
+        const response = await fetch('http://localhost:5002/api/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            username,
+            realName: username, // For now, use username as real name
+            description: 'New user joined the network'
+          }),
+        });
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || 'Registration failed');
+        }
+
+        // After successful registration, log them in
+        onLogin(username);
+      } catch (err: any) {
+        setError(err.message);
+      }
     } else {
-      setError('Invalid credentials');
+      if (username && password === '123') {
+        onLogin(username);
+      } else {
+        setError('Invalid credentials');
+      }
     }
   };
 
