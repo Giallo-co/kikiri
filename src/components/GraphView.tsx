@@ -8,6 +8,7 @@ interface Props {
   links: LinkDatum[]
   config: GraphConfig
   selectedId?: string | null
+  shouldFocus?: boolean
   isLoggedIn?: boolean
   onNodeClick: (nodeId: string, content: any) => void
   onDeselect?: () => void
@@ -28,7 +29,7 @@ const ENABLE_DYNAMIC_EXCLUSION = false // true: radius changes on selection, fal
 
 
 
-export default function GraphView({ nodes, links, config, selectedId, isLoggedIn, onNodeClick, onDeselect }: Props) {
+export default function GraphView({ nodes, links, config, selectedId, shouldFocus = true, isLoggedIn, onNodeClick, onDeselect }: Props) {
   const svgRef = useRef<SVGSVGElement>(null)
   const simulationRef = useRef<d3.Simulation<NodeDatum, undefined> | null>(null)
   const gRef = useRef<d3.Selection<SVGGElement, unknown, null, undefined> | null>(null)
@@ -462,9 +463,9 @@ export default function GraphView({ nodes, links, config, selectedId, isLoggedIn
     simulation.alpha(0.3).restart()
     updateHighlight()
 
-    if (selectedId) {
+    if (selectedId && shouldFocus) {
       setTimeout(() => zoomToNode(selectedId), 50)
-    } else if (svgRef.current && zoomRef.current) {
+    } else if (!selectedId && svgRef.current && zoomRef.current) {
       // Reset zoom to center when no node is selected and nodes change (e.g. after login)
       const rect = svgRef.current.getBoundingClientRect()
       const visualCenterY = (rect.height - 72) / 2
@@ -477,7 +478,7 @@ export default function GraphView({ nodes, links, config, selectedId, isLoggedIn
       )
     }
 
-  }, [nodes, links, config, selectedId])
+  }, [nodes, links, config, selectedId, shouldFocus])
 
   return (
     <svg

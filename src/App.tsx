@@ -60,11 +60,13 @@ export default function App() {
   const [error, setError] = useState<string | null>(null)
   const [currentTrack, setCurrentTrack] = useState<Music>(DEFAULT_TRACK)
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
+  const [isManualSelection, setIsManualSelection] = useState(false)
+  const [shouldFocus, setShouldFocus] = useState(true)
   const [autoPlay, setAutoPlay] = useState(false)
   const [history, setHistory] = useState<string[]>([])
   const esRef = useRef<EventSource | null>(null)
 
-  const handleTrackChange = (track: Music, nodeId?: string, addToHistory = true) => {
+  const handleTrackChange = (track: Music, nodeId?: string, addToHistory = true, focus = true) => {
     let targetNodeId = nodeId
 
     if (!targetNodeId) {
@@ -77,6 +79,7 @@ export default function App() {
         setHistory(prev => [...prev, selectedNodeId])
       }
       setSelectedNodeId(targetNodeId)
+      setShouldFocus(focus)
     }
 
     setAutoPlay(true)
@@ -85,13 +88,17 @@ export default function App() {
 
   const handleNodeClick = (nodeId: string, content: any) => {
     setSelectedNodeId(nodeId)
+    setIsManualSelection(true)
+    setShouldFocus(true)
     if (content && content.music_id) {
-      handleTrackChange(content as Music, nodeId)
+      handleTrackChange(content as Music, nodeId, true, true)
     }
   }
 
   const handleDeselect = () => {
     setSelectedNodeId(null)
+    setIsManualSelection(false)
+    setShouldFocus(true)
   }
 
   const handleLoginSuccess = () => {
@@ -106,43 +113,47 @@ export default function App() {
   const handleNext = () => {
     if (!currentTrack || !rawNodes.length) return
     const currentNode = rawNodes.find(rn => rn.node_id === selectedNodeId)
-    if (!currentNode) return
+    const baseNode = currentNode || rawNodes.find(rn => rn.music_id === currentTrack.music_id)
+    if (!baseNode) return
 
     // Priority 1: Use specific next link
-    if (currentNode.node_album_links_next?.length > 0) {
-      const nextId = currentNode.node_album_links_next[0]
+    if (baseNode.node_album_links_next?.length > 0) {
+      const nextId = baseNode.node_album_links_next[0]
       const nextNode = rawNodes.find(rn => rn.node_id === nextId)
       if (nextNode && nextNode.node_type === "Music") {
-        handleTrackChange(nextNode as unknown as Music, nextNode.node_id)
+        handleTrackChange(nextNode as unknown as Music, nextNode.node_id, true, isManualSelection)
         return
       }
     }
 
     // Priority 2: Fallback to Author node
-    if (currentNode.node_author_links_next?.length > 0) {
-      const authorId = currentNode.node_author_links_next[0]
+    if (baseNode.node_author_links_next?.length > 0) {
+      const authorId = baseNode.node_author_links_next[0]
       setSelectedNodeId(authorId)
+      setShouldFocus(isManualSelection)
     }
   }
 
   const handlePrevious = () => {
     if (!currentTrack || !rawNodes.length) return
     const currentNode = rawNodes.find(rn => rn.node_id === selectedNodeId)
-    if (!currentNode) return
+    const baseNode = currentNode || rawNodes.find(rn => rn.music_id === currentTrack.music_id)
+    if (!baseNode) return
 
-    if (currentNode.node_album_links_previous?.length > 0) {
-      const prevId = currentNode.node_album_links_previous[0]
+    if (baseNode.node_album_links_previous?.length > 0) {
+      const prevId = baseNode.node_album_links_previous[0]
       const prevNode = rawNodes.find(rn => rn.node_id === prevId)
       if (prevNode && prevNode.node_type === "Music") {
-        handleTrackChange(prevNode as unknown as Music, prevNode.node_id, false)
+        handleTrackChange(prevNode as unknown as Music, prevNode.node_id, false, isManualSelection)
         return
       }
     }
 
     // Fallback to Author node
-    if (currentNode.node_author_links_next?.length > 0) {
-      const authorId = currentNode.node_author_links_next[0]
+    if (baseNode.node_author_links_next?.length > 0) {
+      const authorId = baseNode.node_author_links_next[0]
       setSelectedNodeId(authorId)
+      setShouldFocus(isManualSelection)
     }
   }
 
@@ -174,18 +185,20 @@ export default function App() {
       if (!randomTag) return false
 
       setSelectedNodeId(randomTag.node_id)
+      setShouldFocus(isManualSelection)
       await delay(SHUFFLE_STEP_DELAY)
 
       const randomAuthor = findAuthorFromTag(randomTag)
       if (!randomAuthor) return await startFullFlow() // Retry if tag has no authors
 
       setSelectedNodeId(randomAuthor.node_id)
+      setShouldFocus(isManualSelection)
       await delay(SHUFFLE_STEP_DELAY)
 
       const randomMusic = findMusicFromAuthor(randomAuthor)
       if (!randomMusic) return await startFullFlow() // Retry if author has no music
 
-      handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id)
+      handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id, true, true)
       return true
     }
 
@@ -204,6 +217,7 @@ export default function App() {
       }
       
       setSelectedNodeId(randomAuthor.node_id)
+      setShouldFocus(isManualSelection)
       await delay(SHUFFLE_STEP_DELAY)
       
       const randomMusic = findMusicFromAuthor(randomAuthor)
@@ -212,7 +226,7 @@ export default function App() {
         return
       }
       
-      handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id)
+      handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id, true, true)
       return
     }
 
@@ -224,7 +238,7 @@ export default function App() {
         return
       }
       
-      handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id)
+      handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id, true, true)
       return
     }
 
@@ -243,6 +257,7 @@ export default function App() {
       }
 
       setSelectedNodeId(randomRelated.node_id)
+      setShouldFocus(isManualSelection)
       await delay(SHUFFLE_STEP_DELAY)
 
       if (randomRelated.node_type === "Tag") {
@@ -250,17 +265,18 @@ export default function App() {
         if (!randomAuthor) { await startFullFlow(); return }
 
         setSelectedNodeId(randomAuthor.node_id)
+        setShouldFocus(isManualSelection)
         await delay(SHUFFLE_STEP_DELAY)
 
         const randomMusic = findMusicFromAuthor(randomAuthor)
         if (!randomMusic) { await startFullFlow(); return }
 
-        handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id)
+        handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id, true, true)
       } else if (randomRelated.node_type === "Author") {
         const randomMusic = findMusicFromAuthor(randomRelated)
         if (!randomMusic) { await startFullFlow(); return }
 
-        handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id)
+        handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id, true, true)
       }
       return
     }
@@ -364,6 +380,7 @@ export default function App() {
             links={graphData.links}
             config={graphConfig}
             selectedId={selectedNodeId}
+            shouldFocus={shouldFocus}
             isLoggedIn={isLoggedIn}
             onNodeClick={handleNodeClick}
             onDeselect={handleDeselect}
