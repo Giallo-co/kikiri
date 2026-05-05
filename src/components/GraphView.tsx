@@ -141,6 +141,8 @@ export default function GraphView({ nodes, links, config, selectedId, shouldFocu
 
     zoomRef.current = zoom
     svg.call(zoom)
+    // Disable default double-click zoom
+    svg.on("dblclick.zoom", null)
 
     // Set initial zoom level
     svg.call(
@@ -453,6 +455,18 @@ export default function GraphView({ nodes, links, config, selectedId, shouldFocu
               .scale(DESELECT_ZOOM_LEVEL)
               .translate(-rect.width / 2, -visualCenterY)
           )
+      }
+    })
+
+    d3.select(svgRef.current).on('dblclick', (event) => {
+      event.preventDefault()
+      if (selectedId) {
+        // Find current content of the selected node to re-trigger "manual" state in App
+        const node = newNodes.find(n => n.id === selectedId)
+        if (node) {
+          onNodeClickRef.current(node.id, node.content)
+        }
+        zoomToNode(selectedId)
       }
     })
 

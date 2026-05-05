@@ -198,7 +198,7 @@ export default function App() {
       const randomMusic = findMusicFromAuthor(randomAuthor)
       if (!randomMusic) return await startFullFlow() // Retry if author has no music
 
-      handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id, true, true)
+      handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id, true, isManualSelection)
       return true
     }
 
@@ -226,7 +226,7 @@ export default function App() {
         return
       }
       
-      handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id, true, true)
+      handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id, true, isManualSelection)
       return
     }
 
@@ -238,7 +238,7 @@ export default function App() {
         return
       }
       
-      handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id, true, true)
+      handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id, true, isManualSelection)
       return
     }
 
@@ -271,12 +271,12 @@ export default function App() {
         const randomMusic = findMusicFromAuthor(randomAuthor)
         if (!randomMusic) { await startFullFlow(); return }
 
-        handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id, true, true)
+        handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id, true, isManualSelection)
       } else if (randomRelated.node_type === "Author") {
         const randomMusic = findMusicFromAuthor(randomRelated)
         if (!randomMusic) { await startFullFlow(); return }
 
-        handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id, true, true)
+        handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id, true, isManualSelection)
       }
       return
     }
