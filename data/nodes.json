@@ -92,7 +92,8 @@
     "author_name": "C418",
     "author_real_name": "Daniel Rosenfeld",
     "author_description": "Hi it's me your favourite music man, Daniel. You probably know me from Minecraft and then came to stay for all the other music that gets you working. Or you are just stopping by. Whatever it is, hi, I'm your favourite human, and occasional music man, Daniel. welcome.",
-    "author_profile_picture": "http://localhost:9000/profile-picture/c418.jpg"
+    "author_profile_picture": "http://localhost:9000/profile-picture/c418.jpg",
+    "node_music_likes": []
   },
   {
     "node_id": "3",
@@ -125,7 +126,8 @@
     "author_name": "Olivia Rodrigo",
     "author_real_name": "Olivia Isabel Rodrigo",
     "author_description": "Olivia Rodrigo is a talented artist.",
-    "author_profile_picture": "http://localhost:9000/profile-picture/olivia-rodrigo.jpg"
+    "author_profile_picture": "http://localhost:9000/profile-picture/olivia-rodrigo.jpg",
+    "node_music_likes": []
   },
   {
     "node_id": "4",
@@ -181,7 +183,8 @@
     "author_name": "Rawayana",
     "author_real_name": "Alberto Horacio Rafael «Beto» Montenegro, Antonio «Tony» Casas, Andrés «Fofo» Story, Alejandro «Abeja» Abeijón",
     "author_description": "Rawayana is a talented artist.",
-    "author_profile_picture": "http://localhost:9000/profile-picture/rawayana.jpg"
+    "author_profile_picture": "http://localhost:9000/profile-picture/rawayana.jpg",
+    "node_music_likes": []
   },
   {
     "node_id": "5",
@@ -216,7 +219,8 @@
     "author_name": "Tame Impala",
     "author_real_name": "Kevin Parker",
     "author_description": "Tame Impala is a talented artist.",
-    "author_profile_picture": "http://localhost:9000/profile-picture/tame-impala.jpg"
+    "author_profile_picture": "http://localhost:9000/profile-picture/tame-impala.jpg",
+    "node_music_likes": []
   },
   {
     "node_id": "6",
@@ -3665,5 +3669,25 @@
     "views": 0,
     "shares": 0,
     "comments": 0
+  },
+   {
+    "node_id": "118",
+    "node_type": "Author",
+    "node_name": "Admin",
+    "node_color": "#FF0000",
+    "node_music_links_next": [],
+    "node_music_links_previous": [],
+    "node_tag_links_next": [],
+    "node_tag_links_previous": [],
+    "node_author_links_next": [],
+    "node_author_links_previous": [],
+    "node_album_links_next": [],
+    "node_album_links_previous": [],
+    "author_id": "5",
+    "author_name": "Admin",
+    "author_real_name": "Administrator User",
+    "author_description": "Test user",
+    "author_profile_picture": "http://localhost:9000/profile-picture/admin.jpg",
+    "node_music_likes": []
   }
 ]
