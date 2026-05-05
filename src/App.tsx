@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import GraphView from './components/GraphView'
 import PlayerBar from "./components/PlayerBar/PlayerBar";
 import Login from "./components/Login/Login";
@@ -66,7 +66,7 @@ export default function App() {
   const [history, setHistory] = useState<string[]>([])
   const esRef = useRef<EventSource | null>(null)
 
-  const handleTrackChange = (track: Music, nodeId?: string, addToHistory = true, focus = true) => {
+  const handleTrackChange = useCallback((track: Music, nodeId?: string, addToHistory = true, focus = true) => {
     let targetNodeId = nodeId
 
     if (!targetNodeId) {
@@ -83,34 +83,36 @@ export default function App() {
     }
 
     setAutoPlay(true)
-    setCurrentTrack(track)
-  }
+    if (currentTrack?.music_id !== track.music_id) {
+      setCurrentTrack(track)
+    }
+  }, [rawNodes, currentTrack, selectedNodeId])
 
-  const handleNodeClick = (nodeId: string, content: any) => {
+  const handleNodeClick = useCallback((nodeId: string, content: any) => {
     setSelectedNodeId(nodeId)
     setIsManualSelection(true)
     setShouldFocus(true)
     if (content && content.music_id) {
       handleTrackChange(content as Music, nodeId, true, true)
     }
-  }
+  }, [handleTrackChange])
 
-  const handleDeselect = () => {
+  const handleDeselect = useCallback(() => {
     setSelectedNodeId(null)
     setIsManualSelection(false)
     setShouldFocus(true)
-  }
+  }, [])
 
-  const handleLoginSuccess = () => {
+  const handleLoginSuccess = useCallback(() => {
     setIsTransitioning(true);
     setTimeout(() => {
       setIsLoggedIn(true);
       setIsTransitioning(false);
       setSelectedNodeId(null); 
     }, 800);
-  }
+  }, [])
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     if (!currentTrack || !rawNodes.length) return
     const currentNode = rawNodes.find(rn => rn.node_id === selectedNodeId)
     const baseNode = currentNode || rawNodes.find(rn => rn.music_id === currentTrack.music_id)
@@ -132,9 +134,9 @@ export default function App() {
       setSelectedNodeId(authorId)
       setShouldFocus(isManualSelection)
     }
-  }
+  }, [currentTrack, rawNodes, selectedNodeId, isManualSelection, handleTrackChange])
 
-  const handlePrevious = () => {
+  const handlePrevious = useCallback(() => {
     if (!currentTrack || !rawNodes.length) return
     const currentNode = rawNodes.find(rn => rn.node_id === selectedNodeId)
     const baseNode = currentNode || rawNodes.find(rn => rn.music_id === currentTrack.music_id)
@@ -155,9 +157,9 @@ export default function App() {
       setSelectedNodeId(authorId)
       setShouldFocus(isManualSelection)
     }
-  }
+  }, [currentTrack, rawNodes, selectedNodeId, isManualSelection, handleTrackChange])
 
-  const handleShuffle = async () => {
+  const handleShuffle = useCallback(async () => {
     if (!rawNodes.length) return
 
     const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
@@ -179,7 +181,7 @@ export default function App() {
     let currentNode = selectedNodeId ? rawNodes.find(n => n.node_id === selectedNodeId) : null
 
     // Helper to execute the full Tag -> Author -> Music flow
-    const startFullFlow = async () => {
+    const startFullFlow = async (): Promise<boolean> => {
       const tags = rawNodes.filter(n => n.node_type === "Tag" && (n.node_author_links_next?.length ?? 0) > 0)
       const randomTag = getRandom(tags.length > 0 ? tags : rawNodes.filter(n => n.node_type === "Tag"))
       if (!randomTag) return false
@@ -280,7 +282,7 @@ export default function App() {
       }
       return
     }
-  }
+  }, [rawNodes, selectedNodeId, isManualSelection, handleTrackChange])
 
   useEffect(() => {
     if (!isLoggedIn) return;

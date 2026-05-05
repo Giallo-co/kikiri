@@ -10,8 +10,14 @@ export function useAudioPlayer(track: Music | null, autoPlay = false, onEndedCal
   const [isMuted, setIsMuted] = useState(false);
   const volumeRef = useRef(1);
 
+  const onEndedRef = useRef(onEndedCallback);
   useEffect(() => {
-    if (!track) return;
+    onEndedRef.current = onEndedCallback;
+  }, [onEndedCallback]);
+
+  useEffect(() => {
+    if (!track?.music_url) return;
+    
     const audio = new Audio(track.music_url);
     audio.crossOrigin = "anonymous";
     audioRef.current = audio;
@@ -26,7 +32,7 @@ export function useAudioPlayer(track: Music | null, autoPlay = false, onEndedCal
     };
     const onEnded = () => {
       setIsPlaying(false);
-      onEndedCallback?.();
+      onEndedRef.current?.();
     };
 
     audio.addEventListener("timeupdate", onTimeUpdate);
@@ -42,8 +48,9 @@ export function useAudioPlayer(track: Music | null, autoPlay = false, onEndedCal
       audio.removeEventListener("timeupdate", onTimeUpdate);
       audio.removeEventListener("loadedmetadata", onLoaded);
       audio.removeEventListener("ended", onEnded);
+      audioRef.current = null;
     };
-  }, [track?.music_url, autoPlay, onEndedCallback]);
+  }, [track?.music_url, autoPlay]);
 
   const togglePlay = useCallback(() => {
     const audio = audioRef.current;
