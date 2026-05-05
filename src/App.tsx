@@ -67,10 +67,16 @@ export default function App() {
   const [shouldFocus, setShouldFocus] = useState(true)
   const [autoPlay, setAutoPlay] = useState(false)
   const [history, setHistory] = useState<string[]>([])
+  const [searchQuery, setSearchQuery] = useState('')
   const esRef = useRef<EventSource | null>(null)
 
   const visibleNodes = useMemo(() => {
     if (!rawNodes.length || !isLoggedIn || !username) return []
+
+    // 1. If searching, show all nodes from the DynamoDB table (rawNodes)
+    if (searchQuery) {
+      return rawNodes
+    }
 
     const userNode = rawNodes.find(n => n.node_type === 'Author' && (n.node_name === username || n.author_name === username))
     const likedMusicIds = userNode?.node_music_likes || []
@@ -525,8 +531,10 @@ export default function App() {
             fixedNodeId={fixedNodeId}
             shouldFocus={shouldFocus}
             isLoggedIn={isLoggedIn}
+            searchQuery={searchQuery}
             onNodeClick={handleNodeClick}
             onDeselect={handleDeselect}
+            onSearch={setSearchQuery}
           />
         )}
       </div>

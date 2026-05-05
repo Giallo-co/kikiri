@@ -12,8 +12,10 @@ interface Props {
   fixedNodeId?: string | null
   shouldFocus?: boolean
   isLoggedIn?: boolean
+  searchQuery?: string
   onNodeClick: (nodeId: string, content: any) => void
   onDeselect?: () => void
+  onSearch?: (query: string) => void
 }
 
 const BASE_COLOR = '#2a2a2a'
@@ -31,7 +33,7 @@ const ENABLE_DYNAMIC_EXCLUSION = false // true: radius changes on selection, fal
 
 
 
-export default function GraphView({ nodes, links, config, selectedId, fixedNodeId, shouldFocus = true, isLoggedIn, onNodeClick, onDeselect }: Props) {
+export default function GraphView({ nodes, links, config, selectedId, fixedNodeId, shouldFocus = true, isLoggedIn, searchQuery, onNodeClick, onDeselect, onSearch }: Props) {
   const svgRef = useRef<SVGSVGElement>(null)
   const simulationRef = useRef<d3.Simulation<NodeDatum, undefined> | null>(null)
   const gRef = useRef<d3.Selection<SVGGElement, unknown, null, undefined> | null>(null)
@@ -393,7 +395,43 @@ export default function GraphView({ nodes, links, config, selectedId, fixedNodeI
 
     const updateHighlight = () => {
       const selId = selectedId ?? null
+      const q = searchQuery?.toLowerCase() || ''
       const nodeSet = new Set<string>()
+
+      if (q) {
+        // --- SEARCH HIGHLIGHT MODE ---
+        const matches = (n: NodeDatum) => {
+          const c = n.content
+          if (!c) return false
+          return (
+            (c.node_name?.toLowerCase().includes(q)) ||
+            (c.music_author?.toLowerCase().includes(q)) ||
+            (c.music_description?.toLowerCase().includes(q)) ||
+            (c.author_real_name?.toLowerCase().includes(q)) ||
+            (c.author_name?.toLowerCase().includes(q))
+          )
+        }
+
+        if (nodeSelectionRef.current) {
+          nodeSelectionRef.current
+            .transition().duration(300)
+            .attr('fill', (n) => matches(n) ? (n.color || BASE_COLOR) : '#999')
+            .attr('opacity', (n) => matches(n) ? 1 : 0.1)
+        }
+
+        if (labelSelectionRef.current) {
+          labelSelectionRef.current
+            .transition().duration(300)
+            .attr('opacity', (n) => matches(n) ? 1 : 0.05)
+        }
+
+        if (linkSelectionRef.current) {
+          linkSelectionRef.current
+            .transition().duration(300)
+            .attr('stroke-opacity', 0.05)
+        }
+        return // Skip selection highlight if searching
+      }
 
       if (selId !== null) {
         nodeSet.add(selId)
@@ -536,6 +574,7 @@ export default function GraphView({ nodes, links, config, selectedId, fixedNodeI
       clickTimer = setTimeout(() => {
         if (!event.defaultPrevented) {
           onDeselectRef.current?.()
+          onSearch?.('')
           setShowSearchBar(false)
 
           // Reset innerExclusionRadius to 0 on defocus
@@ -589,7 +628,7 @@ export default function GraphView({ nodes, links, config, selectedId, fixedNodeI
 
     if (selectedId && shouldFocus) {
       setTimeout(() => zoomToNode(selectedId), 50)
-    } else if (!selectedId && svgRef.current && zoomRef.current) {
+    } else if (!selectedId && !searchQuery && svgRef.current && zoomRef.current) {
       // Reset zoom to center when no node is selected and nodes change (e.g. after login)
       const rect = svgRef.current.getBoundingClientRect()
       const visualCenterY = (rect.height - 72) / 2
@@ -602,7 +641,7 @@ export default function GraphView({ nodes, links, config, selectedId, fixedNodeI
       )
     }
 
-  }, [nodes, links, config, selectedId, shouldFocus])
+  }, [nodes, links, config, selectedId, shouldFocus, searchQuery])
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
@@ -623,6 +662,43 @@ export default function GraphView({ nodes, links, config, selectedId, fixedNodeI
               className="search-input" 
               placeholder="Search"
               autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const val = e.currentTarget.value
+                  onSearch?.(val)
+                  setShowSearchBar(false)
+                  
+                  // 1. Reset exclusion radius
+                  configRef.current = {
+                    ...configRef.current,
+                    innerExclusionRadius: 0
+                  }
+
+                  // 2. Restart simulation to apply radius change
+                  if (simulationRef.current) {
+                    simulationRef.current.alpha(0.3).restart()
+                  }
+
+                  // 3. Zoom out to see the whole graph (desenfocar)
+                  if (svgRef.current && zoomRef.current) {
+                    const rect = svgRef.current.getBoundingClientRect()
+                    const width = rect.width
+                    const height = rect.height
+                    const visualCenterY = (height - 72) / 2
+                    
+                    d3.select(svgRef.current)
+                      .transition()
+                      .duration(750)
+                      .call(
+                        zoomRef.current.transform,
+                        d3.zoomIdentity
+                          .translate(width / 2, visualCenterY)
+                          .scale(DESELECT_ZOOM_LEVEL)
+                          .translate(-width / 2, -visualCenterY)
+                      )
+                  }
+                }
+              }}
             />
             <div className="search-icon">
               <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
