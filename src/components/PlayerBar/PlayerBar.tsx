@@ -6,9 +6,11 @@ import "./PlayerBar.css";
 interface Props {
   track: Music | null;
   autoPlay?: boolean;
+  isLiked?: boolean;
   onNext?: () => void;
   onPrevious?: () => void;
   onShuffle?: () => void;
+  onLike?: () => void;
 }
 
 function formatTime(s: number): string {
@@ -23,13 +25,21 @@ function calcRatio(e: MouseEvent | React.MouseEvent, el: HTMLElement): number {
   return Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
 }
 
-export default function PlayerBar({ track, autoPlay = false, onNext, onPrevious, onShuffle }: Props) {
+export default function PlayerBar({ track, autoPlay = false, isLiked = false, onNext, onPrevious, onShuffle, onLike }: Props) {
   const { isPlaying, currentTime, duration, volume, isMuted, togglePlay, seek, changeVolume, toggleMute, restart } =
     useAudioPlayer(track, autoPlay, onNext);
   const [imgError, setImgError] = useState(false);
+  const [isLikeAnimating, setIsLikeAnimating] = useState(false);
 
   const progressRef = useRef<HTMLDivElement>(null);
   const volumeRef = useRef<HTMLDivElement>(null);
+
+  const handleLikeClick = () => {
+    if (!onLike) return;
+    setIsLikeAnimating(true);
+    onLike();
+    setTimeout(() => setIsLikeAnimating(false), 450);
+  };
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
@@ -153,8 +163,12 @@ export default function PlayerBar({ track, autoPlay = false, onNext, onPrevious,
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
           </button>
-          <button className="ctrl-btn small-btn" aria-label="Like">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <button 
+            className={`ctrl-btn small-btn like-btn ${isLiked ? 'active' : ''} ${isLikeAnimating ? 'animating' : ''}`} 
+            onClick={handleLikeClick} 
+            aria-label="Like"
+          >
+            <svg viewBox="0 0 24 24" fill={isLiked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8">
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
             </svg>
           </button>

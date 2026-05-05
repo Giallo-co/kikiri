@@ -414,6 +414,44 @@ export default function App() {
     setGraphData({ nodes, links })
   }, [visibleNodes])
 
+  const handleLike = useCallback(() => {
+    if (!currentTrack || !username || !rawNodes.length) return
+
+    const trackId = rawNodes.find(rn => rn.music_id === currentTrack.music_id)?.node_id
+    if (!trackId) return
+
+    setRawNodes(prev => {
+      const userIdx = prev.findIndex(n => n.node_type === 'Author' && (n.node_name === username || n.author_name === username))
+      if (userIdx === -1) return prev
+
+      const newUserNodes = [...prev]
+      const userNode = { ...newUserNodes[userIdx] }
+      
+      const likes = userNode.node_music_likes || []
+      const links = userNode.node_music_links_next || []
+
+      if (likes.includes(trackId)) {
+        // Unlike: remove from both
+        userNode.node_music_likes = likes.filter((id: string) => id !== trackId)
+        userNode.node_music_links_next = links.filter((id: string) => id !== trackId)
+      } else {
+        // Like: add to both
+        userNode.node_music_likes = [...likes, trackId]
+        userNode.node_music_links_next = [...links, trackId]
+      }
+
+      newUserNodes[userIdx] = userNode
+      return newUserNodes
+    })
+  }, [currentTrack, username, rawNodes])
+
+  const isCurrentTrackLiked = useMemo(() => {
+    if (!currentTrack || !username || !rawNodes.length) return false
+    const userNode = rawNodes.find(n => n.node_type === 'Author' && (n.node_name === username || n.author_name === username))
+    const trackNode = rawNodes.find(rn => rn.music_id === currentTrack.music_id)
+    return userNode?.node_music_likes?.includes(trackNode?.node_id || '') || false
+  }, [currentTrack, username, rawNodes])
+
   useEffect(() => {
     if (!isLoggedIn) return;
     const connect = () => {
@@ -511,9 +549,11 @@ export default function App() {
             <PlayerBar 
               track={currentTrack} 
               autoPlay={autoPlay} 
+              isLiked={isCurrentTrackLiked}
               onNext={handleNext}
               onPrevious={handlePrevious}
               onShuffle={handleShuffle}
+              onLike={handleLike}
             />
           </div>
         </>
