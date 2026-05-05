@@ -115,6 +115,54 @@ app.post('/api/node-selected', (req, res) => {
   res.sendStatus(200)
 })
 
+app.post('/api/like', async (req, res) => {
+  const { username, musicNodeId } = req.body;
+  if (!username || !musicNodeId) {
+    return res.status(400).json({ error: 'Username and musicNodeId are required' });
+  }
+
+  try {
+    const scanCommand = new ScanCommand({
+      TableName: "node",
+      FilterExpression: "node_type = :type AND (node_name = :name OR author_name = :name)",
+      ExpressionAttributeValues: {
+        ":type": "Author",
+        ":name": username
+      }
+    });
+    const scanResult = await docClient.send(scanCommand);
+    const userNode = scanResult.Items?.[0];
+
+    if (!userNode) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const nodeId = userNode.node_id;
+    let likes = userNode.node_music_likes || [];
+    let links = userNode.node_music_links_next || [];
+
+    if (likes.includes(musicNodeId)) {
+      likes = likes.filter((id: string) => id !== musicNodeId);
+      links = links.filter((id: string) => id !== musicNodeId);
+    } else {
+      likes.push(musicNodeId);
+      links.push(musicNodeId);
+    }
+
+    const putCommand = new PutCommand({
+      TableName: "node",
+      Item: { ...userNode, node_music_likes: likes, node_music_links_next: links }
+    });
+    await docClient.send(putCommand);
+
+    console.log(`[Backend] User ${username} toggled like for music node ${musicNodeId}`);
+    res.json({ message: "Success", likes, links });
+  } catch (error) {
+    console.error("Error toggling like in DynamoDB:", error);
+    res.status(500).json({ error: "Failed to update likes" });
+  }
+});
+
 app.post('/api/music', async (req, res) => {
   try {
     const item = req.body

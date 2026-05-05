@@ -417,9 +417,11 @@ export default function App() {
   const handleLike = useCallback(() => {
     if (!currentTrack || !username || !rawNodes.length) return
 
-    const trackId = rawNodes.find(rn => rn.music_id === currentTrack.music_id)?.node_id
-    if (!trackId) return
+    const trackNode = rawNodes.find(rn => rn.music_id === currentTrack.music_id)
+    if (!trackNode) return
+    const trackId = trackNode.node_id
 
+    // Optimistic UI update
     setRawNodes(prev => {
       const userIdx = prev.findIndex(n => n.node_type === 'Author' && (n.node_name === username || n.author_name === username))
       if (userIdx === -1) return prev
@@ -431,11 +433,9 @@ export default function App() {
       const links = userNode.node_music_links_next || []
 
       if (likes.includes(trackId)) {
-        // Unlike: remove from both
         userNode.node_music_likes = likes.filter((id: string) => id !== trackId)
         userNode.node_music_links_next = links.filter((id: string) => id !== trackId)
       } else {
-        // Like: add to both
         userNode.node_music_likes = [...likes, trackId]
         userNode.node_music_links_next = [...links, trackId]
       }
@@ -443,6 +443,14 @@ export default function App() {
       newUserNodes[userIdx] = userNode
       return newUserNodes
     })
+
+    // Persistence to DynamoDB
+    fetch('/api/like', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, musicNodeId: trackId })
+    }).catch(err => console.error('Failed to sync like to DynamoDB:', err))
+
   }, [currentTrack, username, rawNodes])
 
   const isCurrentTrackLiked = useMemo(() => {
