@@ -3673,7 +3673,7 @@
    {
     "node_id": "118",
     "node_type": "Author",
-    "node_name": "Admin",
+    "node_name": "admin",
     "node_color": "#FF0000",
     "node_music_links_next": [],
     "node_music_links_previous": [],
@@ -3684,10 +3684,10 @@
     "node_album_links_next": [],
     "node_album_links_previous": [],
     "author_id": "5",
-    "author_name": "Admin",
+    "author_name": "admin",
     "author_real_name": "Administrator User",
     "author_description": "Test user",
     "author_profile_picture": "http://localhost:9000/profile-picture/admin.jpg",
-    "node_music_likes": []
+    "node_music_likes": ["115","40", "116" ]
   }
 ]

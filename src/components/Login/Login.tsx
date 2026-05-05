@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import './Login.css';
 
 interface LoginProps {
-  onLogin: () => void;
+  onLogin: (username: string) => void;
   isTransitioning: boolean;
 }
 
@@ -15,8 +15,8 @@ export default function Login({ onLogin, isTransitioning }: LoginProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (username === 'admin' && password === '123') {
-      onLogin();
+    if (username && password === '123') {
+      onLogin(username);
     } else {
       setError('Invalid credentials');
     }

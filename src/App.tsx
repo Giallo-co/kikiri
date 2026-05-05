@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import GraphView from './components/GraphView'
 import PlayerBar from "./components/PlayerBar/PlayerBar";
-import SideNav from "./components/SideNav/SideNav";
+import SideNav, { NavItem } from "./components/SideNav/SideNav";
 import Login from "./components/Login/Login";
 import { graphConfig } from './graphConfig'
 import type { NodeDatum, LinkDatum, RawNode } from './types/graph'
@@ -54,6 +54,8 @@ const generateInitialNodes = (count: number): GraphData => {
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [username, setUsername] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<NavItem>('Home')
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [graphData, setGraphData] = useState<GraphData | null>(() => generateInitialNodes(200))
   const [rawNodes, setRawNodes] = useState<RawNode[]>([])
@@ -104,14 +106,19 @@ export default function App() {
     setShouldFocus(true)
   }, [])
 
-  const handleLoginSuccess = useCallback(() => {
+  const handleLoginSuccess = useCallback((user: string) => {
     setIsTransitioning(true);
     setTimeout(() => {
+      setUsername(user);
       setIsLoggedIn(true);
       setIsTransitioning(false);
       setSelectedNodeId(null); 
     }, 800);
   }, [])
+
+  const handleNavSelect = useCallback((item: NavItem) => {
+    setActiveTab(item);
+  }, []);
 
   const handleNext = useCallback(() => {
     if (!currentTrack || !rawNodes.length) return
@@ -286,6 +293,55 @@ export default function App() {
   }, [rawNodes, selectedNodeId, isManualSelection, handleTrackChange])
 
   useEffect(() => {
+    if (!rawNodes.length || !isLoggedIn || !username) return
+
+    // Find the user's node to get their liked music IDs
+    const userNode = rawNodes.find(n => n.node_type === 'Author' && (n.node_name === username || n.author_name === username))
+    const likedMusicIds = userNode?.node_music_likes || []
+
+    let filteredRawNodes = rawNodes
+
+    if (activeTab === 'Home') {
+      // Show only nodes that are in the user's likes
+      filteredRawNodes = rawNodes.filter(rn => likedMusicIds.includes(rn.node_id) || rn.node_id === userNode?.node_id)
+    } else if (activeTab === 'Explore') {
+      // Show nodes that are NOT in the user's likes
+      filteredRawNodes = rawNodes.filter(rn => !likedMusicIds.includes(rn.node_id) && rn.node_id !== userNode?.node_id)
+    }
+
+    const nodes: NodeDatum[] = filteredRawNodes.map(rn => ({
+      id: rn.node_id,
+      name: rn.node_name,
+      color: rn.node_color,
+      content: (rn.node_type === "Music" || rn.node_type === "Author") ? rn : null
+    }))
+
+    const filteredNodeIds = new Set(filteredRawNodes.map(rn => rn.node_id))
+    const links: LinkDatum[] = []
+
+    filteredRawNodes.forEach(rn => {
+      const allLinks = [
+        ...(rn.node_tag_links_next || []),
+        ...(rn.node_tag_links_previous || []),
+        ...(rn.node_music_links_next || []),
+        ...(rn.node_music_links_previous || []),
+        ...(rn.node_author_links_next || []),
+        ...(rn.node_author_links_previous || []),
+        ...(rn.node_album_links_next || []),
+        ...(rn.node_album_links_previous || [])
+      ]
+
+      allLinks.forEach(targetId => {
+        if (filteredNodeIds.has(targetId)) {
+          links.push({ source: rn.node_id, target: targetId })
+        }
+      })
+    })
+
+    setGraphData({ nodes, links })
+  }, [rawNodes, activeTab, isLoggedIn, username])
+
+  useEffect(() => {
     if (!isLoggedIn) return;
     const connect = () => {
       const es = new EventSource('/api/nodes/stream')
@@ -311,39 +367,6 @@ export default function App() {
           const incomingNodes: RawNode[] = parsed
           if (Array.isArray(incomingNodes) && incomingNodes.length) {
             setRawNodes(incomingNodes)
-            const nodes: NodeDatum[] = incomingNodes.map(rn => {
-              // Pass the whole node as content if it's a Music or Author node.
-              return {
-                id: rn.node_id,
-                name: rn.node_name,
-                color: rn.node_color,
-                content: (rn.node_type === "Music" || rn.node_type === "Author") ? rn : null
-              }
-            })
-
-            const links: LinkDatum[] = []
-            const nodeIds = new Set(incomingNodes.map(rn => rn.node_id))
-
-            incomingNodes.forEach(rn => {
-              const allLinks = [
-                ...(rn.node_tag_links_next || []),
-                ...(rn.node_tag_links_previous || []),
-                ...(rn.node_music_links_next || []),
-                ...(rn.node_music_links_previous || []),
-                ...(rn.node_author_links_next || []),
-                ...(rn.node_author_links_previous || []),
-                ...(rn.node_album_links_next || []),
-                ...(rn.node_album_links_previous || [])
-              ]
-
-              allLinks.forEach(targetId => {
-                if (nodeIds.has(targetId)) {
-                  links.push({ source: rn.node_id, target: targetId })
-                }
-              })
-            })
-
-            setGraphData({ nodes, links })
           }
         } catch (e) {
           setError('parse error')
@@ -408,7 +431,7 @@ export default function App() {
             }}>{error}</div>
           )}
 
-          <SideNav />
+          <SideNav onSelect={handleNavSelect} />
 
           <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', zIndex: 100 }}>
             <PlayerBar 
