@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import GraphView from './components/GraphView'
 import PlayerBar from "./components/PlayerBar/PlayerBar";
+import SideNav from "./components/SideNav/SideNav";
 import Login from "./components/Login/Login";
 import { graphConfig } from './graphConfig'
 import type { NodeDatum, LinkDatum, RawNode } from './types/graph'
@@ -406,6 +407,8 @@ export default function App() {
               fontSize: 10, fontFamily: 'monospace', color: '#cf6679', zIndex: 10
             }}>{error}</div>
           )}
+
+          <SideNav />
 
           <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', zIndex: 100 }}>
             <PlayerBar 
