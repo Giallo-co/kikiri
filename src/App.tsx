@@ -75,12 +75,83 @@ export default function App() {
     const userNode = rawNodes.find(n => n.node_type === 'Author' && (n.node_name === username || n.author_name === username))
     const likedMusicIds = userNode?.node_music_likes || []
 
-    if (activeTab === 'Home') {
-      return rawNodes.filter(rn => likedMusicIds.includes(rn.node_id) || rn.node_id === userNode?.node_id)
-    } else if (activeTab === 'Explore') {
-      return rawNodes.filter(rn => !likedMusicIds.includes(rn.node_id) && rn.node_id !== userNode?.node_id)
+    // 1. Determine which Music nodes are visible
+    const visibleMusicNodes = rawNodes.filter(rn => {
+      if (rn.node_type !== 'Music') return false
+      if (activeTab === 'Home') return likedMusicIds.includes(rn.node_id)
+      if (activeTab === 'Explore') return !likedMusicIds.includes(rn.node_id)
+      return true
+    })
+
+    const visibleMusicIds = new Set(visibleMusicNodes.map(m => m.node_id))
+
+    // 2. Determine which other nodes (Author, Tag, etc.) are related to visible Music nodes
+    // Using a BFS approach to find all organizational nodes reachable from visible Music
+    const reachableIds = new Set<string>()
+    const queue: string[] = []
+
+    // Initialize BFS with visible music and their direct neighbors
+    visibleMusicNodes.forEach(m => {
+      reachableIds.add(m.node_id)
+      const neighbors = [
+        ...(m.node_tag_links_next || []),
+        ...(m.node_tag_links_previous || []),
+        ...(m.node_author_links_next || []),
+        ...(m.node_author_links_previous || []),
+        ...(m.node_album_links_next || []),
+        ...(m.node_album_links_previous || []),
+        ...(m.node_music_links_next || []),
+        ...(m.node_music_links_previous || [])
+      ].filter(id => id && id !== m.node_id);
+      
+      neighbors.forEach(id => {
+        if (!reachableIds.has(id)) {
+          reachableIds.add(id)
+          queue.push(id)
+        }
+      })
+    })
+
+    // Create a map for quick lookup
+    const rawNodesMap = new Map(rawNodes.map(n => [n.node_id, n]))
+
+    // Expand BFS only through organizational nodes (Author, Tag, Album)
+    // We don't want to hop through other Music nodes to avoid showing unliked music in Home
+    while (queue.length > 0) {
+      const currentId = queue.shift()!
+      const currentNode = rawNodesMap.get(currentId)
+      if (!currentNode || currentNode.node_type === 'Music') continue
+
+      const neighbors = [
+        ...(currentNode.node_tag_links_next || []),
+        ...(currentNode.node_tag_links_previous || []),
+        ...(currentNode.node_author_links_next || []),
+        ...(currentNode.node_author_links_previous || []),
+        ...(currentNode.node_album_links_next || []),
+        ...(currentNode.node_album_links_previous || []),
+        ...(currentNode.node_music_links_next || []),
+        ...(currentNode.node_music_links_previous || [])
+      ].filter(id => id && id !== currentId);
+
+      neighbors.forEach(id => {
+        if (!reachableIds.has(id)) {
+          const neighborNode = rawNodesMap.get(id)
+          // Only traverse through organizational nodes, or if it's a music node, only if it's already visible
+          if (neighborNode && (neighborNode.node_type !== 'Music' || visibleMusicIds.has(id))) {
+            reachableIds.add(id)
+            if (neighborNode.node_type !== 'Music') {
+              queue.push(id)
+            }
+          }
+        }
+      })
     }
-    return rawNodes
+
+    // 3. Filter rawNodes: Include visible Music, the user themselves, and any reachable nodes
+    return rawNodes.filter(rn => {
+      if (rn.node_id === userNode?.node_id) return true
+      return reachableIds.has(rn.node_id)
+    })
   }, [rawNodes, activeTab, isLoggedIn, username])
 
   const handleTrackChange = useCallback((track: Music, nodeId?: string, addToHistory = true, focus = true) => {
@@ -311,13 +382,11 @@ export default function App() {
   }, [rawNodes, selectedNodeId, isManualSelection, handleTrackChange])
 
   useEffect(() => {
-    if (!visibleNodes.length) return
-
     const nodes: NodeDatum[] = visibleNodes.map(rn => ({
       id: rn.node_id,
       name: rn.node_name,
       color: rn.node_color,
-      content: (rn.node_type === "Music" || rn.node_type === "Author") ? rn : null
+      content: (rn.node_type === "Music" || rn.node_type === "Author" || rn.node_type === "Tag") ? rn : null
     }))
 
     const filteredNodeIds = new Set(visibleNodes.map(rn => rn.node_id))
