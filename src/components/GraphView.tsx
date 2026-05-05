@@ -8,6 +8,7 @@ interface Props {
   links: LinkDatum[]
   config: GraphConfig
   selectedId?: string | null
+  fixedNodeId?: string | null
   shouldFocus?: boolean
   isLoggedIn?: boolean
   onNodeClick: (nodeId: string, content: any) => void
@@ -29,7 +30,7 @@ const ENABLE_DYNAMIC_EXCLUSION = false // true: radius changes on selection, fal
 
 
 
-export default function GraphView({ nodes, links, config, selectedId, shouldFocus = true, isLoggedIn, onNodeClick, onDeselect }: Props) {
+export default function GraphView({ nodes, links, config, selectedId, fixedNodeId, shouldFocus = true, isLoggedIn, onNodeClick, onDeselect }: Props) {
   const svgRef = useRef<SVGSVGElement>(null)
   const simulationRef = useRef<d3.Simulation<NodeDatum, undefined> | null>(null)
   const gRef = useRef<d3.Selection<SVGGElement, unknown, null, undefined> | null>(null)
@@ -47,10 +48,12 @@ export default function GraphView({ nodes, links, config, selectedId, shouldFocu
   const maskCircleRef = useRef<d3.Selection<SVGCircleElement, unknown, null, undefined> | null>(null)
   const maskOuterCircleRef = useRef<d3.Selection<SVGCircleElement, unknown, null, undefined> | null>(null)
   const configRef = useRef(config)
+  const fixedNodeIdRef = useRef(fixedNodeId)
 
   useEffect(() => {
     configRef.current = config
-  }, [config])
+    fixedNodeIdRef.current = fixedNodeId
+  }, [config, fixedNodeId])
 
   useEffect(() => {
     const wasSelected = isSelectedRef.current
@@ -205,6 +208,16 @@ export default function GraphView({ nodes, links, config, selectedId, shouldFocu
 
         for (let i = 0, n = currentNodes.length; i < n; ++i) {
           const node = currentNodes[i]
+
+          // Fix user node if applicable
+          if (fixedNodeIdRef.current && node.id === fixedNodeIdRef.current) {
+            node.x = cx
+            node.y = cy
+            node.fx = cx
+            node.fy = cy
+            continue
+          }
+
           let dx = (node.x || 0) - cx
           let dy = (node.y || 0) - cy
           let dist = Math.sqrt(dx * dx + dy * dy)

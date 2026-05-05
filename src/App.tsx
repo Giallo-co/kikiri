@@ -137,11 +137,22 @@ export default function App() {
     }
 
     // 3. Filter rawNodes: Include reachable nodes and the user themselves
+    // Also, hide Authors that don't have any music links
     return rawNodes.filter(rn => {
+      if (rn.node_type === 'Author' && (!rn.node_music_links_next || rn.node_music_links_next.length === 0)) return false
       if (rn.node_id === userNode?.node_id) return true
       return reachableIds.has(rn.node_id)
     })
   }, [rawNodes, activeTab, isLoggedIn, username])
+
+  const fixedNodeId = useMemo(() => {
+    if (!isLoggedIn || !username || !rawNodes.length) return null
+    const userNode = rawNodes.find(n => n.node_type === 'Author' && (n.node_name === username || n.author_name === username))
+    if (userNode && userNode.node_music_links_next && userNode.node_music_links_next.length > 0) {
+      return userNode.node_id
+    }
+    return null
+  }, [isLoggedIn, username, rawNodes])
 
   const handleTrackChange = useCallback((track: Music, nodeId?: string, addToHistory = true, focus = true) => {
     let targetNodeId = nodeId
@@ -468,6 +479,7 @@ export default function App() {
             links={graphData.links}
             config={graphConfig}
             selectedId={selectedNodeId}
+            fixedNodeId={fixedNodeId}
             shouldFocus={shouldFocus}
             isLoggedIn={isLoggedIn}
             onNodeClick={handleNodeClick}
