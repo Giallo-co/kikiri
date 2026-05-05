@@ -75,7 +75,7 @@ export default function App() {
     const userNode = rawNodes.find(n => n.node_type === 'Author' && (n.node_name === username || n.author_name === username))
     const likedMusicIds = userNode?.node_music_likes || []
 
-    // 1. Determine which Music nodes are visible
+    // 1. Determine which Music nodes are visible based on the current tab
     const visibleMusicNodes = rawNodes.filter(rn => {
       if (rn.node_type !== 'Music') return false
       if (activeTab === 'Home') return likedMusicIds.includes(rn.node_id)
@@ -84,70 +84,59 @@ export default function App() {
     })
 
     const visibleMusicIds = new Set(visibleMusicNodes.map(m => m.node_id))
-
-    // 2. Determine which other nodes (Author, Tag, etc.) are related to visible Music nodes
-    // Using a BFS approach to find all organizational nodes reachable from visible Music
     const reachableIds = new Set<string>()
-    const queue: string[] = []
-
-    // Initialize BFS with visible music and their direct neighbors
-    visibleMusicNodes.forEach(m => {
-      reachableIds.add(m.node_id)
-      const neighbors = [
-        ...(m.node_tag_links_next || []),
-        ...(m.node_tag_links_previous || []),
-        ...(m.node_author_links_next || []),
-        ...(m.node_author_links_previous || []),
-        ...(m.node_album_links_next || []),
-        ...(m.node_album_links_previous || []),
-        ...(m.node_music_links_next || []),
-        ...(m.node_music_links_previous || [])
-      ].filter(id => id && id !== m.node_id);
-      
-      neighbors.forEach(id => {
-        if (!reachableIds.has(id)) {
-          reachableIds.add(id)
-          queue.push(id)
-        }
-      })
-    })
-
-    // Create a map for quick lookup
     const rawNodesMap = new Map(rawNodes.map(n => [n.node_id, n]))
 
-    // Expand BFS only through organizational nodes (Author, Tag, Album)
-    // We don't want to hop through other Music nodes to avoid showing unliked music in Home
+    const getAllLinks = (n: RawNode) => [
+      ...(n.node_tag_links_next || []),
+      ...(n.node_tag_links_previous || []),
+      ...(n.node_author_links_next || []),
+      ...(n.node_author_links_previous || []),
+      ...(n.node_album_links_next || []),
+      ...(n.node_album_links_previous || []),
+      ...(n.node_music_links_next || []),
+      ...(n.node_music_links_previous || [])
+    ].filter(id => id && id !== n.node_id);
+
+    // 2. Use BFS to find nodes related to visible Music
+    // For Home, we limit to 2 steps (Music -> Author -> Tag) to keep it strictly related
+    const queue: { id: string, depth: number }[] = []
+    visibleMusicNodes.forEach(m => {
+      reachableIds.add(m.node_id)
+      queue.push({ id: m.node_id, depth: 0 })
+    })
+
+    const maxDepth = activeTab === 'Home' ? 2 : 100 
+
     while (queue.length > 0) {
-      const currentId = queue.shift()!
+      const { id: currentId, depth } = queue.shift()!
+      if (depth >= maxDepth) continue
+
       const currentNode = rawNodesMap.get(currentId)
-      if (!currentNode || currentNode.node_type === 'Music') continue
+      if (!currentNode) continue
 
-      const neighbors = [
-        ...(currentNode.node_tag_links_next || []),
-        ...(currentNode.node_tag_links_previous || []),
-        ...(currentNode.node_author_links_next || []),
-        ...(currentNode.node_author_links_previous || []),
-        ...(currentNode.node_album_links_next || []),
-        ...(currentNode.node_album_links_previous || []),
-        ...(currentNode.node_music_links_next || []),
-        ...(currentNode.node_music_links_previous || [])
-      ].filter(id => id && id !== currentId);
+      const neighbors = getAllLinks(currentNode)
+      neighbors.forEach(nid => {
+        const neighbor = rawNodesMap.get(nid)
+        if (!neighbor) return
 
-      neighbors.forEach(id => {
-        if (!reachableIds.has(id)) {
-          const neighborNode = rawNodesMap.get(id)
-          // Only traverse through organizational nodes, or if it's a music node, only if it's already visible
-          if (neighborNode && (neighborNode.node_type !== 'Music' || visibleMusicIds.has(id))) {
-            reachableIds.add(id)
-            if (neighborNode.node_type !== 'Music') {
-              queue.push(id)
-            }
+        if (neighbor.node_type === 'Music') {
+          // Only add music nodes if they are already identified as visible for this tab
+          if (visibleMusicIds.has(nid) && !reachableIds.has(nid)) {
+            reachableIds.add(nid)
+            queue.push({ id: nid, depth: depth + 1 })
+          }
+        } else {
+          // Add organizational nodes (Author, Tag, Album) and continue expansion
+          if (!reachableIds.has(nid)) {
+            reachableIds.add(nid)
+            queue.push({ id: nid, depth: depth + 1 })
           }
         }
       })
     }
 
-    // 3. Filter rawNodes: Include visible Music, the user themselves, and any reachable nodes
+    // 3. Filter rawNodes: Include reachable nodes and the user themselves
     return rawNodes.filter(rn => {
       if (rn.node_id === userNode?.node_id) return true
       return reachableIds.has(rn.node_id)
