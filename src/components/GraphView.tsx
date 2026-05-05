@@ -93,7 +93,7 @@ export default function GraphView({ nodes, links, config, selectedId, fixedNodeI
               zoomRef.current.transform,
               d3.zoomIdentity
                 .translate(width / 2, visualCenterY)
-                .scale(FOCUS_ZOOM_LEVEL)
+                .scale(DESELECT_ZOOM_LEVEL) // Use neutral scale instead of FOCUS_ZOOM_LEVEL
                 .translate(-targetX, -targetY)
             )
         }
@@ -400,37 +400,27 @@ export default function GraphView({ nodes, links, config, selectedId, fixedNodeI
 
       if (q) {
         // --- SEARCH HIGHLIGHT MODE ---
-        const matches = (n: NodeDatum) => {
-          const c = n.content
-          if (!c) return false
-          return (
-            (c.node_name?.toLowerCase().includes(q)) ||
-            (c.music_author?.toLowerCase().includes(q)) ||
-            (c.music_description?.toLowerCase().includes(q)) ||
-            (c.author_real_name?.toLowerCase().includes(q)) ||
-            (c.author_name?.toLowerCase().includes(q))
-          )
-        }
-
+        // Since visibleNodes already filters out non-matches, we just ensure 
+        // that all current nodes keep their original color and full opacity.
         if (nodeSelectionRef.current) {
           nodeSelectionRef.current
             .transition().duration(300)
-            .attr('fill', (n) => matches(n) ? (n.color || BASE_COLOR) : '#999')
-            .attr('opacity', (n) => matches(n) ? 1 : 0.1)
+            .attr('fill', (n) => n.color || BASE_COLOR)
+            .attr('opacity', 1)
         }
 
         if (labelSelectionRef.current) {
           labelSelectionRef.current
             .transition().duration(300)
-            .attr('opacity', (n) => matches(n) ? 1 : 0.05)
+            .attr('opacity', 1)
         }
 
         if (linkSelectionRef.current) {
           linkSelectionRef.current
             .transition().duration(300)
-            .attr('stroke-opacity', 0.05)
+            .attr('stroke-opacity', 0.7)
         }
-        return // Skip selection highlight if searching
+        return 
       }
 
       if (selId !== null) {

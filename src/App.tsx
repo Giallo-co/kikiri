@@ -68,14 +68,25 @@ export default function App() {
   const [autoPlay, setAutoPlay] = useState(false)
   const [history, setHistory] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState('')
+  const [currentConfig, setCurrentConfig] = useState(graphConfig)
   const esRef = useRef<EventSource | null>(null)
 
   const visibleNodes = useMemo(() => {
     if (!rawNodes.length || !isLoggedIn || !username) return []
 
-    // 1. If searching, show all nodes from the DynamoDB table (rawNodes)
+    // 1. Search Logic
     if (searchQuery) {
-      return rawNodes
+      const q = searchQuery.toLowerCase()
+      const matches = rawNodes.filter(rn => 
+        (rn.node_name?.toLowerCase().includes(q)) ||
+        (rn.music_author?.toLowerCase().includes(q)) ||
+        (rn.music_description?.toLowerCase().includes(q)) ||
+        (rn.author_real_name?.toLowerCase().includes(q)) ||
+        (rn.author_name?.toLowerCase().includes(q))
+      )
+
+      // Always show ONLY matching nodes when searching
+      return matches
     }
 
     const userNode = rawNodes.find(n => n.node_type === 'Author' && (n.node_name === username || n.author_name === username))
@@ -183,13 +194,26 @@ export default function App() {
   }, [visibleNodes, currentTrack, selectedNodeId])
 
   const handleNodeClick = useCallback((nodeId: string, content: any) => {
+    // If we are in search mode, clear search and navigate to appropriate tab
+    if (searchQuery) {
+      setSearchQuery('')
+      // Decide tab based on whether it's liked or other logic. 
+      // Defaulting to 'Home' if it's already in the "liked" context, else 'Explore' is a safe bet for a general music player.
+      // However, the prompt says "Home or Explore", I'll set a logic to pick one.
+      const userNode = rawNodes.find(n => n.node_type === 'Author' && (n.node_name === username || n.author_name === username))
+      const likedMusicIds = userNode?.node_music_likes || []
+      
+      const isLiked = likedMusicIds.includes(nodeId)
+      setActiveTab(isLiked ? 'Home' : 'Explore')
+    }
+
     setSelectedNodeId(nodeId)
     setIsManualSelection(true)
     setShouldFocus(true)
     if (content && content.music_id) {
       handleTrackChange(content as Music, nodeId, true, true)
     }
-  }, [handleTrackChange])
+  }, [handleTrackChange, searchQuery, rawNodes, username])
 
   const handleDeselect = useCallback(() => {
     setSelectedNodeId(null)
@@ -388,6 +412,35 @@ export default function App() {
   }, [rawNodes, selectedNodeId, isManualSelection, handleTrackChange])
 
   useEffect(() => {
+    if (!searchQuery) {
+      setCurrentConfig(graphConfig)
+      return
+    }
+
+    const q = searchQuery.toLowerCase()
+    const matches = rawNodes.filter(rn => 
+      (rn.node_name?.toLowerCase().includes(q)) ||
+      (rn.music_author?.toLowerCase().includes(q)) ||
+      (rn.music_description?.toLowerCase().includes(q)) ||
+      (rn.author_real_name?.toLowerCase().includes(q)) ||
+      (rn.author_name?.toLowerCase().includes(q))
+    )
+
+    if (matches.length === 1) {
+      const match = matches[0]
+      const content = (match.node_type === "Music" || match.node_type === "Author" || match.node_type === "Tag") ? match : null
+      handleNodeClick(match.node_id, content)
+      setCurrentConfig(graphConfig)
+    } else if (matches.length >= 2) {
+      setSelectedNodeId(null) // Deselect when showing multiple search results
+      setCurrentConfig(prev => ({
+        ...prev,
+        outerExclusionRadius: matches.length * 5
+      }))
+    }
+  }, [searchQuery, rawNodes, handleNodeClick])
+
+  useEffect(() => {
     const nodes: NodeDatum[] = visibleNodes.map(rn => ({
       id: rn.node_id,
       name: rn.node_name,
@@ -526,7 +579,7 @@ export default function App() {
           <GraphView
             nodes={graphData.nodes}
             links={graphData.links}
-            config={graphConfig}
+            config={currentConfig}
             selectedId={selectedNodeId}
             fixedNodeId={fixedNodeId}
             shouldFocus={shouldFocus}
