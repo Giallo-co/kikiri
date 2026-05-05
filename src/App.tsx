@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import GraphView from './components/GraphView'
 import PlayerBar from "./components/PlayerBar/PlayerBar";
 import SideNav, { NavItem } from "./components/SideNav/SideNav";
@@ -69,11 +69,25 @@ export default function App() {
   const [history, setHistory] = useState<string[]>([])
   const esRef = useRef<EventSource | null>(null)
 
+  const visibleNodes = useMemo(() => {
+    if (!rawNodes.length || !isLoggedIn || !username) return []
+
+    const userNode = rawNodes.find(n => n.node_type === 'Author' && (n.node_name === username || n.author_name === username))
+    const likedMusicIds = userNode?.node_music_likes || []
+
+    if (activeTab === 'Home') {
+      return rawNodes.filter(rn => likedMusicIds.includes(rn.node_id) || rn.node_id === userNode?.node_id)
+    } else if (activeTab === 'Explore') {
+      return rawNodes.filter(rn => !likedMusicIds.includes(rn.node_id) && rn.node_id !== userNode?.node_id)
+    }
+    return rawNodes
+  }, [rawNodes, activeTab, isLoggedIn, username])
+
   const handleTrackChange = useCallback((track: Music, nodeId?: string, addToHistory = true, focus = true) => {
     let targetNodeId = nodeId
 
     if (!targetNodeId) {
-      const currentNode = rawNodes.find(rn => rn.music_id === track.music_id)
+      const currentNode = visibleNodes.find(rn => rn.music_id === track.music_id)
       if (currentNode) targetNodeId = currentNode.node_id
     }
 
@@ -89,7 +103,7 @@ export default function App() {
     if (currentTrack?.music_id !== track.music_id) {
       setCurrentTrack(track)
     }
-  }, [rawNodes, currentTrack, selectedNodeId])
+  }, [visibleNodes, currentTrack, selectedNodeId])
 
   const handleNodeClick = useCallback((nodeId: string, content: any) => {
     setSelectedNodeId(nodeId)
@@ -121,15 +135,15 @@ export default function App() {
   }, []);
 
   const handleNext = useCallback(() => {
-    if (!currentTrack || !rawNodes.length) return
-    const currentNode = rawNodes.find(rn => rn.node_id === selectedNodeId)
-    const baseNode = currentNode || rawNodes.find(rn => rn.music_id === currentTrack.music_id)
+    if (!currentTrack || !visibleNodes.length) return
+    const currentNode = visibleNodes.find(rn => rn.node_id === selectedNodeId)
+    const baseNode = currentNode || visibleNodes.find(rn => rn.music_id === currentTrack.music_id)
     if (!baseNode) return
 
     // Priority 1: Use specific next link
     if (baseNode.node_album_links_next?.length > 0) {
       const nextId = baseNode.node_album_links_next[0]
-      const nextNode = rawNodes.find(rn => rn.node_id === nextId)
+      const nextNode = visibleNodes.find(rn => rn.node_id === nextId)
       if (nextNode && nextNode.node_type === "Music") {
         handleTrackChange(nextNode as unknown as Music, nextNode.node_id, true, isManualSelection)
         return
@@ -139,20 +153,22 @@ export default function App() {
     // Priority 2: Fallback to Author node
     if (baseNode.node_author_links_next?.length > 0) {
       const authorId = baseNode.node_author_links_next[0]
-      setSelectedNodeId(authorId)
-      setShouldFocus(isManualSelection)
+      if (visibleNodes.some(n => n.node_id === authorId)) {
+        setSelectedNodeId(authorId)
+        setShouldFocus(isManualSelection)
+      }
     }
-  }, [currentTrack, rawNodes, selectedNodeId, isManualSelection, handleTrackChange])
+  }, [currentTrack, visibleNodes, selectedNodeId, isManualSelection, handleTrackChange])
 
   const handlePrevious = useCallback(() => {
-    if (!currentTrack || !rawNodes.length) return
-    const currentNode = rawNodes.find(rn => rn.node_id === selectedNodeId)
-    const baseNode = currentNode || rawNodes.find(rn => rn.music_id === currentTrack.music_id)
+    if (!currentTrack || !visibleNodes.length) return
+    const currentNode = visibleNodes.find(rn => rn.node_id === selectedNodeId)
+    const baseNode = currentNode || visibleNodes.find(rn => rn.music_id === currentTrack.music_id)
     if (!baseNode) return
 
     if (baseNode.node_album_links_previous?.length > 0) {
       const prevId = baseNode.node_album_links_previous[0]
-      const prevNode = rawNodes.find(rn => rn.node_id === prevId)
+      const prevNode = visibleNodes.find(rn => rn.node_id === prevId)
       if (prevNode && prevNode.node_type === "Music") {
         handleTrackChange(prevNode as unknown as Music, prevNode.node_id, false, isManualSelection)
         return
@@ -162,13 +178,15 @@ export default function App() {
     // Fallback to Author node
     if (baseNode.node_author_links_next?.length > 0) {
       const authorId = baseNode.node_author_links_next[0]
-      setSelectedNodeId(authorId)
-      setShouldFocus(isManualSelection)
+      if (visibleNodes.some(n => n.node_id === authorId)) {
+        setSelectedNodeId(authorId)
+        setShouldFocus(isManualSelection)
+      }
     }
-  }, [currentTrack, rawNodes, selectedNodeId, isManualSelection, handleTrackChange])
+  }, [currentTrack, visibleNodes, selectedNodeId, isManualSelection, handleTrackChange])
 
   const handleShuffle = useCallback(async () => {
-    if (!rawNodes.length) return
+    if (!visibleNodes.length) return
 
     const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
     
@@ -176,22 +194,22 @@ export default function App() {
 
     const findMusicFromAuthor = (authorNode: RawNode) => {
       const musicIds = authorNode.node_music_links_next || []
-      const musics = rawNodes.filter(n => musicIds.includes(n.node_id) && n.node_type === "Music")
+      const musics = visibleNodes.filter(n => musicIds.includes(n.node_id) && n.node_type === "Music")
       return getRandom(musics)
     }
 
     const findAuthorFromTag = (tagNode: RawNode) => {
       const authorIds = tagNode.node_author_links_next || []
-      const authors = rawNodes.filter(n => authorIds.includes(n.node_id) && n.node_type === "Author")
+      const authors = visibleNodes.filter(n => authorIds.includes(n.node_id) && n.node_type === "Author")
       return getRandom(authors)
     }
 
-    let currentNode = selectedNodeId ? rawNodes.find(n => n.node_id === selectedNodeId) : null
+    let currentNode = selectedNodeId ? visibleNodes.find(n => n.node_id === selectedNodeId) : null
 
     // Helper to execute the full Tag -> Author -> Music flow
     const startFullFlow = async (): Promise<boolean> => {
-      const tags = rawNodes.filter(n => n.node_type === "Tag" && (n.node_author_links_next?.length ?? 0) > 0)
-      const randomTag = getRandom(tags.length > 0 ? tags : rawNodes.filter(n => n.node_type === "Tag"))
+      const tags = visibleNodes.filter(n => n.node_type === "Tag" && (n.node_author_links_next?.length ?? 0) > 0)
+      const randomTag = getRandom(tags.length > 0 ? tags : visibleNodes.filter(n => n.node_type === "Tag"))
       if (!randomTag) return false
 
       setSelectedNodeId(randomTag.node_id)
@@ -293,33 +311,19 @@ export default function App() {
   }, [rawNodes, selectedNodeId, isManualSelection, handleTrackChange])
 
   useEffect(() => {
-    if (!rawNodes.length || !isLoggedIn || !username) return
+    if (!visibleNodes.length) return
 
-    // Find the user's node to get their liked music IDs
-    const userNode = rawNodes.find(n => n.node_type === 'Author' && (n.node_name === username || n.author_name === username))
-    const likedMusicIds = userNode?.node_music_likes || []
-
-    let filteredRawNodes = rawNodes
-
-    if (activeTab === 'Home') {
-      // Show only nodes that are in the user's likes
-      filteredRawNodes = rawNodes.filter(rn => likedMusicIds.includes(rn.node_id) || rn.node_id === userNode?.node_id)
-    } else if (activeTab === 'Explore') {
-      // Show nodes that are NOT in the user's likes
-      filteredRawNodes = rawNodes.filter(rn => !likedMusicIds.includes(rn.node_id) && rn.node_id !== userNode?.node_id)
-    }
-
-    const nodes: NodeDatum[] = filteredRawNodes.map(rn => ({
+    const nodes: NodeDatum[] = visibleNodes.map(rn => ({
       id: rn.node_id,
       name: rn.node_name,
       color: rn.node_color,
       content: (rn.node_type === "Music" || rn.node_type === "Author") ? rn : null
     }))
 
-    const filteredNodeIds = new Set(filteredRawNodes.map(rn => rn.node_id))
+    const filteredNodeIds = new Set(visibleNodes.map(rn => rn.node_id))
     const links: LinkDatum[] = []
 
-    filteredRawNodes.forEach(rn => {
+    visibleNodes.forEach(rn => {
       const allLinks = [
         ...(rn.node_tag_links_next || []),
         ...(rn.node_tag_links_previous || []),
@@ -339,7 +343,7 @@ export default function App() {
     })
 
     setGraphData({ nodes, links })
-  }, [rawNodes, activeTab, isLoggedIn, username])
+  }, [visibleNodes])
 
   useEffect(() => {
     if (!isLoggedIn) return;
