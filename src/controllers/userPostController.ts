@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { UserPostService } from '../services/userPostService';
+import { logger } from '../lib/logger';
 import { getAuthUserId } from '../utils/authRequest';
 
 export class UserPostController {
@@ -25,6 +26,8 @@ export class UserPostController {
         imageKeys: Array.isArray(imageKeys) ? imageKeys : [],
         audioKey: audioKey ?? ''
       });
+
+      logger.info('user_post_created', { userId: actorId, createdOn: post.createdOn });
 
       return res.status(201).json({ post });
     } catch (err) {

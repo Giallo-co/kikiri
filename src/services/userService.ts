@@ -8,6 +8,7 @@ import jwt from 'jsonwebtoken';
 import { docClient, TABLE_NAME } from '../lib/dynamo';
 import { BatchWriteCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { S3PresignService } from './s3PresignService';
+import { logger } from '../lib/logger';
 
 interface AuthResponse {
   user: Omit<User, 'password'>;
@@ -184,7 +185,11 @@ export class UserService {
       const deleted = await this.userRepository.delete(userId);
       return deleted;
     } catch (error) {
-      console.error("Error during user deletion cascade:", error);
+      logger.error("user_deletion_cascade_failed", {
+        userId,
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw new ServiceException(1007, "Failed to complete user deletion cascade.");
     }
   }

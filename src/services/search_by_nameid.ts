@@ -1,6 +1,7 @@
 import { UserRepository } from '../repositories/userRepository';
 import { ServiceException } from '../errors/ServiceException';
 import { User } from '../models/userModel';
+import { logger } from '../lib/logger';
 
 export class SearchService {
   constructor(private readonly userRepository: UserRepository) {}
@@ -26,7 +27,10 @@ export class SearchService {
 
       return { data: sanitized, total, page: pageNum, limit: take };
     } catch (err) {
-      console.error('SearchService.searchUsers error', err);
+      logger.error('search_users_failed', {
+        message: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined,
+      });
       throw new ServiceException(2001, 'Error searching users');
     }
   }
@@ -50,7 +54,10 @@ export class SearchService {
 
       return undefined;
     } catch (err) {
-      console.error('SearchService.getUserByIdOrPublicId error', err);
+      logger.error('get_user_by_id_or_public_id_failed', {
+        message: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined,
+      });
       throw new ServiceException(2002, 'Error retrieving user');
     }
   }
