@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { v4 as uuidv4 } from "uuid";
+import { randomUUID } from "crypto";
 import s3Client from "../lib/aws/s3/s3Client";
 import prisma from "../lib/prisma";
 
@@ -34,7 +34,7 @@ router.get("/presigned-url", async (req: Request, res: Response) => {
   }
 
   const ext = ALLOWED_CONTENT_TYPES[contentType];
-  const key = `profile-pictures/${userId}/${uuidv4()}${ext}`;
+  const key = `profile-pictures/${userId}/${randomUUID()}${ext}`;
 
   const command = new PutObjectCommand({
     Bucket: BUCKET,

@@ -1,4 +1,9 @@
-const API = '/user';
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+const API = API_BASE ? `${API_BASE}/user` : '/user';
+
+console.log('VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL);
+console.log('API_BASE:', API_BASE);
+console.log('API:', API);
 
 export function parseJwtSub(token: string): number | null {
   try {

@@ -1,6 +1,7 @@
 import express from "express";
 import path from "path";
-import config from "./config/config"; 
+import config from "./config/config";
+import { logger } from "./lib/logger";
 import { errorHandler } from './middlewares/errorHandler';
 import userRoutes from './routes/userRoutes';
 import feedRoutes from './routes/feedRoutes';
@@ -9,10 +10,19 @@ import interactionRoutes from './routes/interactionRoutes';
 import uploadRoutes from './routes/uploadRoutes';
 import userPostRoutes from './routes/userPostRoutes';
 import profilePictureRoutes from './routes/profilePicture';
+import cors from 'cors';
 
 const app = express();
 const PORT = config.port; 
 
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'https://TU-APP.amplifyapp.com'
+  ],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -36,6 +46,8 @@ declare const module: any;
 
 if (require.main === module) {
   app.listen(PORT, () => {
-    console.log(`Server running on ${config.protocol}://${config.host}:${PORT}`);
+    const url = `${config.protocol}://${config.host}:${PORT}`;
+    logger.info("Winston probe: servidor en marcha");
+    logger.info(`Server running on ${url}`, { port: PORT });
   });
 }
