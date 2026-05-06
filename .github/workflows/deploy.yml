@@ -49,6 +49,8 @@ jobs:
             
             # Recreación del .env incluyendo la arquitectura de AWS
             cat <<EOF > /var/www/kikiri/kikiri/.env
+            NODE_ENV=production
+            LOG_DIR=/var/log/social-media
             PORT=${{ secrets.PORT }}
             HOST=0.0.0.0
             PROTOCOL=http

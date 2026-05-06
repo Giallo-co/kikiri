@@ -1,6 +1,7 @@
 import express from "express";
 import path from "path";
-import config from "./config/config"; 
+import config from "./config/config";
+import { logger } from "./lib/logger";
 import { errorHandler } from './middlewares/errorHandler';
 import userRoutes from './routes/userRoutes';
 import feedRoutes from './routes/feedRoutes';
@@ -45,6 +46,8 @@ declare const module: any;
 
 if (require.main === module) {
   app.listen(PORT, () => {
-    console.log(`Server running on ${config.protocol}://${config.host}:${PORT}`);
+    const url = `${config.protocol}://${config.host}:${PORT}`;
+    logger.info("Winston probe: servidor en marcha");
+    logger.info(`Server running on ${url}`, { port: PORT });
   });
 }
