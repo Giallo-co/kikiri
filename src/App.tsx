@@ -81,21 +81,17 @@ export default function App() {
     setView('home');
     setSelectedNodeId(null);
     setActiveLibraryCollection(null);
-    setIsProfileOpen(false); // Cerramos el perfil si se navega a home
+    setIsProfileOpen(false);
   };
 
   const handleGoLibrary = () => {
     setView('library');
     setActiveLibraryCollection(null);
-    setIsProfileOpen(false); // Cerramos el perfil si se navega a library
+    setIsProfileOpen(false);
   };
 
   const handleOpenProfile = () => {
     setIsProfileOpen(true);
-  };
-
-  const handleEnterCollection = (collectionId: string) => {
-    setActiveLibraryCollection(collectionId);
   };
 
   const handleToggleLike = (track: Music) => {
@@ -136,7 +132,7 @@ export default function App() {
 
   const handleNodeClick = (nodeId: string, content: any) => {
     if (nodeId.startsWith('col-')) {
-        handleEnterCollection(nodeId);
+        setActiveLibraryCollection(nodeId);
         return; 
     }
     if (content?.music_id) {
@@ -272,7 +268,6 @@ export default function App() {
     connect(); return () => { esRef.current?.close() }
   }, [isLoggedIn])
 
-  // --- LÓGICA DE FILTRADO PARA LA VISTA Y BÚSQUEDA ---
   const currentDisplayData = activeLibraryCollection ? getFilteredGraphData() : graphData;
 
   const searchNodes = activeLibraryCollection && currentDisplayData 
@@ -357,8 +352,10 @@ export default function App() {
               user={{
                 name: "Usuario prueba 1",
                 epitaph: "Explorando las frecuencias del vacío. El sonido es la única constante.",
-                avatar: "https://www.nutrisslovers.com/Portals/nutrisslovers/Articulos%20Nutriss%20Gatos/gatos-unicos-guia-de-razas-y-como-nutrir-su-mundo/cuales-son-las-razas-de-gatos-mas-populares-en-colombia.jpg?ver=T9w4YcvobP-L1GXta8uTAA%3D%3D", // Avatar demo
-                banner: "https://img.freepik.com/foto-gratis/personaje-estilo-anime-espacio_23-2151134346.jpg?semt=ais_hybrid&w=740&q=80" // Banner demo
+                avatar: "https://www.nutrisslovers.com/Portals/nutrisslovers/Articulos%20Nutriss%20Gatos/gatos-unicos-guia-de-razas-y-como-nutrir-su-mundo/cuales-son-las-razas-de-gatos-mas-populares-en-colombia.jpg", 
+                banner: "https://img.freepik.com/foto-gratis/personaje-estilo-anime-espacio_23-2151134346.jpg",
+                // Imagen lateral tipo Steam
+                bgImage: "https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/5298bac0-b8bf-4c80-af67-725c1272dbb0/dfylpne-d32e5569-bcbd-4c32-bcd4-bf4f3e2cf9a6.jpg/v1/fill/w_1192,h_670,q_70,strp/spider_man_into_the_spider_verse_wallpaper_by_thekingblader995_dfylpne-pre.jpg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9MTA4MCIsInBhdGgiOiIvZi81Mjk4YmFjMC1iOGJmLTRjODAtYWY2Ny03MjVjMTI3MmRiYjAvZGZ5bHBuZS1kMzJlNTU2OS1iY2JkLTRjMzItYmNkNC1iZjRmM2UyY2Y5YTYuanBnIiwid2lkdGgiOiI8PTE5MjAifV1dLCJhdWQiOlsidXJuOnNlcnZpY2U6aW1hZ2Uub3BlcmF0aW9ucyJdfQ.GYBFh6wtP8a5DoyfAh2Cqpg1xSNf1vSW0nIXf0EaYUg" 
               }}
               likedSongs={rawNodes
                 .filter(n => {
