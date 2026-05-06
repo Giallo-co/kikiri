@@ -5,6 +5,7 @@ import SideNav, { NavItem } from "./components/SideNav/SideNav";
 import Login from "./components/Login/Login";
 import Profile from "./components/Profile/Profile";
 import Post from "./components/Post/Post";
+import CustomCursor from "./components/CustomCursor/CustomCursor";
 import { graphConfig } from './graphConfig'
 import type { NodeDatum, LinkDatum, RawNode } from './types/graph'
 import type { Music } from "./types/music";
@@ -514,7 +515,7 @@ export default function App() {
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden', backgroundColor: '#ebebeb' }}>
-      
+      <CustomCursor />
       {(!isLoggedIn || isTransitioning) && (
         <Login onLogin={handleLoginSuccess} isTransitioning={isTransitioning} />
       )}
