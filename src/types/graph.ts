@@ -3,6 +3,7 @@ export interface NodeDatum {
   name?: string
   color?: string
   content?: any
+  isComment?: boolean
   x?: number
   y?: number
   fx?: number | null

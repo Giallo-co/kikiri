@@ -7,10 +7,12 @@ interface Props {
   track: Music | null;
   autoPlay?: boolean;
   isLiked?: boolean;
+  isCommentActive?: boolean;
   onNext?: () => void;
   onPrevious?: () => void;
   onShuffle?: () => void;
   onLike?: () => void;
+  onCommentToggle?: () => void;
 }
 
 function formatTime(s: number): string {
@@ -25,7 +27,7 @@ function calcRatio(e: MouseEvent | React.MouseEvent, el: HTMLElement): number {
   return Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
 }
 
-export default function PlayerBar({ track, autoPlay = false, isLiked = false, onNext, onPrevious, onShuffle, onLike }: Props) {
+export default function PlayerBar({ track, autoPlay = false, isLiked = false, isCommentActive = false, onNext, onPrevious, onShuffle, onLike, onCommentToggle }: Props) {
   const { isPlaying, currentTime, duration, volume, isMuted, togglePlay, seek, changeVolume, toggleMute, restart } =
     useAudioPlayer(track, autoPlay, onNext);
   const [imgError, setImgError] = useState(false);
@@ -158,8 +160,12 @@ export default function PlayerBar({ track, autoPlay = false, isLiked = false, on
 
       <div className="player-right">
         <div className="player-social-btns">
-          <button className="ctrl-btn small-btn" aria-label="Comment">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <button 
+            className={`ctrl-btn small-btn ${isCommentActive ? 'active' : ''}`} 
+            onClick={onCommentToggle} 
+            aria-label="Comment"
+          >
+            <svg viewBox="0 0 24 24" fill={isCommentActive ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
           </button>

@@ -3,6 +3,7 @@ import * as d3 from 'd3'
 import type { NodeDatum, LinkDatum, GraphConfig } from '../types/graph'
 import type { Music } from '../types/music'
 import './GraphView.css'
+import './Login/Login.css'
 
 interface Props {
   nodes: NodeDatum[]
@@ -12,6 +13,7 @@ interface Props {
   playingNodeId?: string | null
   fixedNodeId?: string | null
   shouldFocus?: boolean
+  showComment?: boolean
   isLoggedIn?: boolean
   searchQuery?: string
   showSearchBar?: boolean
@@ -37,13 +39,14 @@ const ENABLE_DYNAMIC_EXCLUSION = false // true: radius changes on selection, fal
 
 
 
-export default function GraphView({ nodes, links, config, selectedId, playingNodeId, fixedNodeId, shouldFocus = true, isLoggedIn, searchQuery, showSearchBar, searchTrigger, onNodeClick, onDeselect, onSearch }: Props) {
+export default function GraphView({ nodes, links, config, selectedId, playingNodeId, fixedNodeId, shouldFocus = true, showComment = false, isLoggedIn, searchQuery, showSearchBar, searchTrigger, onNodeClick, onDeselect, onSearch }: Props) {
   const svgRef = useRef<SVGSVGElement>(null)
   const simulationRef = useRef<d3.Simulation<NodeDatum, undefined> | null>(null)
   const gRef = useRef<d3.Selection<SVGGElement, unknown, null, undefined> | null>(null)
   const nodeSelectionRef = useRef<d3.Selection<SVGCircleElement, NodeDatum, SVGGElement, unknown> | null>(null)
   const labelSelectionRef = useRef<d3.Selection<SVGTextElement, NodeDatum, SVGGElement, unknown> | null>(null)
   const linkSelectionRef = useRef<d3.Selection<SVGLineElement, any, SVGGElement, unknown> | null>(null)
+  const commentSelectionRef = useRef<d3.Selection<SVGForeignObjectElement, NodeDatum, SVGGElement, unknown> | null>(null)
   const onNodeClickRef = useRef(onNodeClick)
   const onDeselectRef = useRef(onDeselect)
   const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null)
@@ -331,6 +334,11 @@ export default function GraphView({ nodes, links, config, selectedId, playingNod
           .attr('x', d => d.x ?? 0)
           .attr('y', d => (d.y ?? 0) + (configRef.current.nodeSize + 12))
       }
+      if (commentSelectionRef.current) {
+        commentSelectionRef.current
+          .attr('x', d => (d.x ?? 0) - 100)
+          .attr('y', d => (d.y ?? 0) - 60)
+      }
     })
 
     simulationRef.current = simulation
@@ -354,12 +362,34 @@ export default function GraphView({ nodes, links, config, selectedId, playingNod
 
     const oldNodes = simulation.nodes()
     const nodeMap = new Map(oldNodes.map(n => [n.id, n]))
-    const newNodes = nodes.map(n => {
+    let newNodes = nodes.map(n => {
       const old = nodeMap.get(n.id)
       return old ? { ...old, ...n } : { ...n }
     })
 
-    const newLinks = links.map(l => ({ ...l }))
+    let newLinks = links.map(l => ({ ...l }))
+
+    // Inject comment node if active
+    if (showComment && selectedId) {
+      const selectedNode = newNodes.find(n => n.id === selectedId)
+      if (selectedNode) {
+        const description = selectedNode.content?.music_description || selectedNode.content?.author_description || 'No description available'
+        const commentNode: NodeDatum = nodeMap.get('comment-node') || {
+          id: 'comment-node',
+          name: 'Comment',
+          x: (selectedNode.x || 0) + 50,
+          y: (selectedNode.y || 0) + 50,
+        }
+        commentNode.content = { ...selectedNode.content, display_description: description }
+        commentNode.isComment = true
+        
+        newNodes.push(commentNode)
+        newLinks.push({
+          source: selectedId,
+          target: 'comment-node'
+        })
+      }
+    }
 
     if (!g.select('.links-group').size()) {
       g.append('g')
@@ -372,12 +402,59 @@ export default function GraphView({ nodes, links, config, selectedId, playingNod
 
     if (!g.select('.nodes-group').size()) g.append('g').attr('class', 'nodes-group')
     if (!g.select('.labels-group').size()) g.append('g').attr('class', 'labels-group')
+    if (!g.select('.comments-group').size()) g.append('g').attr('class', 'comments-group')
 
     const linkGroup = g.select<SVGGElement>('.links-group')
     const nodeGroup = g.select<SVGGElement>('.nodes-group')
     const labelGroup = g.select<SVGGElement>('.labels-group')
+    const commentGroup = g.select<SVGGElement>('.comments-group')
 
     labelGroup.style('display', config.showLabels ? 'inline' : 'none')
+
+    commentSelectionRef.current = commentGroup
+      .selectAll<SVGForeignObjectElement, NodeDatum>('foreignObject')
+      .data(newNodes.filter(n => n.isComment), d => d.id)
+      .join(
+        enter => enter.append('foreignObject')
+          .attr('width', 200)
+          .attr('height', 120)
+          .call(d3.drag<SVGForeignObjectElement, NodeDatum>()
+            .on('start', (event, d) => {
+              if (!event.active) simulation.alphaTarget(0.3).restart()
+              d.fx = d.x; d.fy = d.y
+            })
+            .on('drag', (event, d) => { d.fx = event.x; d.fy = event.y })
+            .on('end', (event, d) => {
+              if (!event.active) simulation.alphaTarget(0)
+              d.fx = null; d.fy = null
+            })
+          )
+          .html(d => `
+            <div class="login-card" style="padding: 15px; width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.01); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(0,0,0,0.05); pointer-events: auto;">
+              <div class="login-card-inner">
+                <div class="login-header" style="margin-bottom: 8px;">
+                  <h2 style="font-size: 0.8rem; margin: 0;">[ Description ]</h2>
+                </div>
+                <div style="font-size: 0.7rem; color: #666; line-height: 1.2; max-height: 60px; overflow-y: auto;">
+                  ${d.content?.display_description || ''}
+                </div>
+              </div>
+            </div>
+          `),
+        update => update.html(d => `
+            <div class="login-card" style="padding: 15px; width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.01); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(0,0,0,0.05); pointer-events: auto;">
+              <div class="login-card-inner">
+                <div class="login-header" style="margin-bottom: 8px;">
+                  <h2 style="font-size: 0.8rem; margin: 0;">[ Description ]</h2>
+                </div>
+                <div style="font-size: 0.7rem; color: #666; line-height: 1.2; max-height: 60px; overflow-y: auto;">
+                  ${d.content?.display_description || ''}
+                </div>
+              </div>
+            </div>
+        `),
+        exit => exit.remove()
+      )
 
     linkSelectionRef.current = linkGroup
       .selectAll<SVGLineElement, any>('line')
@@ -466,7 +543,7 @@ export default function GraphView({ nodes, links, config, selectedId, playingNod
 
     nodeSelectionRef.current = nodeGroup
       .selectAll<SVGCircleElement, NodeDatum>('circle')
-      .data(newNodes, d => d.id)
+      .data(newNodes.filter(n => !n.isComment), d => d.id)
       .join(
         enter => enter.append('circle')
           .attr('r', config.nodeSize)
@@ -509,7 +586,7 @@ export default function GraphView({ nodes, links, config, selectedId, playingNod
 
     labelSelectionRef.current = labelGroup
       .selectAll<SVGTextElement, NodeDatum>('text')
-      .data(newNodes, d => d.id)
+      .data(newNodes.filter(n => !n.isComment), d => d.id)
       .join(
         enter => enter.append('text')
           .text(d => d.name || d.id)
@@ -599,7 +676,7 @@ export default function GraphView({ nodes, links, config, selectedId, playingNod
       )
     }
 
-  }, [nodes, links, config, selectedId, playingNodeId, shouldFocus, searchQuery])
+  }, [nodes, links, config, selectedId, playingNodeId, shouldFocus, showComment, searchQuery])
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>

@@ -146,6 +146,10 @@
   color: #ff4b4b !important;
 }
 
+.ctrl-btn.active {
+  color: #ab90df !important;
+}
+
 .like-btn.animating {
   animation: heart-pop 0.45s ease-out;
 }

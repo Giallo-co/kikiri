@@ -68,6 +68,7 @@ export default function App() {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
   const [isManualSelection, setIsManualSelection] = useState(false)
   const [shouldFocus, setShouldFocus] = useState(true)
+  const [isCommentActive, setIsCommentActive] = useState(false)
   const [autoPlay, setAutoPlay] = useState(false)
   const [history, setHistory] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState('')
@@ -358,7 +359,14 @@ export default function App() {
     setSelectedNodeId(null)
     setIsManualSelection(false)
     setShouldFocus(true)
+    setIsCommentActive(false)
   }, [])
+
+  const handleCommentToggle = useCallback(() => {
+    if (selectedNodeId) {
+      setIsCommentActive(prev => !prev)
+    }
+  }, [selectedNodeId])
 
   const handleLoginSuccess = useCallback((user: string) => {
     setIsTransitioning(true);
@@ -536,6 +544,7 @@ export default function App() {
             playingNodeId={playingNodeId}
             fixedNodeId={fixedNodeId}
             shouldFocus={shouldFocus}
+            showComment={isCommentActive}
             isLoggedIn={isLoggedIn}
             searchQuery={searchQuery}
             showSearchBar={activeTab === 'Search'}
@@ -592,10 +601,12 @@ export default function App() {
               track={currentTrack} 
               autoPlay={autoPlay} 
               isLiked={isCurrentTrackLiked}
+              isCommentActive={isCommentActive}
               onNext={handleNext}
               onPrevious={handlePrevious}
               onShuffle={handleShuffle}
               onLike={handleLike}
+              onCommentToggle={handleCommentToggle}
             />
           </div>
         </>
