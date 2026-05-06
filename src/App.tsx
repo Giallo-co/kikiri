@@ -252,6 +252,12 @@ export default function App() {
     }
   }, [currentTrack, visibleNodes, selectedNodeId, isManualSelection, handleTrackChange])
 
+  const playingNodeId = useMemo(() => {
+    if (!currentTrack) return null
+    const node = visibleNodes.find(rn => rn.music_id === currentTrack.music_id)
+    return node?.node_id || null
+  }, [currentTrack, visibleNodes])
+
   const handleShuffle = useCallback(async () => {
     if (!visibleNodes.length) return
 
@@ -278,20 +284,20 @@ export default function App() {
       if (!randomTag) return false
 
       setSelectedNodeId(randomTag.node_id)
-      setShouldFocus(isManualSelection)
+      setShouldFocus(true)
       await delay(SHUFFLE_STEP_DELAY)
 
       const randomAuthor = findAuthorFromTag(randomTag)
       if (!randomAuthor) return await startFullFlow()
 
       setSelectedNodeId(randomAuthor.node_id)
-      setShouldFocus(isManualSelection)
+      setShouldFocus(true)
       await delay(SHUFFLE_STEP_DELAY)
 
       const randomMusic = findMusicFromAuthor(randomAuthor)
       if (!randomMusic) return await startFullFlow()
 
-      handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id, true, isManualSelection)
+      handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id, true, true)
       return true
     }
 
@@ -303,17 +309,17 @@ export default function App() {
     if (currentNode.node_type === "Tag") {
       const randomAuthor = findAuthorFromTag(currentNode)
       if (!randomAuthor) { await startFullFlow(); return }
-      setSelectedNodeId(randomAuthor.node_id); setShouldFocus(isManualSelection); await delay(SHUFFLE_STEP_DELAY)
+      setSelectedNodeId(randomAuthor.node_id); setShouldFocus(true); await delay(SHUFFLE_STEP_DELAY)
       const randomMusic = findMusicFromAuthor(randomAuthor)
       if (!randomMusic) { await startFullFlow(); return }
-      handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id, true, isManualSelection)
+      handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id, true, true)
       return
     }
 
     if (currentNode.node_type === "Author") {
       const randomMusic = findMusicFromAuthor(currentNode)
       if (!randomMusic) { await startFullFlow(); return }
-      handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id, true, isManualSelection)
+      handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id, true, true)
       return
     }
 
@@ -322,22 +328,22 @@ export default function App() {
       const relatedNodes = rawNodes.filter(n => relatedIds.includes(n.node_id))
       const randomRelated = getRandom(relatedNodes)
       if (!randomRelated) { await startFullFlow(); return }
-      setSelectedNodeId(randomRelated.node_id); setShouldFocus(isManualSelection); await delay(SHUFFLE_STEP_DELAY)
+      setSelectedNodeId(randomRelated.node_id); setShouldFocus(true); await delay(SHUFFLE_STEP_DELAY)
       if (randomRelated.node_type === "Tag") {
         const randomAuthor = findAuthorFromTag(randomRelated)
         if (!randomAuthor) { await startFullFlow(); return }
-        setSelectedNodeId(randomAuthor.node_id); setShouldFocus(isManualSelection); await delay(SHUFFLE_STEP_DELAY)
+        setSelectedNodeId(randomAuthor.node_id); setShouldFocus(true); await delay(SHUFFLE_STEP_DELAY)
         const randomMusic = findMusicFromAuthor(randomAuthor)
         if (!randomMusic) { await startFullFlow(); return }
-        handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id, true, isManualSelection)
+        handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id, true, true)
       } else if (randomRelated.node_type === "Author") {
         const randomMusic = findMusicFromAuthor(randomRelated)
         if (!randomMusic) { await startFullFlow(); return }
-        handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id, true, isManualSelection)
+        handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id, true, true)
       }
       return
     }
-  }, [rawNodes, selectedNodeId, isManualSelection, handleTrackChange])
+  }, [rawNodes, visibleNodes, selectedNodeId, handleTrackChange])
 
   const handleNodeClick = useCallback((nodeId: string, content: any) => {
     setSelectedNodeId(nodeId)
@@ -527,6 +533,7 @@ export default function App() {
             links={graphData.links}
             config={currentConfig}
             selectedId={selectedNodeId}
+            playingNodeId={playingNodeId}
             fixedNodeId={fixedNodeId}
             shouldFocus={shouldFocus}
             isLoggedIn={isLoggedIn}

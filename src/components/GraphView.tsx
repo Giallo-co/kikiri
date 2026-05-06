@@ -9,6 +9,7 @@ interface Props {
   links: LinkDatum[]
   config: GraphConfig
   selectedId?: string | null
+  playingNodeId?: string | null
   fixedNodeId?: string | null
   shouldFocus?: boolean
   isLoggedIn?: boolean
@@ -36,7 +37,7 @@ const ENABLE_DYNAMIC_EXCLUSION = false // true: radius changes on selection, fal
 
 
 
-export default function GraphView({ nodes, links, config, selectedId, fixedNodeId, shouldFocus = true, isLoggedIn, searchQuery, showSearchBar, searchTrigger, onNodeClick, onDeselect, onSearch }: Props) {
+export default function GraphView({ nodes, links, config, selectedId, playingNodeId, fixedNodeId, shouldFocus = true, isLoggedIn, searchQuery, showSearchBar, searchTrigger, onNodeClick, onDeselect, onSearch }: Props) {
   const svgRef = useRef<SVGSVGElement>(null)
   const simulationRef = useRef<d3.Simulation<NodeDatum, undefined> | null>(null)
   const gRef = useRef<d3.Selection<SVGGElement, unknown, null, undefined> | null>(null)
@@ -497,6 +498,10 @@ export default function GraphView({ nodes, links, config, selectedId, fixedNodeI
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ id: d.id, name: d.name, content })
             }).catch(err => console.error('Failed to notify backend:', err))
+          })
+          .on('dblclick', (event, d) => {
+            event.stopPropagation()
+            zoomToNode(d.id)
           }),
         update => update.attr('r', config.nodeSize),
         exit => exit.remove()
@@ -562,11 +567,12 @@ export default function GraphView({ nodes, links, config, selectedId, fixedNodeI
         clickTimer = null
       }
       
-      if (selectedId) {
-        const node = newNodes.find(n => n.id === selectedId)
+      const targetId = selectedId || playingNodeId
+      if (targetId) {
+        const node = newNodes.find(n => n.id === targetId)
         if (node) {
           onNodeClickRef.current(node.id, node.content)
-          zoomToNode(selectedId)
+          zoomToNode(targetId)
         }
       }
     })
@@ -593,7 +599,7 @@ export default function GraphView({ nodes, links, config, selectedId, fixedNodeI
       )
     }
 
-  }, [nodes, links, config, selectedId, shouldFocus, searchQuery])
+  }, [nodes, links, config, selectedId, playingNodeId, shouldFocus, searchQuery])
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
