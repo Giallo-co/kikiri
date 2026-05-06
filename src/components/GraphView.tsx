@@ -27,7 +27,7 @@ const BASE_COLOR = '#2a2a2a'
 const SELECTED_COLOR = '#ab90df'
 const LINK_BASE = '#b0aca6'
 const LINK_SELECTED = '#ab90df'
-const FOCUS_ZOOM_LEVEL = 3.5 // variable to control zoom depth
+const FOCUS_ZOOM_LEVEL = 1.5 // variable to control zoom depth
 const SEARCH_FOCUS_ZOOM = 1.0 // Configurable zoom depth for search results
 const DESELECT_ZOOM_LEVEL = 0.4 // variable to control zoom when deselecting
 const LINK_EXCLUSION_OPACITY = 0.2 // opacity of links when passing through the center (0 to 1)
@@ -334,10 +334,25 @@ export default function GraphView({ nodes, links, config, selectedId, playingNod
           .attr('x', d => d.x ?? 0)
           .attr('y', d => (d.y ?? 0) + (configRef.current.nodeSize + 12))
       }
-      if (commentSelectionRef.current) {
+      if (commentSelectionRef.current && svgRef.current) {
+        const transform = d3.zoomTransform(svgRef.current)
+        const padding = 20
+        const w = 220
+        const h = 160
+
         commentSelectionRef.current
-          .attr('x', d => (d.x ?? 0) - 100)
-          .attr('y', d => (d.y ?? 0) - 60)
+          .attr('x', d => {
+            const lx = (d.x ?? 0) - w / 2
+            const minLx = (padding - transform.x) / transform.k
+            const maxLx = (width - padding - transform.x) / transform.k - w
+            return Math.max(minLx, Math.min(maxLx, lx))
+          })
+          .attr('y', d => {
+            const ly = (d.y ?? 0) - h / 2
+            const minLy = (padding - transform.y) / transform.k
+            const maxLy = (height - 72 - padding - transform.y) / transform.k - h
+            return Math.max(minLy, Math.min(maxLy, ly))
+          })
       }
     })
 
@@ -416,8 +431,8 @@ export default function GraphView({ nodes, links, config, selectedId, playingNod
       .data(newNodes.filter(n => n.isComment), d => d.id)
       .join(
         enter => enter.append('foreignObject')
-          .attr('width', 200)
-          .attr('height', 120)
+          .attr('width', 220)
+          .attr('height', 160)
           .call(d3.drag<SVGForeignObjectElement, NodeDatum>()
             .on('start', (event, d) => {
               if (!event.active) simulation.alphaTarget(0.3).restart()
@@ -430,24 +445,24 @@ export default function GraphView({ nodes, links, config, selectedId, playingNod
             })
           )
           .html(d => `
-            <div class="login-card" style="padding: 15px; width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.01); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(0,0,0,0.05); pointer-events: auto;">
-              <div class="login-card-inner">
-                <div class="login-header" style="margin-bottom: 8px;">
-                  <h2 style="font-size: 0.8rem; margin: 0;">[ Description ]</h2>
+            <div class="login-card" style="padding: 20px; width: 100%; height: 100%; box-sizing: border-box; background: rgba(255,255,255,0.01); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: none; pointer-events: auto; font-family: 'Inter', -apple-system, sans-serif; display: flex; flex-direction: column;">
+              <div class="login-card-inner" style="position: relative; height: 100%; display: flex; flex-direction: column;">
+                <div class="login-header" style="margin-bottom: 12px;">
+                  <h2 style="font-size: 0.9rem; font-weight: 400; letter-spacing: 0.5px; margin: 0; color: #000;">[ Description ]</h2>
                 </div>
-                <div style="font-size: 0.7rem; color: #666; line-height: 1.2; max-height: 60px; overflow-y: auto;">
+                <div style="font-size: 0.75rem; color: #666; line-height: 1.4; overflow-y: auto; flex: 1; padding-right: 4px;">
                   ${d.content?.display_description || ''}
                 </div>
               </div>
             </div>
           `),
         update => update.html(d => `
-            <div class="login-card" style="padding: 15px; width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.01); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(0,0,0,0.05); pointer-events: auto;">
-              <div class="login-card-inner">
-                <div class="login-header" style="margin-bottom: 8px;">
-                  <h2 style="font-size: 0.8rem; margin: 0;">[ Description ]</h2>
+            <div class="login-card" style="padding: 20px; width: 100%; height: 100%; box-sizing: border-box; background: rgba(255,255,255,0.01); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: none; pointer-events: auto; font-family: 'Inter', -apple-system, sans-serif; display: flex; flex-direction: column;">
+              <div class="login-card-inner" style="position: relative; height: 100%; display: flex; flex-direction: column;">
+                <div class="login-header" style="margin-bottom: 12px;">
+                  <h2 style="font-size: 0.9rem; font-weight: 400; letter-spacing: 0.5px; margin: 0; color: #000;">[ Description ]</h2>
                 </div>
-                <div style="font-size: 0.7rem; color: #666; line-height: 1.2; max-height: 60px; overflow-y: auto;">
+                <div style="font-size: 0.75rem; color: #666; line-height: 1.4; overflow-y: auto; flex: 1; padding-right: 4px;">
                   ${d.content?.display_description || ''}
                 </div>
               </div>
