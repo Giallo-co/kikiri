@@ -13,6 +13,8 @@ interface Props {
   onShuffle?: () => void;
   onLike?: () => void;
   onCommentToggle?: () => void;
+  onShare?: () => void;
+  isSharing?: boolean;
 }
 
 function formatTime(s: number): string {
@@ -27,7 +29,7 @@ function calcRatio(e: MouseEvent | React.MouseEvent, el: HTMLElement): number {
   return Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
 }
 
-export default function PlayerBar({ track, autoPlay = false, isLiked = false, isCommentActive = false, onNext, onPrevious, onShuffle, onLike, onCommentToggle }: Props) {
+export default function PlayerBar({ track, autoPlay = false, isLiked = false, isCommentActive = false, onNext, onPrevious, onShuffle, onLike, onCommentToggle, onShare, isSharing = false }: Props) {
   const { isPlaying, currentTime, duration, volume, isMuted, togglePlay, seek, changeVolume, toggleMute, restart } =
     useAudioPlayer(track, autoPlay, onNext);
   const [imgError, setImgError] = useState(false);
@@ -178,7 +180,7 @@ export default function PlayerBar({ track, autoPlay = false, isLiked = false, is
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
             </svg>
           </button>
-          <button className="ctrl-btn small-btn" aria-label="Share">
+          <button className={`ctrl-btn small-btn share-btn ${isSharing ? 'sharing' : ''}`} onClick={onShare} aria-label="Share">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
               <circle cx="18" cy="5" r="3" />
               <circle cx="6" cy="12" r="3" />

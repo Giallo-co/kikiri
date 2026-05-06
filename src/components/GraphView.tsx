@@ -67,7 +67,14 @@ export default function GraphView({ nodes, links, config, selectedId, playingNod
 
   useEffect(() => {
     if (showSearchBar) {
-      setHideOverlay(false) // Reset overlay visibility when search is activated or triggered
+      // If there's already a search query when the search bar is triggered (like from a share link), 
+      // we hide the overlay immediately to show the result.
+      if (searchQuery) {
+        setHideOverlay(true)
+      } else {
+        setHideOverlay(false)
+      }
+      
       if (svgRef.current && zoomRef.current) {
         const rect = svgRef.current.getBoundingClientRect()
         const width = rect.width
@@ -273,6 +280,9 @@ export default function GraphView({ nodes, links, config, selectedId, playingNod
 
         for (let i = 0, n = currentNodes.length; i < n; ++i) {
           const node = currentNodes[i]
+
+          // Skip comment nodes and fixed nodes
+          if (node.isComment) continue
 
           // Fix user node if applicable
           if (fixedNodeIdRef.current && node.id === fixedNodeIdRef.current) {

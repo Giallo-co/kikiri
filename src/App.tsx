@@ -69,12 +69,14 @@ export default function App() {
   const [isManualSelection, setIsManualSelection] = useState(false)
   const [shouldFocus, setShouldFocus] = useState(true)
   const [isCommentActive, setIsCommentActive] = useState(false)
+  const [isSharing, setIsSharing] = useState(false)
   const [autoPlay, setAutoPlay] = useState(false)
   const [history, setHistory] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [searchTrigger, setSearchTrigger] = useState(0)
   const [currentConfig, setCurrentConfig] = useState(graphConfig)
   const esRef = useRef<EventSource | null>(null)
+  const initialSearchHandledRef = useRef(false)
 
   const visibleNodes = useMemo(() => {
     if (!rawNodes.length || !isLoggedIn || !username) return []
@@ -282,7 +284,28 @@ export default function App() {
     const startFullFlow = async (): Promise<boolean> => {
       const tags = visibleNodes.filter(n => n.node_type === "Tag" && (n.node_author_links_next?.length ?? 0) > 0)
       const randomTag = getRandom(tags.length > 0 ? tags : visibleNodes.filter(n => n.node_type === "Tag"))
-      if (!randomTag) return false
+      
+      if (!randomTag) {
+        // Fallback for searches with no tags: pick a random author or music
+        const authors = visibleNodes.filter(n => n.node_type === "Author")
+        const musics = visibleNodes.filter(n => n.node_type === "Music")
+        const fallback = getRandom(authors) || getRandom(musics) || getRandom(visibleNodes)
+        if (!fallback) return false
+        
+        setSelectedNodeId(fallback.node_id)
+        setShouldFocus(true)
+        if (fallback.node_type === "Music") {
+          handleTrackChange(fallback as unknown as Music, fallback.node_id, true, true)
+          return true
+        }
+        // If it's an author, wait a bit then pick a music
+        await delay(SHUFFLE_STEP_DELAY)
+        const randomMusic = findMusicFromAuthor(fallback)
+        if (randomMusic) {
+          handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id, true, true)
+        }
+        return true
+      }
 
       setSelectedNodeId(randomTag.node_id)
       setShouldFocus(true)
@@ -326,7 +349,7 @@ export default function App() {
 
     if (currentNode.node_type === "Music") {
       const relatedIds = [...(currentNode.node_tag_links_next || []), ...(currentNode.node_author_links_next || [])]
-      const relatedNodes = rawNodes.filter(n => relatedIds.includes(n.node_id))
+      const relatedNodes = visibleNodes.filter(n => relatedIds.includes(n.node_id))
       const randomRelated = getRandom(relatedNodes)
       if (!randomRelated) { await startFullFlow(); return }
       setSelectedNodeId(randomRelated.node_id); setShouldFocus(true); await delay(SHUFFLE_STEP_DELAY)
@@ -344,7 +367,7 @@ export default function App() {
       }
       return
     }
-  }, [rawNodes, visibleNodes, selectedNodeId, handleTrackChange])
+  }, [visibleNodes, selectedNodeId, handleTrackChange])
 
   const handleNodeClick = useCallback((nodeId: string, content: any) => {
     setSelectedNodeId(nodeId)
@@ -367,6 +390,17 @@ export default function App() {
       setIsCommentActive(prev => !prev)
     }
   }, [selectedNodeId])
+
+  const handleShare = useCallback(() => {
+    if (!currentTrack) return
+    const shareUrl = `${window.location.origin}${window.location.pathname}?search=${encodeURIComponent(currentTrack.music_name)}`
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      setIsSharing(true)
+      setTimeout(() => setIsSharing(false), 600)
+    }).catch(err => {
+      console.error('Failed to copy:', err)
+    })
+  }, [currentTrack])
 
   const handleLoginSuccess = useCallback((user: string) => {
     setIsTransitioning(true);
@@ -527,6 +561,23 @@ export default function App() {
     connect(); return () => { esRef.current?.close() }
   }, [isLoggedIn])
 
+  useEffect(() => {
+    if (isLoggedIn && rawNodes.length > 0 && !initialSearchHandledRef.current) {
+      const params = new URLSearchParams(window.location.search)
+      const query = params.get('search')
+      if (query) {
+        handleSearch(query)
+        setActiveTab('Search')
+        setSearchTrigger(prev => prev + 1)
+        
+        // Remove search param from URL without refreshing
+        const newUrl = window.location.pathname
+        window.history.replaceState({}, '', newUrl)
+      }
+      initialSearchHandledRef.current = true
+    }
+  }, [isLoggedIn, rawNodes, handleSearch])
+
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden', backgroundColor: '#ebebeb' }}>
       <CustomCursor />
@@ -607,6 +658,8 @@ export default function App() {
               onShuffle={handleShuffle}
               onLike={handleLike}
               onCommentToggle={handleCommentToggle}
+              onShare={handleShare}
+              isSharing={isSharing}
             />
           </div>
         </>
