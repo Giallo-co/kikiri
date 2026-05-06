@@ -1,70 +1,83 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import './ProfileView.css';
+import type { Music } from '../../types/music';
 
 interface ProfileViewProps {
   onClose: () => void;
+  onGoHome: () => void;
+  onGoLibrary: () => void;
   user: {
     name: string;
-    email: string;
-    avatar?: string;
-    stats: {
-      likedCount: number;
-      collectionsCount: number;
-    }
+    epitaph: string;
+    avatar: string;
+    banner: string;
   };
+  likedSongs: Music[];
 }
 
-export default function ProfileView({ onClose, user }: ProfileViewProps) {
+export default function ProfileView({ onClose, onGoHome, onGoLibrary, user, likedSongs }: ProfileViewProps) {
+  
   return (
-    <div style={{
-      position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-      backgroundColor: 'rgba(10, 10, 10, 0.9)', backdropFilter: 'blur(15px)',
-      zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center',
-      animation: 'fadeIn 0.3s ease-out'
-    }}>
-      <div style={{
-        width: '400px', padding: '40px', borderRadius: '30px',
-        backgroundColor: 'rgba(20, 20, 20, 0.5)', border: '1px solid rgba(0, 242, 255, 0.3)',
-        boxShadow: '0 0 30px rgba(0, 0, 0, 0.5)', textAlign: 'center', position: 'relative'
-      }}>
-        {/* Botón Cerrar */}
-        <button onClick={onClose} style={{
-          position: 'absolute', top: '20px', right: '20px', background: 'none', border: 'none',
-          color: '#666', cursor: 'pointer', fontSize: '20px'
-        }}>✕</button>
+    <div className="profile-overlay">
+      <div className="profile-container">
+        {/* Botón cerrar */}
+        <button className="close-profile" onClick={onClose}>✕</button>
 
-        {/* Avatar con Resplandor */}
-        <div style={{
-          width: '120px', height: '120px', borderRadius: '50%', margin: '0 auto 20px',
-          border: '2px solid #00f2ff', boxShadow: '0 0 15px rgba(0, 242, 255, 0.4)',
-          overflow: 'hidden', backgroundColor: '#333'
-        }}>
-          {user.avatar ? <img src={user.avatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : 
-          <div style={{ fontSize: '50px', marginTop: '20px' }}>👤</div>}
-        </div>
-
-        <h2 style={{ color: 'white', margin: '10px 0 5px', fontSize: '24px', letterSpacing: '1px' }}>{user.name}</h2>
-        <p style={{ color: '#00f2ff', fontSize: '14px', marginBottom: '30px', opacity: 0.8 }}>{user.email}</p>
-
-        {/* Stats Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '30px' }}>
-          <div style={{ padding: '15px', borderRadius: '15px', backgroundColor: 'rgba(255, 255, 255, 0.03)' }}>
-            <div style={{ color: 'white', fontSize: '20px', fontWeight: 'bold' }}>{user.stats.likedCount}</div>
-            <div style={{ color: '#666', fontSize: '11px', textTransform: 'uppercase' }}>Me gusta</div>
+        {/* HEADER: Vinilo + Banner */}
+        <header className="profile-header">
+          <div className="vinyl-wrapper">
+            <div className="vinyl-disk">
+              <div className="vinyl-lines"></div>
+              <div className="vinyl-center" style={{ backgroundImage: `url(${user.avatar})` }}></div>
+            </div>
           </div>
-          <div style={{ padding: '15px', borderRadius: '15px', backgroundColor: 'rgba(255, 255, 255, 0.03)' }}>
-            <div style={{ color: 'white', fontSize: '20px', fontWeight: 'bold' }}>{user.stats.collectionsCount}</div>
-            <div style={{ color: '#666', fontSize: '11px', textTransform: 'uppercase' }}>Colecciones</div>
+          
+          <div className="banner-info">
+            <div className="user-banner" style={{ backgroundImage: `url(${user.banner})` }}>
+              <div className="banner-overlay"></div>
+            </div>
+            <div className="user-text">
+              <h1>{user.name}</h1>
+              <p className="epitaph">{user.epitaph}</p>
+            </div>
           </div>
-        </div>
+        </header>
 
-        <button style={{
-          width: '100%', padding: '12px', borderRadius: '12px',
-          backgroundColor: 'transparent', border: '1px solid #ff4b4b', color: '#ff4b4b',
-          cursor: 'pointer', fontSize: '14px', transition: 'all 0.2s'
-        }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 75, 75, 0.1)'}
-           onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
-          Cerrar Sesión
-        </button>
+        {/* SECCIÓN ME GUSTA */}
+        <section className="liked-section">
+          <h2>ME GUSTA ❤️</h2>
+          <div className="songs-grid">
+            {likedSongs.slice(0, 6).map((song) => (
+              <div key={song.music_id} className="song-card">
+                <img src={song.music_cover_url} alt={song.music_name} />
+                <span>{song.music_name}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* FOOTER: GIF + Espectrograma + Nav */}
+        <footer className="profile-footer">
+          <div className="footer-gif">
+            {/* Aquí puedes poner un GIF de tu elección */}
+            <img src="https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJueGZ3bmZ3bmZ3bmZ3/l41lTf7FpXjW/giphy.gif" alt="vibe" />
+          </div>
+
+          <div className="visualizer-area">
+            <div className="spectrogram-mock">
+              {/* Generamos barritas aleatorias para el espectrograma */}
+              {[...Array(40)].map((_, i) => (
+                <div key={i} className="bar" style={{ height: `${Math.random() * 100}%` }}></div>
+              ))}
+            </div>
+          </div>
+
+          <nav className="profile-internal-nav">
+            <button onClick={onGoHome}>INICIO</button>
+            <button className="disabled">EXPLORAR</button>
+            <button onClick={onGoLibrary}>BIBLIOTECA</button>
+          </nav>
+        </footer>
       </div>
     </div>
   );

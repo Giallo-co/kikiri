@@ -6,7 +6,7 @@ import Navigation from './components/Navigation/Navigation';
 import NodeInfoPanel from './components/NodeInfoPanels/NodeInfoPanel';
 import SearchModal from './components/Search/SearchModal';
 import LibraryView from './components/Library/LibraryView'; 
-import ProfileView from './components/Profile/ProfileView'; // Importamos el nuevo perfil
+import ProfileView from './components/Profile/ProfileView'; 
 import { graphConfig } from './graphConfig'
 import type { NodeDatum, LinkDatum, RawNode } from './types/graph'
 import type { Music } from "./types/music";
@@ -67,7 +67,7 @@ export default function App() {
   const [autoPlay, setAutoPlay] = useState(false)
   const [history, setHistory] = useState<string[]>([])
   const [isSearchOpen, setIsSearchOpen] = useState(false)
-  const [isProfileOpen, setIsProfileOpen] = useState(false) // Nuevo estado Perfil
+  const [isProfileOpen, setIsProfileOpen] = useState(false) 
   
   const [view, setView] = useState<'home' | 'library'>('home')
   const [activeLibraryCollection, setActiveLibraryCollection] = useState<string | null>(null);
@@ -76,17 +76,22 @@ export default function App() {
   const esRef = useRef<EventSource | null>(null)
   const selectedNode = rawNodes.find(n => n.node_id === selectedNodeId) || null;
 
+  // --- HANDLERS DE NAVEGACIÓN ---
   const handleGoHome = () => {
     setView('home');
     setSelectedNodeId(null);
     setActiveLibraryCollection(null);
-    setIsProfileOpen(false);
+    setIsProfileOpen(false); // Cerramos el perfil si se navega a home
   };
 
   const handleGoLibrary = () => {
     setView('library');
     setActiveLibraryCollection(null);
-    setIsProfileOpen(false);
+    setIsProfileOpen(false); // Cerramos el perfil si se navega a library
+  };
+
+  const handleOpenProfile = () => {
+    setIsProfileOpen(true);
   };
 
   const handleEnterCollection = (collectionId: string) => {
@@ -332,8 +337,8 @@ export default function App() {
             onHomeClick={handleGoHome} 
             onSearchClick={() => setIsSearchOpen(true)}
             onLibraryClick={handleGoLibrary}
-            onProfileClick={() => setIsProfileOpen(true)} // Nueva función
-            currentView={activeLibraryCollection ? 'library' : view} 
+            onProfileClick={handleOpenProfile} 
+            currentView={isProfileOpen ? 'profile' : (activeLibraryCollection ? 'library' : view)} 
           />
 
           <SearchModal 
@@ -347,18 +352,32 @@ export default function App() {
           {isProfileOpen && (
             <ProfileView 
               onClose={() => setIsProfileOpen(false)}
+              onGoHome={handleGoHome}
+              onGoLibrary={handleGoLibrary}
               user={{
                 name: "Nebula User",
-                email: "user@nebula.ai",
-                stats: {
-                  likedCount: likedSongIds.size,
-                  collectionsCount: 3
-                }
+                epitaph: "Explorando las frecuencias del vacío. El sonido es la única constante.",
+                avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix", // Avatar demo
+                banner: "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=1000" // Banner demo
               }}
+              likedSongs={rawNodes
+                .filter(n => {
+                  let content = n.node_content;
+                  if (typeof content === 'string') try { content = JSON.parse(content) } catch {}
+                  return content && likedSongIds.has((content as any).music_id);
+                })
+                .map(n => {
+                  let content = n.node_content;
+                  if (typeof content === 'string') try { content = JSON.parse(content) } catch {}
+                  return content as Music;
+                })
+              }
             />
           )}
 
-          {(view === 'home' || activeLibraryCollection) && <NodeInfoPanel selectedNode={selectedNode} />}
+          {(view === 'home' || activeLibraryCollection) && !isProfileOpen && (
+            <NodeInfoPanel selectedNode={selectedNode} />
+          )}
 
           <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', zIndex: 100 }}>
             <PlayerBar 
