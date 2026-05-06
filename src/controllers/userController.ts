@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { UserService } from '../services/userService';
+import { logger } from '../lib/logger';
 import { getAuthUserId } from '../utils/authRequest';
 import { objectPublicUrl } from '../utils/mediaUrls';
 
@@ -22,6 +23,8 @@ export class UserController {
                 role: role ?? 0  
             });
 
+            logger.info('user_registered', { userId: authData.user.id });
+
             res.status(201).json({
                 message: "User registered successfully",
                 user: authData.user,
@@ -42,6 +45,8 @@ export class UserController {
             }
 
             const authData = await this.userService.loginUser(email, password);
+
+            logger.info('user_login', { userId: authData.user.id });
 
             res.status(200).json({
                 message: "Login successful",

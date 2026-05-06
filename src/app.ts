@@ -2,6 +2,8 @@ import express from "express";
 import path from "path";
 import config from "./config/config";
 import { logger } from "./lib/logger";
+import { latencyMetric } from "./middlewares/cloudWatchMiddleware";
+import { requestLog } from "./middlewares/requestLogMiddleware";
 import { errorHandler } from './middlewares/errorHandler';
 import userRoutes from './routes/userRoutes';
 import feedRoutes from './routes/feedRoutes';
@@ -24,6 +26,8 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
+app.use(latencyMetric);
+app.use(requestLog);
 app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/", (_req, _res) => {
@@ -45,9 +49,29 @@ declare const require: any;
 declare const module: any;
 
 if (require.main === module) {
+  process.on("unhandledRejection", (reason: unknown) => {
+    logger.error("unhandled_rejection", {
+      reason: reason instanceof Error ? reason.message : String(reason),
+      stack: reason instanceof Error ? reason.stack : undefined,
+    });
+  });
+
+  process.on("uncaughtException", (error: Error) => {
+    logger.error("uncaught_exception", {
+      message: error.message,
+      stack: error.stack,
+    });
+    process.exit(1);
+  });
+
   app.listen(PORT, () => {
     const url = `${config.protocol}://${config.host}:${PORT}`;
-    logger.info("Winston probe: servidor en marcha");
-    logger.info(`Server running on ${url}`, { port: PORT });
+    logger.info("Winston probe: servidor en marcha", {
+      port: PORT,
+      url,
+      nodeEnv: config.nodeEnv,
+      apiBasePath: config.apiBasePath,
+      logLevel: process.env.LOG_LEVEL || (config.nodeEnv === "production" ? "info" : "debug"),
+    });
   });
 }
