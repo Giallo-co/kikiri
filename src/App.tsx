@@ -413,6 +413,7 @@ export default function App() {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && (e.key === 'f' || e.key === 'F')) {
         e.preventDefault()
+        handleDeselect()
         setActiveTab('Search')
         setSearchQuery('')
         setSearchTrigger(prev => prev + 1)
@@ -420,7 +421,7 @@ export default function App() {
     }
     window.addEventListener('keydown', handleGlobalKeyDown)
     return () => window.removeEventListener('keydown', handleGlobalKeyDown)
-  }, [])
+  }, [handleDeselect])
 
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query)
