@@ -52,16 +52,26 @@ export default function Profile({ userNode, onUpdate, onClose }: ProfileProps) {
   };
 
   return (
-    <div className="profile-container">
+    <div className="profile-container" style={{ backgroundImage: `url(${userNode.author_profile_picture || ''})` }}>
       <div className="glass-effect-layer" />
       
       <div className="profile-content-layer">
         <div className="profile-card">
           <div className="profile-card-inner">
-            <div className="logo-icon">P</div>
+            <div className="profile-avatar-section">
+              <div className="profile-avatar-container">
+                <img 
+                  src={userNode.author_profile_picture || 'https://via.placeholder.com/150'} 
+                  alt="Profile" 
+                  className="profile-avatar-image"
+                />
+              </div>
+            </div>
             
             <div className="profile-header">
-              <h2>[ User Profile ]</h2>
+              <button type="button" className="change-photo-btn-header">
+                [ Change Profile Picture ]
+              </button>
               <p>Customize your identity in the network.</p>
             </div>
 
@@ -98,21 +108,12 @@ export default function Profile({ userNode, onUpdate, onClose }: ProfileProps) {
               </div>
               <div className="form-group">
                 <label>Node Color</label>
-                <div className="color-input-wrapper">
-                  <input 
-                    type="color" 
-                    value={nodeColor} 
-                    onChange={(e) => setNodeColor(e.target.value)} 
-                    className="color-picker"
-                  />
-                  <input 
-                    type="text" 
-                    value={nodeColor} 
-                    onChange={(e) => setNodeColor(e.target.value)} 
-                    placeholder="#000000"
-                    className="color-text-input"
-                  />
-                </div>
+                <input 
+                  type="color" 
+                  value={nodeColor} 
+                  onChange={(e) => setNodeColor(e.target.value)} 
+                  className="color-picker"
+                />
               </div>
               
               {error && <p className="error-msg">{error}</p>}
