@@ -3,6 +3,7 @@ import GraphView from './components/GraphView'
 import PlayerBar from "./components/PlayerBar/PlayerBar";
 import SideNav, { NavItem } from "./components/SideNav/SideNav";
 import Login from "./components/Login/Login";
+import Profile from "./components/Profile/Profile";
 import { graphConfig } from './graphConfig'
 import type { NodeDatum, LinkDatum, RawNode } from './types/graph'
 import type { Music } from "./types/music";
@@ -409,6 +410,11 @@ export default function App() {
     }
   }, []);
 
+  const handleProfileUpdate = useCallback((updatedNode: RawNode) => {
+    setRawNodes(prev => prev.map(n => n.node_id === updatedNode.node_id ? updatedNode : n));
+    if (updatedNode.node_name) setUsername(updatedNode.node_name);
+  }, []);
+
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && (e.key === 'f' || e.key === 'F')) {
@@ -633,6 +639,19 @@ export default function App() {
 
       {isLoggedIn && (
         <>
+          {activeTab === 'Profile' && (
+            (() => {
+              const userNode = rawNodes.find(n => n.node_type === 'Author' && (n.node_name === username || n.author_name === username));
+              return userNode ? (
+                <Profile 
+                  userNode={userNode} 
+                  onUpdate={handleProfileUpdate} 
+                  onClose={() => setActiveTab('Home')} 
+                />
+              ) : null;
+            })()
+          )}
+
           <div style={{
             position: 'absolute', top: 12, right: 16, fontSize: 11,
             fontFamily: 'monospace', color: connected ? '#6dbf8a' : '#cf6679',

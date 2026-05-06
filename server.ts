@@ -160,6 +160,49 @@ app.post('/api/like', async (req, res) => {
   }
 });
 
+app.post('/api/profile/update', async (req, res) => {
+  const { node_id, author_description, node_color, node_name, author_name } = req.body;
+  if (!node_id) {
+    return res.status(400).json({ error: 'node_id is required' });
+  }
+
+  try {
+    const scanCommand = new ScanCommand({
+      TableName: "node",
+      FilterExpression: "node_id = :id",
+      ExpressionAttributeValues: {
+        ":id": node_id
+      }
+    });
+    const scanResult = await docClient.send(scanCommand);
+    const userNode = scanResult.Items?.[0];
+
+    if (!userNode) {
+      return res.status(404).json({ error: "Node not found" });
+    }
+
+    const updatedNode = {
+      ...userNode,
+      author_description: author_description !== undefined ? author_description : userNode.author_description,
+      node_color: node_color !== undefined ? node_color : userNode.node_color,
+      node_name: node_name !== undefined ? node_name : userNode.node_name,
+      author_name: author_name !== undefined ? author_name : userNode.author_name,
+    };
+
+    const putCommand = new PutCommand({
+      TableName: "node",
+      Item: updatedNode
+    });
+    await docClient.send(putCommand);
+
+    console.log(`[Backend] Profile updated for node ${node_id}`);
+    res.json({ message: "Success", node: updatedNode });
+  } catch (error) {
+    console.error("Error updating profile in DynamoDB:", error);
+    res.status(500).json({ error: "Failed to update profile" });
+  }
+});
+
 app.post('/api/register', async (req, res) => {
   const { username, realName, description } = req.body;
   if (!username) {

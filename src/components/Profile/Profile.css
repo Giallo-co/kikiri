@@ -1,0 +1,195 @@
+:root {
+  /* Overlay & Glass Effect - Matching Login.css */
+  --profile-glass-color: 255, 255, 255;
+  --profile-glass-opacity: 0.001;
+  --profile-overlay-bg: rgba(var(--profile-glass-color), var(--profile-glass-opacity));
+  --profile-glass-blur: 20px;
+
+  /* Text Colors */
+  --profile-text-main: #333333;
+  --profile-text-title: #000000;
+  --profile-text-subtitle: #666666;
+  --profile-text-muted: #888888;
+  --profile-text-error: #ff4d4d;
+
+  /* Decorative Elements */
+  --profile-marker-color: rgba(0, 0, 0, 0.2);
+
+  /* Inputs */
+  --profile-input-bg: rgba(0, 0, 0, 0.03);
+  --profile-input-border: rgba(0, 0, 0, 0.1);
+  --profile-input-text: #000000;
+  --profile-input-placeholder: rgba(0, 0, 0, 0.3);
+  --profile-input-focus-bg: rgba(0, 0, 0, 0.05);
+  --profile-input-focus-border: rgba(0, 0, 0, 0.2);
+
+  /* Button */
+  --profile-btn-bg: rgba(0, 0, 0, 0.05);
+  --profile-btn-border: rgba(0, 0, 0, 0.1);
+  --profile-btn-text: #000000;
+  --profile-btn-hover-bg: rgba(0, 0, 0, 0.1);
+}
+
+.profile-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Inter', -apple-system, sans-serif;
+}
+
+.glass-effect-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--profile-overlay-bg);
+  backdrop-filter: blur(var(--profile-glass-blur));
+  -webkit-backdrop-filter: blur(var(--profile-glass-blur));
+  z-index: 1;
+}
+
+.profile-content-layer {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.profile-card {
+  width: 100%;
+  max-width: 460px;
+  position: relative;
+  padding: 40px;
+  color: var(--profile-text-main);
+}
+
+
+/* Corner markers */
+.profile-card::before, .profile-card::after,
+.profile-card-inner::before, .profile-card-inner::after {
+  content: '';
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  border-color: var(--profile-marker-color);
+  border-style: solid;
+}
+
+.profile-card::before { top: 0; left: 0; border-width: 1px 0 0 1px; }
+.profile-card::after { top: 0; right: 0; border-width: 1px 1px 0 0; }
+.profile-card-inner::before { bottom: 0; left: 0; border-width: 0 0 1px 1px; }
+.profile-card-inner::after { bottom: 0; right: 0; border-width: 0 1px 1px 0; }
+
+.profile-header {
+  margin-bottom: 2rem;
+}
+
+.profile-header h2 {
+  font-size: 1.2rem;
+  font-weight: 400;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  color: var(--profile-text-title);
+}
+
+.profile-header p {
+  font-size: 0.8rem;
+  color: var(--profile-text-subtitle);
+  margin: 0;
+}
+
+.profile-textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 4px;
+  border: 1px solid var(--profile-input-border);
+  background: var(--profile-input-bg);
+  box-sizing: border-box;
+  outline: none;
+  font-size: 0.9rem;
+  color: var(--profile-input-text);
+  transition: all 0.3s ease;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.profile-textarea:focus {
+  background: var(--profile-input-focus-bg);
+  border-color: var(--profile-input-focus-border);
+}
+
+.color-input-wrapper {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.color-picker {
+  padding: 0;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--profile-input-border);
+  background: none;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.color-text-input {
+  flex: 1;
+}
+
+.profile-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 2rem;
+}
+
+.save-btn, .cancel-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.save-btn {
+  border: 1px solid var(--profile-btn-border);
+  background: var(--profile-btn-bg);
+  color: var(--profile-btn-text);
+}
+
+.save-btn:hover:not(:disabled) {
+  background: var(--profile-btn-hover-bg);
+}
+
+.save-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cancel-btn {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--profile-text-subtitle);
+}
+
+.cancel-btn:hover {
+  color: var(--profile-text-main);
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.error-msg {
+  color: var(--profile-text-error);
+  font-size: 0.75rem;
+  margin-top: 1rem;
+  text-align: center;
+}
