@@ -68,42 +68,17 @@ export default function App() {
   const [autoPlay, setAutoPlay] = useState(false)
   const [history, setHistory] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState('')
+  const [searchTrigger, setSearchTrigger] = useState(0)
   const [currentConfig, setCurrentConfig] = useState(graphConfig)
   const esRef = useRef<EventSource | null>(null)
 
   const visibleNodes = useMemo(() => {
     if (!rawNodes.length || !isLoggedIn || !username) return []
 
-    // 1. Search Logic
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase()
-      const matches = rawNodes.filter(rn => 
-        (rn.node_name?.toLowerCase().includes(q)) ||
-        (rn.music_author?.toLowerCase().includes(q)) ||
-        (rn.music_description?.toLowerCase().includes(q)) ||
-        (rn.author_real_name?.toLowerCase().includes(q)) ||
-        (rn.author_name?.toLowerCase().includes(q))
-      )
-
-      // Always show ONLY matching nodes when searching
-      return matches
-    }
-
     const userNode = rawNodes.find(n => n.node_type === 'Author' && (n.node_name === username || n.author_name === username))
     const likedMusicIds = userNode?.node_music_likes || []
-
-    // 1. Determine which Music nodes are visible based on the current tab
-    const visibleMusicNodes = rawNodes.filter(rn => {
-      if (rn.node_type !== 'Music') return false
-      if (activeTab === 'Home') return likedMusicIds.includes(rn.node_id)
-      if (activeTab === 'Explore') return !likedMusicIds.includes(rn.node_id)
-      return true
-    })
-
-    const visibleMusicIds = new Set(visibleMusicNodes.map(m => m.node_id))
-    const reachableIds = new Set<string>()
-    const rawNodesMap = new Map(rawNodes.map(n => [n.node_id, n]))
-
+    
+    // helper to get all links for BFS
     const getAllLinks = (n: RawNode) => [
       ...(n.node_tag_links_next || []),
       ...(n.node_tag_links_previous || []),
@@ -115,52 +90,80 @@ export default function App() {
       ...(n.node_music_links_previous || [])
     ].filter(id => id && id !== n.node_id);
 
-    // 2. Use BFS to find nodes related to visible Music
-    // For Home, we limit to 2 steps (Music -> Author -> Tag) to keep it strictly related
-    const queue: { id: string, depth: number }[] = []
-    visibleMusicNodes.forEach(m => {
-      reachableIds.add(m.node_id)
-      queue.push({ id: m.node_id, depth: 0 })
-    })
+    const getReachableFrom = (startingNodes: RawNode[], maxDepth: number) => {
+      const reachableIds = new Set<string>()
+      const rawNodesMap = new Map(rawNodes.map(n => [n.node_id, n]))
+      const queue: { id: string, depth: number }[] = []
+      
+      startingNodes.forEach(m => {
+        reachableIds.add(m.node_id)
+        queue.push({ id: m.node_id, depth: 0 })
+      })
 
-    const maxDepth = activeTab === 'Home' ? 2 : 100 
-
-    while (queue.length > 0) {
-      const { id: currentId, depth } = queue.shift()!
-      if (depth >= maxDepth) continue
-
-      const currentNode = rawNodesMap.get(currentId)
-      if (!currentNode) continue
-
-      const neighbors = getAllLinks(currentNode)
-      neighbors.forEach(nid => {
-        const neighbor = rawNodesMap.get(nid)
-        if (!neighbor) return
-
-        if (neighbor.node_type === 'Music') {
-          // Only add music nodes if they are already identified as visible for this tab
-          if (visibleMusicIds.has(nid) && !reachableIds.has(nid)) {
-            reachableIds.add(nid)
-            queue.push({ id: nid, depth: depth + 1 })
-          }
-        } else {
-          // Add organizational nodes (Author, Tag, Album) and continue expansion
+      while (queue.length > 0) {
+        const { id: currentId, depth } = queue.shift()!
+        if (depth >= maxDepth) continue
+        const currentNode = rawNodesMap.get(currentId)
+        if (!currentNode) continue
+        getAllLinks(currentNode).forEach(nid => {
           if (!reachableIds.has(nid)) {
             reachableIds.add(nid)
             queue.push({ id: nid, depth: depth + 1 })
           }
-        }
-      })
+        })
+      }
+      return reachableIds
     }
 
-    // 3. Filter rawNodes: Include reachable nodes and the user themselves
-    // Also, hide Authors that don't have any music links
+    // --- SEARCH TAB LOGIC ---
+    if (activeTab === 'Search') {
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase()
+        return rawNodes.filter(rn => 
+          (rn.node_name?.toLowerCase().includes(q)) ||
+          (rn.music_author?.toLowerCase().includes(q)) ||
+          (rn.music_description?.toLowerCase().includes(q)) ||
+          (rn.author_real_name?.toLowerCase().includes(q)) ||
+          (rn.author_name?.toLowerCase().includes(q))
+        )
+      } else {
+        // Union of Home and Explore: basically everything reachable
+        // To be safe, let's just show all nodes that are organizational or music
+        // But the prompt says "Home and Explore", so let's combine their logic
+        const homeMusic = rawNodes.filter(rn => rn.node_type === 'Music' && likedMusicIds.includes(rn.node_id))
+        const exploreMusic = rawNodes.filter(rn => rn.node_type === 'Music' && !likedMusicIds.includes(rn.node_id))
+        
+        const homeReachable = getReachableFrom(homeMusic, 2)
+        const exploreReachable = getReachableFrom(exploreMusic, 100)
+        
+        const unionIds = new Set([...homeReachable, ...exploreReachable])
+        return rawNodes.filter(rn => {
+          if (rn.node_type === 'Author' && (!rn.node_music_links_next || rn.node_music_links_next.length === 0)) return false
+          if (rn.node_id === userNode?.node_id) return true
+          return unionIds.has(rn.node_id)
+        })
+      }
+    }
+
+    // --- NORMAL TABS LOGIC ---
+    const visibleMusicNodes = rawNodes.filter(rn => {
+      if (rn.node_type !== 'Music') return false
+      if (activeTab === 'Home') return likedMusicIds.includes(rn.node_id)
+      if (activeTab === 'Explore') return !likedMusicIds.includes(rn.node_id)
+      return true
+    })
+    
+    const visibleMusicIds = new Set(visibleMusicNodes.map(m => m.node_id))
+    const maxDepth = activeTab === 'Home' ? 2 : 100 
+    const reachableIds = getReachableFrom(visibleMusicNodes, maxDepth)
+
     return rawNodes.filter(rn => {
       if (rn.node_type === 'Author' && (!rn.node_music_links_next || rn.node_music_links_next.length === 0)) return false
       if (rn.node_id === userNode?.node_id) return true
+      if (rn.node_type === 'Music' && !visibleMusicIds.has(rn.node_id)) return false
       return reachableIds.has(rn.node_id)
     })
-  }, [rawNodes, activeTab, isLoggedIn, username])
+  }, [rawNodes, activeTab, isLoggedIn, username, searchQuery])
 
   const fixedNodeId = useMemo(() => {
     if (!isLoggedIn || !username || !rawNodes.length) return null
@@ -192,48 +195,6 @@ export default function App() {
       setCurrentTrack(track)
     }
   }, [visibleNodes, currentTrack, selectedNodeId])
-
-  const handleNodeClick = useCallback((nodeId: string, content: any) => {
-    // If we are in search mode, clear search and navigate to appropriate tab
-    if (searchQuery) {
-      setSearchQuery('')
-      // Decide tab based on whether it's liked or other logic. 
-      // Defaulting to 'Home' if it's already in the "liked" context, else 'Explore' is a safe bet for a general music player.
-      // However, the prompt says "Home or Explore", I'll set a logic to pick one.
-      const userNode = rawNodes.find(n => n.node_type === 'Author' && (n.node_name === username || n.author_name === username))
-      const likedMusicIds = userNode?.node_music_likes || []
-      
-      const isLiked = likedMusicIds.includes(nodeId)
-      setActiveTab(isLiked ? 'Home' : 'Explore')
-    }
-
-    setSelectedNodeId(nodeId)
-    setIsManualSelection(true)
-    setShouldFocus(true)
-    if (content && content.music_id) {
-      handleTrackChange(content as Music, nodeId, true, true)
-    }
-  }, [handleTrackChange, searchQuery, rawNodes, username])
-
-  const handleDeselect = useCallback(() => {
-    setSelectedNodeId(null)
-    setIsManualSelection(false)
-    setShouldFocus(true)
-  }, [])
-
-  const handleLoginSuccess = useCallback((user: string) => {
-    setIsTransitioning(true);
-    setTimeout(() => {
-      setUsername(user);
-      setIsLoggedIn(true);
-      setIsTransitioning(false);
-      setSelectedNodeId(null); 
-    }, 800);
-  }, [])
-
-  const handleNavSelect = useCallback((item: NavItem) => {
-    setActiveTab(item);
-  }, []);
 
   const handleNext = useCallback(() => {
     if (!currentTrack || !visibleNodes.length) return
@@ -411,6 +372,83 @@ export default function App() {
     }
   }, [rawNodes, selectedNodeId, isManualSelection, handleTrackChange])
 
+  const handleNodeClick = useCallback((nodeId: string, content: any) => {
+    setSelectedNodeId(nodeId)
+    setIsManualSelection(true)
+    setShouldFocus(true)
+
+    // If we are NOT in search mode, do the track change as usual
+    if (activeTab !== 'Search' && content && content.music_id) {
+      handleTrackChange(content as Music, nodeId, true, true)
+    } else if (activeTab === 'Search' && content && content.music_id) {
+      // In search mode, play music but stay in Search tab
+      handleTrackChange(content as Music, nodeId, true, true)
+    }
+  }, [handleTrackChange, activeTab])
+
+  const handleDeselect = useCallback(() => {
+    setSelectedNodeId(null)
+    setIsManualSelection(false)
+    setShouldFocus(true)
+  }, [])
+
+  const handleLoginSuccess = useCallback((user: string) => {
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setUsername(user);
+      setIsLoggedIn(true);
+      setIsTransitioning(false);
+      setSelectedNodeId(null); 
+    }, 800);
+  }, [])
+
+  const handleNavSelect = useCallback((item: NavItem) => {
+    setActiveTab(item);
+    if (item !== 'Search') {
+      setSearchQuery('')
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'f' || e.key === 'F')) {
+        e.preventDefault()
+        setActiveTab('Search')
+        setSearchQuery('')
+        setSearchTrigger(prev => prev + 1)
+      }
+    }
+    window.addEventListener('keydown', handleGlobalKeyDown)
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown)
+  }, [])
+
+  const handleSearch = useCallback((query: string) => {
+    setSearchQuery(query)
+    if (!query) return
+
+    const q = query.toLowerCase()
+    const matches = rawNodes.filter(rn => 
+      (rn.node_name?.toLowerCase().includes(q)) ||
+      (rn.music_author?.toLowerCase().includes(q)) ||
+      (rn.music_description?.toLowerCase().includes(q)) ||
+      (rn.author_real_name?.toLowerCase().includes(q)) ||
+      (rn.author_name?.toLowerCase().includes(q))
+    )
+
+    if (matches.length === 1) {
+      const match = matches[0]
+      const content = (match.node_type === "Music" || match.node_type === "Author" || match.node_type === "Tag") ? match : null
+      
+      // Auto-select and play if it's a single match
+      setSelectedNodeId(match.node_id)
+      setIsManualSelection(true)
+      setShouldFocus(true)
+      if (content && content.music_id) {
+        handleTrackChange(content as Music, match.node_id, true, true)
+      }
+    }
+  }, [rawNodes, handleTrackChange])
+
   useEffect(() => {
     if (!searchQuery) {
       setCurrentConfig(graphConfig)
@@ -426,19 +464,17 @@ export default function App() {
       (rn.author_name?.toLowerCase().includes(q))
     )
 
-    if (matches.length === 1) {
-      const match = matches[0]
-      const content = (match.node_type === "Music" || match.node_type === "Author" || match.node_type === "Tag") ? match : null
-      handleNodeClick(match.node_id, content)
-      setCurrentConfig(graphConfig)
-    } else if (matches.length >= 2) {
-      setSelectedNodeId(null) // Deselect when showing multiple search results
+    if (matches.length >= 2) {
+      setSelectedNodeId(null) 
       setCurrentConfig(prev => ({
         ...prev,
         outerExclusionRadius: matches.length * 5
       }))
+    } else {
+
+      setCurrentConfig(graphConfig)
     }
-  }, [searchQuery, rawNodes, handleNodeClick])
+  }, [searchQuery, rawNodes])
 
   useEffect(() => {
     const nodes: NodeDatum[] = visibleNodes.map(rn => ({
@@ -585,9 +621,11 @@ export default function App() {
             shouldFocus={shouldFocus}
             isLoggedIn={isLoggedIn}
             searchQuery={searchQuery}
+            showSearchBar={activeTab === 'Search'}
+            searchTrigger={searchTrigger}
             onNodeClick={handleNodeClick}
             onDeselect={handleDeselect}
-            onSearch={setSearchQuery}
+            onSearch={handleSearch}
           />
         )}
       </div>
@@ -609,7 +647,7 @@ export default function App() {
             }}>{error}</div>
           )}
 
-          <SideNav onSelect={handleNavSelect} />
+          <SideNav activeTab={activeTab} onSelect={handleNavSelect} />
 
           <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', zIndex: 100 }}>
             <PlayerBar 

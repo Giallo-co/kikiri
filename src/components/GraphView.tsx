@@ -13,6 +13,8 @@ interface Props {
   shouldFocus?: boolean
   isLoggedIn?: boolean
   searchQuery?: string
+  showSearchBar?: boolean
+  searchTrigger?: number
   onNodeClick: (nodeId: string, content: any) => void
   onDeselect?: () => void
   onSearch?: (query: string) => void
@@ -23,6 +25,7 @@ const SELECTED_COLOR = '#ab90df'
 const LINK_BASE = '#b0aca6'
 const LINK_SELECTED = '#ab90df'
 const FOCUS_ZOOM_LEVEL = 3.5 // variable to control zoom depth
+const SEARCH_FOCUS_ZOOM = 1.0 // Configurable zoom depth for search results
 const DESELECT_ZOOM_LEVEL = 0.4 // variable to control zoom when deselecting
 const LINK_EXCLUSION_OPACITY = 0.2 // opacity of links when passing through the center (0 to 1)
 const EXCLUSION_TRANSITION_SPEED = 200 // speed at which the exclusion radius changes (pixels per tick)
@@ -33,7 +36,7 @@ const ENABLE_DYNAMIC_EXCLUSION = false // true: radius changes on selection, fal
 
 
 
-export default function GraphView({ nodes, links, config, selectedId, fixedNodeId, shouldFocus = true, isLoggedIn, searchQuery, onNodeClick, onDeselect, onSearch }: Props) {
+export default function GraphView({ nodes, links, config, selectedId, fixedNodeId, shouldFocus = true, isLoggedIn, searchQuery, showSearchBar, searchTrigger, onNodeClick, onDeselect, onSearch }: Props) {
   const svgRef = useRef<SVGSVGElement>(null)
   const simulationRef = useRef<d3.Simulation<NodeDatum, undefined> | null>(null)
   const gRef = useRef<d3.Selection<SVGGElement, unknown, null, undefined> | null>(null)
@@ -52,67 +55,59 @@ export default function GraphView({ nodes, links, config, selectedId, fixedNodeI
   const maskOuterCircleRef = useRef<d3.Selection<SVGCircleElement, unknown, null, undefined> | null>(null)
   const configRef = useRef(config)
   const fixedNodeIdRef = useRef(fixedNodeId)
-  const [showSearchBar, setShowSearchBar] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
+  const [hideOverlay, setHideOverlay] = useState(false)
 
   // Variable para configurar el objetivo del enfoque. Si es null, se enfoca el centro visual.
   const focusTarget = { x: null, y: null };
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && (e.key === 'f' || e.key === 'F')) {
-        e.preventDefault()
-        setShowSearchBar(true)
+    if (showSearchBar) {
+      setHideOverlay(false) // Reset overlay visibility when search is activated or triggered
+      if (svgRef.current && zoomRef.current) {
+        const rect = svgRef.current.getBoundingClientRect()
+        const width = rect.width
+        const height = rect.height
+        const visualCenterY = (height - 72) / 2
 
-        // 1. Aumentar innerExclusionRadius a 400
+        const targetX = focusTarget.x ?? (width / 2)
+        const targetY = focusTarget.y ?? visualCenterY
+
+        d3.select(svgRef.current)
+          .transition()
+          .duration(750)
+          .call(
+            zoomRef.current.transform,
+            d3.zoomIdentity
+              .translate(width / 2, visualCenterY)
+              .scale(DESELECT_ZOOM_LEVEL)
+              .translate(-targetX, -targetY)
+          )
+        
+        // Aumentar innerExclusionRadius a 400
         configRef.current = {
           ...configRef.current,
           innerExclusionRadius: 400
         }
-
-        // 2. Asegurarse de que el radio no esté suprimido (por ejemplo, deseleccionando)
-        if (selectedId) {
-          onDeselectRef.current?.()
-        }
-        isRadiusSuppressedRef.current = false
-
-        // 3. Enfocar el centro (o el objetivo configurable)
-        if (svgRef.current && zoomRef.current) {
-          const rect = svgRef.current.getBoundingClientRect()
-          const width = rect.width
-          const height = rect.height
-          const visualCenterY = (height - 72) / 2
-
-          const targetX = focusTarget.x ?? (width / 2)
-          const targetY = focusTarget.y ?? visualCenterY
-
-          d3.select(svgRef.current)
-            .transition()
-            .duration(750)
-            .call(
-              zoomRef.current.transform,
-              d3.zoomIdentity
-                .translate(width / 2, visualCenterY)
-                .scale(DESELECT_ZOOM_LEVEL) // Use neutral scale instead of FOCUS_ZOOM_LEVEL
-                .translate(-targetX, -targetY)
-            )
-        }
-
-        // 4. Reiniciar la simulación para aplicar el cambio de radio
         if (simulationRef.current) {
           simulationRef.current.alpha(0.3).restart()
         }
 
-        // Focus the search input after a short delay
         setTimeout(() => {
           searchInputRef.current?.focus()
         }, 100)
       }
+    } else {
+      // Reset innerExclusionRadius
+      configRef.current = {
+        ...configRef.current,
+        innerExclusionRadius: 0
+      }
+      if (simulationRef.current) {
+        simulationRef.current.alpha(0.3).restart()
+      }
     }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [selectedId])
+  }, [showSearchBar, searchTrigger])
 
   useEffect(() => {
     configRef.current = config
@@ -398,31 +393,6 @@ export default function GraphView({ nodes, links, config, selectedId, fixedNodeI
       const q = searchQuery?.toLowerCase() || ''
       const nodeSet = new Set<string>()
 
-      if (q) {
-        // --- SEARCH HIGHLIGHT MODE ---
-        // Since visibleNodes already filters out non-matches, we just ensure 
-        // that all current nodes keep their original color and full opacity.
-        if (nodeSelectionRef.current) {
-          nodeSelectionRef.current
-            .transition().duration(300)
-            .attr('fill', (n) => n.color || BASE_COLOR)
-            .attr('opacity', 1)
-        }
-
-        if (labelSelectionRef.current) {
-          labelSelectionRef.current
-            .transition().duration(300)
-            .attr('opacity', 1)
-        }
-
-        if (linkSelectionRef.current) {
-          linkSelectionRef.current
-            .transition().duration(300)
-            .attr('stroke-opacity', 0.7)
-        }
-        return 
-      }
-
       if (selId !== null) {
         nodeSet.add(selId)
         newLinks.forEach((l: any) => {
@@ -564,18 +534,8 @@ export default function GraphView({ nodes, links, config, selectedId, fixedNodeI
       clickTimer = setTimeout(() => {
         if (!event.defaultPrevented) {
           onDeselectRef.current?.()
-          onSearch?.('')
-          setShowSearchBar(false)
-
-          // Reset innerExclusionRadius to 0 on defocus
-          configRef.current = {
-            ...configRef.current,
-            innerExclusionRadius: 0
-          }
-          if (simulationRef.current) {
-            simulationRef.current.alpha(0.3).restart()
-          }
-
+          onSearch?.('') // This will be handled in App to close search bar
+          
           if (zoomRef.current && svgRef.current) {
             const rect = svgRef.current.getBoundingClientRect()
             const visualCenterY = (rect.height - 72) / 2
@@ -590,7 +550,7 @@ export default function GraphView({ nodes, links, config, selectedId, fixedNodeI
           }
         }
         clickTimer = null
-      }, 250) // Wait 250ms for a second click
+      }, 250)
     })
 
     svg.on('dblclick', (event) => {
@@ -639,7 +599,7 @@ export default function GraphView({ nodes, links, config, selectedId, fixedNodeI
         ref={svgRef}
         style={{ width: '100%', height: '100%', display: 'block' }}
       />
-      {showSearchBar && (
+      {showSearchBar && !hideOverlay && (
         <div 
           className="search-bar-container" 
           style={{ width: config.searchBarWidth }}
@@ -656,20 +616,18 @@ export default function GraphView({ nodes, links, config, selectedId, fixedNodeI
                 if (e.key === 'Enter') {
                   const val = e.currentTarget.value
                   onSearch?.(val)
-                  setShowSearchBar(false)
-                  
-                  // 1. Reset exclusion radius
+                  setHideOverlay(true)
+
+                  // 1. Reset innerExclusionRadius to 0 to collapse nodes
                   configRef.current = {
                     ...configRef.current,
                     innerExclusionRadius: 0
                   }
-
-                  // 2. Restart simulation to apply radius change
                   if (simulationRef.current) {
                     simulationRef.current.alpha(0.3).restart()
                   }
 
-                  // 3. Zoom out to see the whole graph (desenfocar)
+                  // 2. Focus camera on center with specific zoom variable
                   if (svgRef.current && zoomRef.current) {
                     const rect = svgRef.current.getBoundingClientRect()
                     const width = rect.width
@@ -683,7 +641,7 @@ export default function GraphView({ nodes, links, config, selectedId, fixedNodeI
                         zoomRef.current.transform,
                         d3.zoomIdentity
                           .translate(width / 2, visualCenterY)
-                          .scale(DESELECT_ZOOM_LEVEL)
+                          .scale(SEARCH_FOCUS_ZOOM)
                           .translate(-width / 2, -visualCenterY)
                       )
                   }

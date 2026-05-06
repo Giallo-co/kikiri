@@ -5,14 +5,12 @@ const NAV_ITEMS = ['Home', 'Explore', 'Search', 'Profile', 'Post'] as const;
 export type NavItem = typeof NAV_ITEMS[number];
 
 interface SideNavProps {
+  activeTab: NavItem;
   onSelect?: (item: NavItem) => void;
 }
 
-export default function SideNav({ onSelect }: SideNavProps) {
-  const [selected, setSelected] = useState<NavItem>('Home');
-
+export default function SideNav({ activeTab, onSelect }: SideNavProps) {
   const handleClick = (item: NavItem) => {
-    setSelected(item);
     onSelect?.(item);
   };
 
@@ -21,7 +19,7 @@ export default function SideNav({ onSelect }: SideNavProps) {
       {NAV_ITEMS.map((item) => (
         <button
           key={item}
-          className={`side-nav-item ${selected === item ? 'selected' : ''}`}
+          className={`side-nav-item ${activeTab === item ? 'selected' : ''}`}
           onClick={() => handleClick(item)}
         >
           {item}
