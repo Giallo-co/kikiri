@@ -109,12 +109,12 @@ export default function Post({ username, onClose, onSuccess }: PostProps) {
                     />
                   </div>
                   <div className="form-group">
-                    <label>General Tag</label>
+                    <label>General Tag(s)</label>
                     <input 
                       type="text" 
                       value={generalTag} 
                       onChange={(e) => setGeneralTag(e.target.value)} 
-                      placeholder="e.g. Soundtrack"
+                      placeholder="e.g. Soundtrack, Indie, Electronic"
                     />
                   </div>
                 </div>
@@ -165,7 +165,7 @@ export default function Post({ username, onClose, onSuccess }: PostProps) {
                         type="text" 
                         value={track.tag} 
                         onChange={(e) => handleTrackChange(index, 'tag', e.target.value)} 
-                        placeholder="Tag (optional)"
+                        placeholder="Tag(s) (optional, e.g. Rock, Metal)"
                       />
                     </div>
                   ))}

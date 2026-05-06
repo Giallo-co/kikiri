@@ -239,36 +239,41 @@ app.post('/api/album/upload', async (req, res) => {
     const albumNodes = [];
     const tagsToUpdate: Record<string, any> = {};
 
-    const getOrCreateTag = async (tagName: string) => {
-      let tagNode = nodes.find(n => n.node_type === 'Tag' && n.node_name === tagName);
-      if (!tagNode) {
-        maxNodeId++;
-        const newNodeId = String(maxNodeId);
-        tagNode = {
-          "node_id": newNodeId,
-          "node_type": "Tag",
-          "node_name": tagName,
-          "node_color": "#" + Math.floor(Math.random()*16777215).toString(16),
-          "node_music_links_next": [],
-          "node_music_links_previous": [],
-          "node_tag_links_next": [],
-          "node_tag_links_previous": [],
-          "node_author_links_next": [],
-          "node_author_links_previous": [],
-          "node_album_links_next": [],
-          "node_album_links_previous": []
-        };
-        nodes.push(tagNode);
-        // We'll save it later or now
-        await docClient.send(new PutCommand({ TableName: "node", Item: tagNode }));
+    const getOrCreateTags = async (tagNamesString: string) => {
+      if (!tagNamesString) return [];
+      const tagNames = tagNamesString.split(',').map(t => t.trim()).filter(t => t !== '');
+      const tagNodes = [];
+
+      for (const tagName of tagNames) {
+        let tagNode = nodes.find(n => n.node_type === 'Tag' && n.node_name === tagName);
+        if (!tagNode) {
+          maxNodeId++;
+          const newNodeId = String(maxNodeId);
+          tagNode = {
+            "node_id": newNodeId,
+            "node_type": "Tag",
+            "node_name": tagName,
+            "node_color": "#" + Math.floor(Math.random()*16777215).toString(16),
+            "node_music_links_next": [],
+            "node_music_links_previous": [],
+            "node_tag_links_next": [],
+            "node_tag_links_previous": [],
+            "node_author_links_next": [],
+            "node_author_links_previous": [],
+            "node_album_links_next": [],
+            "node_album_links_previous": []
+          };
+          nodes.push(tagNode);
+          await docClient.send(new PutCommand({ TableName: "node", Item: tagNode }));
+        }
+        tagNodes.push(tagNode);
       }
-      return tagNode;
+      return tagNodes;
     };
 
-    let generalTagNode: any = null;
-    if (generalTag) {
-      generalTagNode = await getOrCreateTag(generalTag);
-    }
+    const generalTagNodes = await getOrCreateTags(generalTag);
+    const allTagIdsUsed = new Set<string>();
+    generalTagNodes.forEach(t => allTagIdsUsed.add(t.node_id));
 
     for (let i = 0; i < tracks.length; i++) {
       const track = tracks[i];
@@ -277,15 +282,13 @@ app.post('/api/album/upload', async (req, res) => {
       const newMusicId = String(maxMusicId + 1);
       maxMusicId++;
 
-      const trackTagIds: string[] = [];
-      if (generalTagNode) trackTagIds.push(generalTagNode.node_id);
+      const trackTagNodes = await getOrCreateTags(track.tag);
+      const trackTagIds: string[] = Array.from(new Set([
+        ...generalTagNodes.map(t => t.node_id),
+        ...trackTagNodes.map(t => t.node_id)
+      ]));
       
-      if (track.tag) {
-        const trackTagNode = await getOrCreateTag(track.tag);
-        if (!trackTagIds.includes(trackTagNode.node_id)) {
-          trackTagIds.push(trackTagNode.node_id);
-        }
-      }
+      trackTagIds.forEach(id => allTagIdsUsed.add(id));
 
       const newNode = {
         "node_id": newNodeId,
@@ -322,6 +325,10 @@ app.post('/api/album/upload', async (req, res) => {
         if (!tagsToUpdate[tagId].node_music_links_next.includes(newNodeId)) {
           tagsToUpdate[tagId].node_music_links_next.push(newNodeId);
         }
+        // Link Tag -> Author as well
+        if (!tagsToUpdate[tagId].node_author_links_next.includes(authorNodeId)) {
+          tagsToUpdate[tagId].node_author_links_next.push(authorNodeId);
+        }
       }
     }
 
@@ -341,10 +348,11 @@ app.post('/api/album/upload', async (req, res) => {
       }));
     }
 
-    // Update Author node's music_links
+    // Update Author node's music_links AND tag_links
     const updatedAuthorNode = {
       ...authorNode,
-      node_music_links_next: [...(authorNode.node_music_links_next || []), ...albumNodes.map(n => n.node_id)]
+      node_music_links_next: [...(authorNode.node_music_links_next || []), ...albumNodes.map(n => n.node_id)],
+      node_tag_links_next: Array.from(new Set([...(authorNode.node_tag_links_next || []), ...allTagIdsUsed]))
     };
     await docClient.send(new PutCommand({
       TableName: "node",
