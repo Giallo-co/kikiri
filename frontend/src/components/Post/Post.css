@@ -1,0 +1,309 @@
+.post-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Inter', -apple-system, sans-serif;
+}
+
+.post-container .post-glass-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  z-index: 1;
+}
+
+.post-container .post-content-layer {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  max-height: 90vh;
+}
+
+.post-container .post-card {
+  width: 100%;
+  max-width: 500px;
+  position: relative;
+  padding: 30px 40px;
+  color: white;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+}
+
+.post-container .post-card-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Corner markers scoped */
+.post-container .post-card::before, 
+.post-container .post-card::after,
+.post-container .post-card-inner::before, 
+.post-container .post-card-inner::after {
+  content: '';
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  border-color: rgba(255, 255, 255, 0.2);
+  border-style: solid;
+}
+
+.post-container .post-card::before { top: 0; left: 0; border-width: 1px 0 0 1px; }
+.post-container .post-card::after { top: 0; right: 0; border-width: 1px 1px 0 0; }
+.post-container .post-card-inner::before { bottom: 0; left: 0; border-width: 0 0 1px 1px; }
+.post-container .post-card-inner::after { bottom: 0; right: 0; border-width: 0 1px 1px 0; }
+
+.post-container .post-header {
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.post-container .post-header-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font-family: inherit;
+  font-size: 1.2rem;
+  font-weight: 400;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  color: white;
+  cursor: pointer;
+  transition: opacity 0.3s ease;
+  display: inline-block;
+}
+
+.post-container .post-header-btn:hover {
+  opacity: 0.8;
+}
+
+.post-container .post-header p {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0;
+}
+
+.post-container .post-form {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.post-container .post-form-scrollable {
+  overflow-y: auto;
+  padding-right: 10px;
+  margin-bottom: 1rem;
+  max-height: 50vh;
+}
+
+/* Scrollbar styling */
+.post-container .post-form-scrollable::-webkit-scrollbar {
+  width: 4px;
+}
+.post-container .post-form-scrollable::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+.post-container .post-form-scrollable::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+}
+
+.post-container .form-section {
+  margin-bottom: 2rem;
+}
+
+.post-container .form-section h3 {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 5px;
+}
+
+.post-container .section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.post-container .section-header h3 {
+  margin-bottom: 0;
+  border-bottom: none;
+}
+
+.post-container .form-group {
+  margin-bottom: 1rem;
+}
+
+.post-container .form-group label {
+  display: block;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 6px;
+  margin-left: 2px;
+}
+
+.post-container input {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  box-sizing: border-box;
+  outline: none;
+  font-size: 0.85rem;
+  color: white;
+  transition: all 0.3s ease;
+  margin-bottom: 8px;
+}
+
+.post-container input:focus {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.post-container .file-upload-container {
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.post-container .file-input {
+  width: 0.1px;
+  height: 0.1px;
+  opacity: 0;
+  overflow: hidden;
+  position: absolute;
+  z-index: -1;
+}
+
+.post-container .file-label {
+  display: block;
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  box-sizing: border-box;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.post-container .file-label:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.post-container .track-input-group {
+  background: rgba(255, 255, 255, 0.02);
+  padding: 15px;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.post-container .track-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.post-container .add-track-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+
+.post-container .remove-track-btn {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0 5px;
+}
+
+.post-container .remove-track-btn:hover {
+  color: #ff4d4d;
+}
+
+.post-container .post-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 1rem;
+}
+
+.post-container .save-btn, 
+.post-container .cancel-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.post-container .save-btn {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.post-container .save-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.post-container .save-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.post-container .cancel-btn {
+  border: 1px solid transparent;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.post-container .cancel-btn:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.post-container .error-msg {
+  color: #ff4d4d;
+  font-size: 0.75rem;
+  margin-top: 0.8rem;
+  text-align: center;
+}
