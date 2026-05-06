@@ -355,10 +355,10 @@ export default function App() {
               onGoHome={handleGoHome}
               onGoLibrary={handleGoLibrary}
               user={{
-                name: "Nebula User",
+                name: "Usuario prueba 1",
                 epitaph: "Explorando las frecuencias del vacío. El sonido es la única constante.",
-                avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix", // Avatar demo
-                banner: "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=1000" // Banner demo
+                avatar: "https://www.nutrisslovers.com/Portals/nutrisslovers/Articulos%20Nutriss%20Gatos/gatos-unicos-guia-de-razas-y-como-nutrir-su-mundo/cuales-son-las-razas-de-gatos-mas-populares-en-colombia.jpg?ver=T9w4YcvobP-L1GXta8uTAA%3D%3D", // Avatar demo
+                banner: "https://img.freepik.com/foto-gratis/personaje-estilo-anime-espacio_23-2151134346.jpg?semt=ais_hybrid&w=740&q=80" // Banner demo
               }}
               likedSongs={rawNodes
                 .filter(n => {

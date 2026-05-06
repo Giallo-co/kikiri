@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import './ProfileView.css';
 import type { Music } from '../../types/music';
 
@@ -23,12 +23,14 @@ export default function ProfileView({ onClose, onGoHome, onGoLibrary, user, like
         {/* Botón cerrar */}
         <button className="close-profile" onClick={onClose}>✕</button>
 
-        {/* HEADER: Vinilo + Banner */}
+        {/* HEADER: Tocadiscos + Banner */}
         <header className="profile-header">
-          <div className="vinyl-wrapper">
-            <div className="vinyl-disk">
-              <div className="vinyl-lines"></div>
-              <div className="vinyl-center" style={{ backgroundImage: `url(${user.avatar})` }}></div>
+          <div className="vinyl-turntable">
+            <div className="vinyl-wrapper">
+              <div className="vinyl-disk">
+                <div className="vinyl-lines"></div>
+                <div className="vinyl-center" style={{ backgroundImage: `url(${user.avatar})` }}></div>
+              </div>
             </div>
           </div>
           
@@ -49,8 +51,11 @@ export default function ProfileView({ onClose, onGoHome, onGoLibrary, user, like
           <div className="songs-grid">
             {likedSongs.slice(0, 6).map((song) => (
               <div key={song.music_id} className="song-card">
-                <img src={song.music_cover_url} alt={song.music_name} />
-                <span>{song.music_name}</span>
+                {/* Marco estandarizado N x Y */}
+                <div className="song-image-frame">
+                  <img src={song.music_cover_url} alt={song.music_name} />
+                </div>
+                <span className="song-title">{song.music_name}</span>
               </div>
             ))}
           </div>
@@ -58,14 +63,12 @@ export default function ProfileView({ onClose, onGoHome, onGoLibrary, user, like
 
         {/* FOOTER: GIF + Espectrograma + Nav */}
         <footer className="profile-footer">
-          <div className="footer-gif">
-            {/* Aquí puedes poner un GIF de tu elección */}
-            <img src="https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJueGZ3bmZ3bmZ3bmZ3/l41lTf7FpXjW/giphy.gif" alt="vibe" />
+          <div className="footer-gif-frame">
+            <img src="https://mir-s3-cdn-cf.behance.net/project_modules/hd/5eeea355389655.59822ff824b72.gif" alt="vibe" />
           </div>
 
           <div className="visualizer-area">
             <div className="spectrogram-mock">
-              {/* Generamos barritas aleatorias para el espectrograma */}
               {[...Array(40)].map((_, i) => (
                 <div key={i} className="bar" style={{ height: `${Math.random() * 100}%` }}></div>
               ))}
