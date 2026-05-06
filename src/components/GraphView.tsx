@@ -87,7 +87,8 @@ export default function GraphView({ nodes, links, config, selectedId, fixedNodeI
         // Aumentar innerExclusionRadius a 400
         configRef.current = {
           ...configRef.current,
-          innerExclusionRadius: 400
+          innerExclusionRadius: 600,
+          outerExclusionRadius: 600,
         }
         if (simulationRef.current) {
           simulationRef.current.alpha(0.3).restart()
@@ -101,7 +102,8 @@ export default function GraphView({ nodes, links, config, selectedId, fixedNodeI
       // Reset innerExclusionRadius
       configRef.current = {
         ...configRef.current,
-        innerExclusionRadius: 0
+        innerExclusionRadius: 0,
+        outerExclusionRadius: 600,
       }
       if (simulationRef.current) {
         simulationRef.current.alpha(0.3).restart()

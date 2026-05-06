@@ -121,13 +121,20 @@ export default function App() {
     if (activeTab === 'Search') {
       if (searchQuery) {
         const q = searchQuery.toLowerCase()
-        return rawNodes.filter(rn => 
+        const matches = rawNodes.filter(rn => 
           (rn.node_name?.toLowerCase().includes(q)) ||
           (rn.music_author?.toLowerCase().includes(q)) ||
           (rn.music_description?.toLowerCase().includes(q)) ||
           (rn.author_real_name?.toLowerCase().includes(q)) ||
           (rn.author_name?.toLowerCase().includes(q))
         )
+
+        if (matches.length === 1 && (matches[0].node_type === 'Author' || matches[0].node_type === 'Tag')) {
+          const reachableIds = getReachableFrom([matches[0]], 1)
+          return rawNodes.filter(rn => reachableIds.has(rn.node_id))
+        }
+
+        return matches
       } else {
         // Union of Home and Explore: basically everything reachable
         const homeMusic = rawNodes.filter(rn => rn.node_type === 'Music' && likedMusicIds.includes(rn.node_id))
@@ -395,8 +402,22 @@ export default function App() {
     )
     if (matches.length === 1) {
       const match = matches[0]
-      setSelectedNodeId(match.node_id); setIsManualSelection(true); setShouldFocus(true)
-      if (match.music_id) handleTrackChange(match as unknown as Music, match.node_id, true, true)
+      if (match.node_type === 'Music') {
+        setSelectedNodeId(match.node_id); 
+        setIsManualSelection(true); 
+        setShouldFocus(true)
+        handleTrackChange(match as unknown as Music, match.node_id, true, true)
+      } else {
+        // For Author or Tag, we don't just select it, we want to see its neighborhood
+        setSelectedNodeId(match.node_id);
+        setIsManualSelection(true);
+        setShouldFocus(true);
+        
+        // The visibleNodes memo will handle showing the reachable nodes 
+        // because it uses activeTab === 'Search' logic.
+        // However, we need to ensure the search results visible list 
+        // includes the related nodes if it's a single match of Author/Tag.
+      }
     }
   }, [rawNodes, handleTrackChange])
 
