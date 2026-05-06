@@ -203,6 +203,162 @@ app.post('/api/profile/update', async (req, res) => {
   }
 });
 
+app.post('/api/album/upload', async (req, res) => {
+  const { albumName, authorName, coverUrl, generalTag, tracks, postedBy } = req.body;
+  if (!albumName || !authorName || !tracks || !Array.isArray(tracks)) {
+    return res.status(400).json({ error: 'Album name, author name, and tracks are required' });
+  }
+
+  try {
+    const scanCommand = new ScanCommand({ TableName: "node" });
+    const scanResult = await docClient.send(scanCommand);
+    const nodes = scanResult.Items || [];
+
+    // Find Author node
+    let authorNode = nodes.find(n => n.node_type === 'Author' && (n.node_name === authorName || n.author_name === authorName));
+    
+    if (!authorNode) {
+      authorNode = nodes.find(n => n.node_type === 'Author' && (n.node_name === postedBy || n.author_name === postedBy));
+    }
+
+    if (!authorNode) {
+      return res.status(404).json({ error: 'Author node not found. Please ensure the author exists.' });
+    }
+
+    const authorNodeId = authorNode.node_id;
+    let maxNodeId = 0;
+    let maxMusicId = 0;
+    nodes.forEach(n => {
+      const nid = parseInt(n.node_id);
+      if (!isNaN(nid) && nid > maxNodeId) maxNodeId = nid;
+      
+      const mid = parseInt(n.music_id);
+      if (!isNaN(mid) && mid > maxMusicId) maxMusicId = mid;
+    });
+
+    const albumNodes = [];
+    const tagsToUpdate: Record<string, any> = {};
+
+    const getOrCreateTag = async (tagName: string) => {
+      let tagNode = nodes.find(n => n.node_type === 'Tag' && n.node_name === tagName);
+      if (!tagNode) {
+        maxNodeId++;
+        const newNodeId = String(maxNodeId);
+        tagNode = {
+          "node_id": newNodeId,
+          "node_type": "Tag",
+          "node_name": tagName,
+          "node_color": "#" + Math.floor(Math.random()*16777215).toString(16),
+          "node_music_links_next": [],
+          "node_music_links_previous": [],
+          "node_tag_links_next": [],
+          "node_tag_links_previous": [],
+          "node_author_links_next": [],
+          "node_author_links_previous": [],
+          "node_album_links_next": [],
+          "node_album_links_previous": []
+        };
+        nodes.push(tagNode);
+        // We'll save it later or now
+        await docClient.send(new PutCommand({ TableName: "node", Item: tagNode }));
+      }
+      return tagNode;
+    };
+
+    let generalTagNode: any = null;
+    if (generalTag) {
+      generalTagNode = await getOrCreateTag(generalTag);
+    }
+
+    for (let i = 0; i < tracks.length; i++) {
+      const track = tracks[i];
+      const newNodeId = String(maxNodeId + 1);
+      maxNodeId++;
+      const newMusicId = String(maxMusicId + 1);
+      maxMusicId++;
+
+      const trackTagIds: string[] = [];
+      if (generalTagNode) trackTagIds.push(generalTagNode.node_id);
+      
+      if (track.tag) {
+        const trackTagNode = await getOrCreateTag(track.tag);
+        if (!trackTagIds.includes(trackTagNode.node_id)) {
+          trackTagIds.push(trackTagNode.node_id);
+        }
+      }
+
+      const newNode = {
+        "node_id": newNodeId,
+        "node_type": "Music",
+        "node_name": track.name,
+        "node_color": authorNode.node_color || "#F28705",
+        "node_music_links_next": [],
+        "node_music_links_previous": [],
+        "node_tag_links_next": trackTagIds,
+        "node_tag_links_previous": [],
+        "node_author_links_next": [authorNodeId],
+        "node_author_links_previous": [],
+        "node_album_links_next": i < tracks.length - 1 ? [String(parseInt(newNodeId) + 1)] : [],
+        "node_album_links_previous": i > 0 ? [String(parseInt(newNodeId) - 1)] : [],
+        "music_id": newMusicId,
+        "music_name": track.name,
+        "music_description": track.description || `${track.name} from ${authorName}`,
+        "music_author": authorName,
+        "music_cover_url": coverUrl,
+        "music_url": track.url,
+        "music_album": albumName,
+        "likes": 0,
+        "views": 0,
+        "shares": 0,
+        "comments": 0
+      };
+      albumNodes.push(newNode);
+
+      // Prepare tag updates
+      for (const tagId of trackTagIds) {
+        if (!tagsToUpdate[tagId]) {
+          tagsToUpdate[tagId] = nodes.find(n => n.node_id === tagId);
+        }
+        if (!tagsToUpdate[tagId].node_music_links_next.includes(newNodeId)) {
+          tagsToUpdate[tagId].node_music_links_next.push(newNodeId);
+        }
+      }
+    }
+
+    // Save Music nodes
+    for (const node of albumNodes) {
+      await docClient.send(new PutCommand({
+        TableName: "node",
+        Item: node
+      }));
+    }
+
+    // Save Tag updates
+    for (const tagId in tagsToUpdate) {
+      await docClient.send(new PutCommand({
+        TableName: "node",
+        Item: tagsToUpdate[tagId]
+      }));
+    }
+
+    // Update Author node's music_links
+    const updatedAuthorNode = {
+      ...authorNode,
+      node_music_links_next: [...(authorNode.node_music_links_next || []), ...albumNodes.map(n => n.node_id)]
+    };
+    await docClient.send(new PutCommand({
+      TableName: "node",
+      Item: updatedAuthorNode
+    }));
+
+    console.log(`[Backend] Album "${albumName}" by ${authorName} uploaded with ${tracks.length} tracks.`);
+    res.status(201).json({ message: 'Album uploaded successfully', count: tracks.length });
+  } catch (error) {
+    console.error("Error uploading album to DynamoDB:", error);
+    res.status(500).json({ error: "Failed to upload album" });
+  }
+});
+
 app.post('/api/register', async (req, res) => {
   const { username, realName, description } = req.body;
   if (!username) {

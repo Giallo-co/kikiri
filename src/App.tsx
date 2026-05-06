@@ -4,6 +4,7 @@ import PlayerBar from "./components/PlayerBar/PlayerBar";
 import SideNav, { NavItem } from "./components/SideNav/SideNav";
 import Login from "./components/Login/Login";
 import Profile from "./components/Profile/Profile";
+import Post from "./components/Post/Post";
 import { graphConfig } from './graphConfig'
 import type { NodeDatum, LinkDatum, RawNode } from './types/graph'
 import type { Music } from "./types/music";
@@ -129,8 +130,6 @@ export default function App() {
         )
       } else {
         // Union of Home and Explore: basically everything reachable
-        // To be safe, let's just show all nodes that are organizational or music
-        // But the prompt says "Home and Explore", so let's combine their logic
         const homeMusic = rawNodes.filter(rn => rn.node_type === 'Music' && likedMusicIds.includes(rn.node_id))
         const exploreMusic = rawNodes.filter(rn => rn.node_type === 'Music' && !likedMusicIds.includes(rn.node_id))
         
@@ -203,7 +202,6 @@ export default function App() {
     const baseNode = currentNode || visibleNodes.find(rn => rn.music_id === currentTrack.music_id)
     if (!baseNode) return
 
-    // Priority 1: Use specific next link
     if (baseNode.node_album_links_next?.length > 0) {
       const nextId = baseNode.node_album_links_next[0]
       const nextNode = visibleNodes.find(rn => rn.node_id === nextId)
@@ -213,7 +211,6 @@ export default function App() {
       }
     }
 
-    // Priority 2: Fallback to Author node
     if (baseNode.node_author_links_next?.length > 0) {
       const authorId = baseNode.node_author_links_next[0]
       if (visibleNodes.some(n => n.node_id === authorId)) {
@@ -238,7 +235,6 @@ export default function App() {
       }
     }
 
-    // Fallback to Author node
     if (baseNode.node_author_links_next?.length > 0) {
       const authorId = baseNode.node_author_links_next[0]
       if (visibleNodes.some(n => n.node_id === authorId)) {
@@ -252,7 +248,6 @@ export default function App() {
     if (!visibleNodes.length) return
 
     const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
-    
     const getRandom = <T,>(arr: T[]): T | null => arr.length > 0 ? arr[Math.floor(Math.random() * arr.length)] : null
 
     const findMusicFromAuthor = (authorNode: RawNode) => {
@@ -269,7 +264,6 @@ export default function App() {
 
     let currentNode = selectedNodeId ? visibleNodes.find(n => n.node_id === selectedNodeId) : null
 
-    // Helper to execute the full Tag -> Author -> Music flow
     const startFullFlow = async (): Promise<boolean> => {
       const tags = visibleNodes.filter(n => n.node_type === "Tag" && (n.node_author_links_next?.length ?? 0) > 0)
       const randomTag = getRandom(tags.length > 0 ? tags : visibleNodes.filter(n => n.node_type === "Tag"))
@@ -280,93 +274,57 @@ export default function App() {
       await delay(SHUFFLE_STEP_DELAY)
 
       const randomAuthor = findAuthorFromTag(randomTag)
-      if (!randomAuthor) return await startFullFlow() // Retry if tag has no authors
+      if (!randomAuthor) return await startFullFlow()
 
       setSelectedNodeId(randomAuthor.node_id)
       setShouldFocus(isManualSelection)
       await delay(SHUFFLE_STEP_DELAY)
 
       const randomMusic = findMusicFromAuthor(randomAuthor)
-      if (!randomMusic) return await startFullFlow() // Retry if author has no music
+      if (!randomMusic) return await startFullFlow()
 
       handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id, true, isManualSelection)
       return true
     }
 
-    // --- CASE 1: No node selected ---
     if (!currentNode) {
       await startFullFlow()
       return
     }
 
-    // --- CASE 2: Tag selected ---
     if (currentNode.node_type === "Tag") {
       const randomAuthor = findAuthorFromTag(currentNode)
-      if (!randomAuthor) {
-        await startFullFlow() // Fallback to full flow if current tag is empty
-        return
-      }
-      
-      setSelectedNodeId(randomAuthor.node_id)
-      setShouldFocus(isManualSelection)
-      await delay(SHUFFLE_STEP_DELAY)
-      
+      if (!randomAuthor) { await startFullFlow(); return }
+      setSelectedNodeId(randomAuthor.node_id); setShouldFocus(isManualSelection); await delay(SHUFFLE_STEP_DELAY)
       const randomMusic = findMusicFromAuthor(randomAuthor)
-      if (!randomMusic) {
-        await startFullFlow()
-        return
-      }
-      
+      if (!randomMusic) { await startFullFlow(); return }
       handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id, true, isManualSelection)
       return
     }
 
-    // --- CASE 3: Author selected ---
     if (currentNode.node_type === "Author") {
       const randomMusic = findMusicFromAuthor(currentNode)
-      if (!randomMusic) {
-        await startFullFlow()
-        return
-      }
-      
+      if (!randomMusic) { await startFullFlow(); return }
       handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id, true, isManualSelection)
       return
     }
 
-    // --- CASE 4: Music selected ---
     if (currentNode.node_type === "Music") {
-      const relatedIds = [
-        ...(currentNode.node_tag_links_next || []),
-        ...(currentNode.node_author_links_next || [])
-      ]
+      const relatedIds = [...(currentNode.node_tag_links_next || []), ...(currentNode.node_author_links_next || [])]
       const relatedNodes = rawNodes.filter(n => relatedIds.includes(n.node_id))
       const randomRelated = getRandom(relatedNodes)
-      
-      if (!randomRelated) {
-        await startFullFlow()
-        return
-      }
-
-      setSelectedNodeId(randomRelated.node_id)
-      setShouldFocus(isManualSelection)
-      await delay(SHUFFLE_STEP_DELAY)
-
+      if (!randomRelated) { await startFullFlow(); return }
+      setSelectedNodeId(randomRelated.node_id); setShouldFocus(isManualSelection); await delay(SHUFFLE_STEP_DELAY)
       if (randomRelated.node_type === "Tag") {
         const randomAuthor = findAuthorFromTag(randomRelated)
         if (!randomAuthor) { await startFullFlow(); return }
-
-        setSelectedNodeId(randomAuthor.node_id)
-        setShouldFocus(isManualSelection)
-        await delay(SHUFFLE_STEP_DELAY)
-
+        setSelectedNodeId(randomAuthor.node_id); setShouldFocus(isManualSelection); await delay(SHUFFLE_STEP_DELAY)
         const randomMusic = findMusicFromAuthor(randomAuthor)
         if (!randomMusic) { await startFullFlow(); return }
-
         handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id, true, isManualSelection)
       } else if (randomRelated.node_type === "Author") {
         const randomMusic = findMusicFromAuthor(randomRelated)
         if (!randomMusic) { await startFullFlow(); return }
-
         handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id, true, isManualSelection)
       }
       return
@@ -377,15 +335,10 @@ export default function App() {
     setSelectedNodeId(nodeId)
     setIsManualSelection(true)
     setShouldFocus(true)
-
-    // If we are NOT in search mode, do the track change as usual
-    if (activeTab !== 'Search' && content && content.music_id) {
-      handleTrackChange(content as Music, nodeId, true, true)
-    } else if (activeTab === 'Search' && content && content.music_id) {
-      // In search mode, play music but stay in Search tab
+    if (content && content.music_id) {
       handleTrackChange(content as Music, nodeId, true, true)
     }
-  }, [handleTrackChange, activeTab])
+  }, [handleTrackChange])
 
   const handleDeselect = useCallback(() => {
     setSelectedNodeId(null)
@@ -432,7 +385,6 @@ export default function App() {
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query)
     if (!query) return
-
     const q = query.toLowerCase()
     const matches = rawNodes.filter(rn => 
       (rn.node_name?.toLowerCase().includes(q)) ||
@@ -441,27 +393,15 @@ export default function App() {
       (rn.author_real_name?.toLowerCase().includes(q)) ||
       (rn.author_name?.toLowerCase().includes(q))
     )
-
     if (matches.length === 1) {
       const match = matches[0]
-      const content = (match.node_type === "Music" || match.node_type === "Author" || match.node_type === "Tag") ? match : null
-      
-      // Auto-select and play if it's a single match
-      setSelectedNodeId(match.node_id)
-      setIsManualSelection(true)
-      setShouldFocus(true)
-      if (content && content.music_id) {
-        handleTrackChange(content as Music, match.node_id, true, true)
-      }
+      setSelectedNodeId(match.node_id); setIsManualSelection(true); setShouldFocus(true)
+      if (match.music_id) handleTrackChange(match as unknown as Music, match.node_id, true, true)
     }
   }, [rawNodes, handleTrackChange])
 
   useEffect(() => {
-    if (!searchQuery) {
-      setCurrentConfig(graphConfig)
-      return
-    }
-
+    if (!searchQuery) { setCurrentConfig(graphConfig); return }
     const q = searchQuery.toLowerCase()
     const matches = rawNodes.filter(rn => 
       (rn.node_name?.toLowerCase().includes(q)) ||
@@ -470,15 +410,10 @@ export default function App() {
       (rn.author_real_name?.toLowerCase().includes(q)) ||
       (rn.author_name?.toLowerCase().includes(q))
     )
-
     if (matches.length >= 2) {
       setSelectedNodeId(null) 
-      setCurrentConfig(prev => ({
-        ...prev,
-        outerExclusionRadius: matches.length * 5
-      }))
+      setCurrentConfig(prev => ({ ...prev, outerExclusionRadius: matches.length * 5 }))
     } else {
-
       setCurrentConfig(graphConfig)
     }
   }, [searchQuery, rawNodes])
@@ -490,66 +425,41 @@ export default function App() {
       color: rn.node_color,
       content: (rn.node_type === "Music" || rn.node_type === "Author" || rn.node_type === "Tag") ? rn : null
     }))
-
     const filteredNodeIds = new Set(visibleNodes.map(rn => rn.node_id))
     const links: LinkDatum[] = []
-
     visibleNodes.forEach(rn => {
       const allLinks = [
-        ...(rn.node_tag_links_next || []),
-        ...(rn.node_tag_links_previous || []),
-        ...(rn.node_music_links_next || []),
-        ...(rn.node_music_links_previous || []),
-        ...(rn.node_author_links_next || []),
-        ...(rn.node_author_links_previous || []),
-        ...(rn.node_album_links_next || []),
-        ...(rn.node_album_links_previous || [])
+        ...(rn.node_tag_links_next || []), ...(rn.node_tag_links_previous || []),
+        ...(rn.node_music_links_next || []), ...(rn.node_music_links_previous || []),
+        ...(rn.node_author_links_next || []), ...(rn.node_author_links_previous || []),
+        ...(rn.node_album_links_next || []), ...(rn.node_album_links_previous || [])
       ]
-
       allLinks.forEach(targetId => {
-        if (filteredNodeIds.has(targetId)) {
-          links.push({ source: rn.node_id, target: targetId })
-        }
+        if (filteredNodeIds.has(targetId)) links.push({ source: rn.node_id, target: targetId })
       })
     })
-
     setGraphData({ nodes, links })
   }, [visibleNodes])
 
   const handleLike = useCallback(() => {
     if (!currentTrack || !username || !rawNodes.length) return
-
     const trackNode = rawNodes.find(rn => rn.music_id === currentTrack.music_id)
     if (!trackNode) return
     const trackId = trackNode.node_id
-
-    // Optimistic UI update
     setRawNodes(prev => {
       const userIdx = prev.findIndex(n => n.node_type === 'Author' && (n.node_name === username || n.author_name === username))
       if (userIdx === -1) return prev
-
-      const newUserNodes = [...prev]
-      const userNode = { ...newUserNodes[userIdx] }
-      
+      const newUserNodes = [...prev]; const userNode = { ...newUserNodes[userIdx] }
       const likes = userNode.node_music_likes || []
-
-      if (likes.includes(trackId)) {
-        userNode.node_music_likes = likes.filter((id: string) => id !== trackId)
-      } else {
-        userNode.node_music_likes = [...likes, trackId]
-      }
-
-      newUserNodes[userIdx] = userNode
-      return newUserNodes
+      if (likes.includes(trackId)) userNode.node_music_likes = likes.filter((id: string) => id !== trackId)
+      else userNode.node_music_likes = [...likes, trackId]
+      newUserNodes[userIdx] = userNode; return newUserNodes
     })
-
-    // Persistence to DynamoDB
     fetch('/api/like', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, musicNodeId: trackId })
-    }).catch(err => console.error('Failed to sync like to DynamoDB:', err))
-
+    }).catch(err => console.error('Failed to sync like:', err))
   }, [currentTrack, username, rawNodes])
 
   const isCurrentTrackLiked = useMemo(() => {
@@ -562,53 +472,24 @@ export default function App() {
   useEffect(() => {
     if (!isLoggedIn) return;
     const connect = () => {
-      const es = new EventSource('/api/nodes/stream')
-      esRef.current = es
-
-      es.onopen = () => {
-        setConnected(true)
-        setError(null)
-      }
-
+      const es = new EventSource('/api/nodes/stream'); esRef.current = es
+      es.onopen = () => { setConnected(true); setError(null) }
       es.onmessage = (event) => {
         try {
           const parsed = JSON.parse(event.data)
-
           if (parsed.__type === 'track') {
             const track = parsed.track as Music
-            if (track && track.music_id) {
-              setCurrentTrack(track)
-            }
+            if (track && track.music_id) setCurrentTrack(track)
             return
           }
-
           const incomingNodes: RawNode[] = parsed
-          if (Array.isArray(incomingNodes) && incomingNodes.length) {
-            setRawNodes(incomingNodes)
-          }
-        } catch (e) {
-          setError('parse error')
-        }
+          if (Array.isArray(incomingNodes) && incomingNodes.length) setRawNodes(incomingNodes)
+        } catch (e) { setError('parse error') }
       }
-
-      es.onerror = () => {
-        setConnected(false)
-        setError('connection error')
-        es.close()
-        setTimeout(connect, 2000)
-      }
+      es.onerror = () => { setConnected(false); setError('connection error'); es.close(); setTimeout(connect, 2000) }
     }
-
-    connect()
-    return () => { esRef.current?.close() }
+    connect(); return () => { esRef.current?.close() }
   }, [isLoggedIn])
-
-  useEffect(() => {
-    if (!isLoggedIn) {
-      // Background nodes are initialized in state, but we ensure they stay if logged out
-      // (This can be empty or used to reset if needed)
-    }
-  }, [isLoggedIn]);
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden', backgroundColor: '#ebebeb' }}>
@@ -617,7 +498,7 @@ export default function App() {
         <Login onLogin={handleLoginSuccess} isTransitioning={isTransitioning} />
       )}
 
-      <div style={{ width: '100%', height: '100%' }}>
+      <div style={{ width: '100%', height: '100%', pointerEvents: (activeTab === 'Profile' || activeTab === 'Post') ? 'none' : 'auto' }}>
         {graphData && (
           <GraphView
             nodes={graphData.nodes}
@@ -650,6 +531,14 @@ export default function App() {
                 />
               ) : null;
             })()
+          )}
+
+          {activeTab === 'Post' && (
+            <Post 
+              username={username || ''} 
+              onClose={() => setActiveTab('Home')} 
+              onSuccess={() => setActiveTab('Home')}
+            />
           )}
 
           <div style={{
