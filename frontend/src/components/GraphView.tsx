@@ -15,6 +15,7 @@ interface Props {
   shouldFocus?: boolean
   showComment?: boolean
   isLoggedIn?: boolean
+  centerBackground?: boolean
   searchQuery?: string
   showSearchBar?: boolean
   searchTrigger?: number
@@ -39,7 +40,7 @@ const ENABLE_DYNAMIC_EXCLUSION = false // true: radius changes on selection, fal
 
 
 
-export default function GraphView({ nodes, links, config, selectedId, playingNodeId, fixedNodeId, shouldFocus = true, showComment = false, isLoggedIn, searchQuery, showSearchBar, searchTrigger, onNodeClick, onDeselect, onSearch }: Props) {
+export default function GraphView({ nodes, links, config, selectedId, playingNodeId, fixedNodeId, shouldFocus = true, showComment = false, isLoggedIn, centerBackground = false, searchQuery, showSearchBar, searchTrigger, onNodeClick, onDeselect, onSearch }: Props) {
   const svgRef = useRef<SVGSVGElement>(null)
   const simulationRef = useRef<d3.Simulation<NodeDatum, undefined> | null>(null)
   const gRef = useRef<d3.Selection<SVGGElement, unknown, null, undefined> | null>(null)
@@ -79,7 +80,7 @@ export default function GraphView({ nodes, links, config, selectedId, playingNod
         const rect = svgRef.current.getBoundingClientRect()
         const width = rect.width
         const height = rect.height
-        const visualCenterY = (height - 72) / 2
+        const visualCenterY = centerBackground ? (height / 2) : ((height - 72) / 2)
 
         const targetX = focusTarget.x ?? (width / 2)
         const targetY = focusTarget.y ?? visualCenterY
@@ -169,7 +170,7 @@ export default function GraphView({ nodes, links, config, selectedId, playingNod
     
     // Adjust visual center to account for PlayerBar (72px)
     const playerBarHeight = 72
-    const visualCenterY = (height - playerBarHeight) / 2
+    const visualCenterY = centerBackground ? (height / 2) : ((height - playerBarHeight) / 2)
 
     const svg = d3.select(svgEl)
     svg.selectAll('*').remove()
@@ -551,7 +552,7 @@ export default function GraphView({ nodes, links, config, selectedId, playingNod
         const rect = svgRef.current.getBoundingClientRect()
         const width = rect.width
         const height = rect.height
-        const visualCenterY = (height - 72) / 2
+        const visualCenterY = centerBackground ? (height / 2) : ((height - 72) / 2)
 
         const x = node.x ?? width / 2
         const y = node.y ?? visualCenterY
@@ -647,7 +648,7 @@ export default function GraphView({ nodes, links, config, selectedId, playingNod
           
           if (zoomRef.current && svgRef.current) {
             const rect = svgRef.current.getBoundingClientRect()
-            const visualCenterY = (rect.height - 72) / 2
+            const visualCenterY = centerBackground ? (rect.height / 2) : ((rect.height - 72) / 2)
             d3.select(svgRef.current).transition().duration(750)
               .call(
                 zoomRef.current.transform, 
@@ -691,7 +692,7 @@ export default function GraphView({ nodes, links, config, selectedId, playingNod
     } else if (!selectedId && !searchQuery && svgRef.current && zoomRef.current) {
       // Reset zoom to center when no node is selected and nodes change (e.g. after login)
       const rect = svgRef.current.getBoundingClientRect()
-      const visualCenterY = (rect.height - 72) / 2
+      const visualCenterY = centerBackground ? (rect.height / 2) : ((rect.height - 72) / 2)
       d3.select(svgRef.current).transition().duration(750).call(
         zoomRef.current.transform,
         d3.zoomIdentity
@@ -742,7 +743,7 @@ export default function GraphView({ nodes, links, config, selectedId, playingNod
                     const rect = svgRef.current.getBoundingClientRect()
                     const width = rect.width
                     const height = rect.height
-                    const visualCenterY = (height - 72) / 2
+                    const visualCenterY = centerBackground ? (height / 2) : ((height - 72) / 2)
                     
                     d3.select(svgRef.current)
                       .transition()

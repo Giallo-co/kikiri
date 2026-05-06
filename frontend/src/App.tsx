@@ -31,36 +31,12 @@ interface GraphData {
   links: LinkDatum[]
 }
 
-const generateInitialNodes = (count: number): GraphData => {
-  const nodes: NodeDatum[] = [];
-  const links: LinkDatum[] = [];
-  for (let i = 0; i < count; i++) {
-    // Darker grayscale for visibility on white background
-    const v = Math.floor(Math.random() * 100) + 20;
-    const color = `rgb(${v},${v},${v})`;
-    nodes.push({
-      id: `initial-${i}`,
-      name: `Node ${i}`,
-      color: color
-    });
-  }
-  for (let i = 0; i < count; i++) {
-    if (Math.random() > 0.7) {
-      const target = Math.floor(Math.random() * count);
-      if (target !== i) {
-        links.push({ source: `initial-${i}`, target: `initial-${target}` });
-      }
-    }
-  }
-  return { nodes, links };
-};
-
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [username, setUsername] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<NavItem>('Home')
   const [isTransitioning, setIsTransitioning] = useState(false)
-  const [graphData, setGraphData] = useState<GraphData | null>(() => generateInitialNodes(200))
+  const [graphData, setGraphData] = useState<GraphData | null>(null)
   const [rawNodes, setRawNodes] = useState<RawNode[]>([])
   const [connected, setConnected] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -79,7 +55,12 @@ export default function App() {
   const initialSearchHandledRef = useRef(false)
 
   const visibleNodes = useMemo(() => {
-    if (!rawNodes.length || !isLoggedIn || !username) return []
+    if (!rawNodes.length) return []
+    
+    // IF NOT LOGGED IN: Show all music nodes for the background
+    if (!isLoggedIn || !username) {
+      return rawNodes.filter(rn => rn.node_type === 'Music')
+    }
 
     const userNode = rawNodes.find(n => n.node_type === 'Author' && (n.node_name === username || n.author_name === username))
     const likedMusicIds = userNode?.node_music_likes || []
@@ -540,7 +521,6 @@ export default function App() {
   }, [currentTrack, username, rawNodes])
 
   useEffect(() => {
-    if (!isLoggedIn) return;
     const connect = () => {
       const es = new EventSource('/api/nodes/stream'); esRef.current = es
       es.onopen = () => { setConnected(true); setError(null) }
@@ -559,7 +539,7 @@ export default function App() {
       es.onerror = () => { setConnected(false); setError('connection error'); es.close(); setTimeout(connect, 2000) }
     }
     connect(); return () => { esRef.current?.close() }
-  }, [isLoggedIn])
+  }, [])
 
   useEffect(() => {
     if (isLoggedIn && rawNodes.length > 0 && !initialSearchHandledRef.current) {
@@ -597,6 +577,7 @@ export default function App() {
             shouldFocus={shouldFocus}
             showComment={isCommentActive}
             isLoggedIn={isLoggedIn}
+            centerBackground={!isLoggedIn}
             searchQuery={searchQuery}
             showSearchBar={activeTab === 'Search'}
             searchTrigger={searchTrigger}
@@ -663,14 +644,6 @@ export default function App() {
             />
           </div>
         </>
-      )}
-
-      {!graphData && !isLoggedIn && (
-        <div style={{
-          position: 'absolute', top: '50%', left: '50%',
-          transform: 'translate(-50%,-50%)',
-          fontSize: 12, fontFamily: 'monospace', color: '#999'
-        }}>generating background...</div>
       )}
     </div>
   )
