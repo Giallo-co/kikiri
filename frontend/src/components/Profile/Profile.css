@@ -1,0 +1,261 @@
+:root {
+  /* Overlay & Glass Effect - Matching Login.css */
+  --profile-glass-color: 255, 255, 255;
+  --profile-glass-opacity: 0.001;
+  --profile-overlay-bg: rgba(var(--profile-glass-color), var(--profile-glass-opacity));
+  --profile-glass-blur: 20px;
+
+  /* Text Colors */
+  --profile-text-main: #333333;
+  --profile-text-title: #000000;
+  --profile-text-subtitle: #666666;
+  --profile-text-muted: #888888;
+  --profile-text-error: #ff4d4d;
+
+  /* Decorative Elements */
+  --profile-marker-color: rgba(255, 255, 255, 0.2);
+
+  /* Inputs */
+  --profile-input-bg: rgba(255, 255, 255, 0.05);
+  --profile-input-border: rgba(255, 255, 255, 0.1);
+  --profile-input-text: #ffffff;
+  --profile-input-placeholder: rgba(255, 255, 255, 0.3);
+  --profile-input-focus-bg: rgba(255, 255, 255, 0.1);
+  --profile-input-focus-border: rgba(255, 255, 255, 0.3);
+
+  /* Button */
+  --profile-btn-bg: rgba(255, 255, 255, 0.1);
+  --profile-btn-border: rgba(255, 255, 255, 0.2);
+  --profile-btn-text: #ffffff;
+  --profile-btn-hover-bg: rgba(255, 255, 255, 0.2);
+}
+
+.profile-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Inter', -apple-system, sans-serif;
+  background-size: cover;
+  background-position: center;
+}
+
+.profile-container .glass-effect-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  z-index: 1;
+}
+
+.profile-container .profile-avatar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1.5rem; /* Reduced from 2.5rem */
+}
+
+.profile-container .profile-avatar-container {
+  width: 100px; /* Reduced from 140px */
+  height: 100px; /* Reduced from 140px */
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.profile-container .profile-avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-container .profile-content-layer {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  overflow-y: auto; /* Added for scroll safety */
+  max-height: 100vh;
+  padding: 20px;
+}
+
+.profile-container .profile-card {
+  width: 100%;
+  max-width: 420px; /* Reduced from 480px */
+  position: relative;
+  padding: 30px 40px; /* Reduced vertical padding */
+  color: white;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Corner markers scoped */
+.profile-container .profile-card::before, 
+.profile-container .profile-card::after,
+.profile-container .profile-card-inner::before, 
+.profile-container .profile-card-inner::after {
+  content: '';
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  border-color: var(--profile-marker-color);
+  border-style: solid;
+}
+
+.profile-container .profile-card::before { top: 0; left: 0; border-width: 1px 0 0 1px; }
+.profile-container .profile-card::after { top: 0; right: 0; border-width: 1px 1px 0 0; }
+.profile-container .profile-card-inner::before { bottom: 0; left: 0; border-width: 0 0 1px 1px; }
+.profile-container .profile-card-inner::after { bottom: 0; right: 0; border-width: 0 1px 1px 0; }
+
+.profile-container .profile-header {
+  margin-bottom: 1.5rem; /* Reduced from 2rem */
+  text-align: center;
+}
+
+.profile-container .change-photo-btn-header {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font-family: inherit;
+  font-size: 1.2rem;
+  font-weight: 400;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  color: white;
+  cursor: pointer;
+  transition: opacity 0.3s ease;
+}
+
+.profile-container .change-photo-btn-header:hover {
+  opacity: 0.8;
+}
+
+.profile-container .profile-header p {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0;
+}
+
+.profile-container .form-group {
+  margin-bottom: 1rem; /* Reduced spacing between groups */
+}
+
+.profile-container .profile-textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 4px;
+  border: 1px solid var(--profile-input-border);
+  background: var(--profile-input-bg);
+  box-sizing: border-box;
+  outline: none;
+  font-size: 0.85rem;
+  color: var(--profile-input-text);
+  transition: all 0.3s ease;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.profile-container .profile-textarea:focus {
+  background: var(--profile-input-focus-bg);
+  border-color: var(--profile-input-focus-border);
+}
+
+.profile-container .form-group label {
+  display: block;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 6px;
+  margin-left: 2px;
+}
+
+.profile-container .form-group input {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 4px;
+  border: 1px solid var(--profile-input-border);
+  background: var(--profile-input-bg);
+  box-sizing: border-box;
+  outline: none;
+  font-size: 0.85rem;
+  color: var(--profile-input-text);
+  transition: all 0.3s ease;
+}
+
+.profile-container .form-group input:focus {
+  background: var(--profile-input-focus-bg);
+  border-color: var(--profile-input-focus-border);
+}
+
+.profile-container .color-picker {
+  width: 100%;
+  height: 38px; /* Reduced from 45px */
+  padding: 2px;
+  border: 1px solid var(--profile-input-border);
+  background: var(--profile-input-bg);
+  cursor: pointer;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.profile-container .profile-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 1.5rem; /* Reduced from 2rem */
+}
+
+.profile-container .save-btn, 
+.profile-container .cancel-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.profile-container .save-btn {
+  border: 1px solid var(--profile-btn-border);
+  background: var(--profile-btn-bg);
+  color: var(--profile-btn-text);
+}
+
+.profile-container .save-btn:hover:not(:disabled) {
+  background: var(--profile-btn-hover-bg);
+}
+
+.profile-container .save-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.profile-container .cancel-btn {
+  border: 1px solid transparent;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.profile-container .cancel-btn:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.profile-container .error-msg {
+  color: var(--profile-text-error);
+  font-size: 0.75rem;
+  margin-top: 0.8rem;
+  text-align: center;
+}
