@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../api/authService';
 import { useAuth } from '../hooks/useAuth';
+import { extractApiErrorMessage, logApiError } from '../utils/apiError';
 
 const LoginPage: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -19,8 +20,9 @@ const LoginPage: React.FC = () => {
       const response = await authService.login({ username, password });
       login(response.token, response.user);
       navigate('/');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
+    } catch (err: unknown) {
+      logApiError('LoginPage: login failed', err);
+      setError(extractApiErrorMessage(err, 'Login failed. Please check your credentials.'));
     } finally {
       setLoading(false);
     }

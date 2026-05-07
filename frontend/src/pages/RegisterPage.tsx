@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../api/authService';
 import { useAuth } from '../hooks/useAuth';
+import { extractApiErrorMessage, logApiError } from '../utils/apiError';
 
 const RegisterPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -20,8 +21,9 @@ const RegisterPage: React.FC = () => {
       const response = await authService.register({ email, username, password });
       login(response.token, response.user);
       navigate('/');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Registration failed. Please try again.');
+    } catch (err: unknown) {
+      logApiError('RegisterPage: registration failed', err);
+      setError(extractApiErrorMessage(err, 'Registration failed. Please try again.'));
     } finally {
       setLoading(false);
     }

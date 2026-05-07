@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { logApiError } from '../utils/apiError';
 
 const rawBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 const normalizedBaseUrl = rawBaseUrl.replace(/\/$/, '');
@@ -29,6 +30,7 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    logApiError('Axios response interceptor', error);
     if (error.response?.status === 401) {
       localStorage.removeItem('kikiri_token');
       window.location.href = '/login';
