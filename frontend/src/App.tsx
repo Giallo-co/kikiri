@@ -7,6 +7,7 @@ import Profile from "./components/Profile/Profile";
 import Post from "./components/Post/Post";
 import CustomCursor from "./components/CustomCursor/CustomCursor";
 import { graphConfig } from './graphConfig'
+import { apiUrl } from './lib/apiBase'
 import type { NodeDatum, LinkDatum, RawNode } from './types/graph'
 import type { Music } from "./types/music";
 
@@ -506,7 +507,7 @@ export default function App() {
       else userNode.node_music_likes = [...likes, trackId]
       newUserNodes[userIdx] = userNode; return newUserNodes
     })
-    fetch('/api/like', {
+    fetch(apiUrl('/api/like'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, musicNodeId: trackId })
@@ -522,7 +523,7 @@ export default function App() {
 
   useEffect(() => {
     const connect = () => {
-      const es = new EventSource('/api/nodes/stream'); esRef.current = es
+      const es = new EventSource(apiUrl('/api/nodes/stream')); esRef.current = es
       es.onopen = () => { setConnected(true); setError(null) }
       es.onmessage = (event) => {
         try {

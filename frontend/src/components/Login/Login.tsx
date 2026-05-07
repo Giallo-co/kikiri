@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './Login.css';
+import { apiUrl } from '../../lib/apiBase';
 
 interface LoginProps {
   onLogin: (username: string) => void;
@@ -19,7 +20,7 @@ export default function Login({ onLogin, isTransitioning }: LoginProps) {
 
     if (isRegister) {
       try {
-        const response = await fetch('http://localhost:5002/api/register', {
+        const response = await fetch(apiUrl('/api/register'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

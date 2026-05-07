@@ -12,6 +12,7 @@ import interactionRoutes from './routes/interactionRoutes';
 import uploadRoutes from './routes/uploadRoutes';
 import userPostRoutes from './routes/userPostRoutes';
 import profilePictureRoutes from './routes/profilePicture';
+import graphApiRoutes from './routes/graphApiRoutes';
 import cors from 'cors';
 
 const app = express();
@@ -41,6 +42,7 @@ app.use(config.apiBasePath, interactionRoutes);
 app.use(config.apiBasePath, uploadRoutes);
 app.use(config.apiBasePath, userPostRoutes);
 app.use("/api/profile-picture", profilePictureRoutes);
+app.use("/api", graphApiRoutes);
 
 app.use(errorHandler); 
 export default app;

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './Post.css';
+import { apiUrl } from '../../lib/apiBase';
 
 interface TrackInput {
   name: string;
@@ -43,7 +44,7 @@ export default function Post({ username, onClose, onSuccess }: PostProps) {
     setError('');
 
     try {
-      const response = await fetch('/api/album/upload', {
+      const response = await fetch(apiUrl('/api/album/upload'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
