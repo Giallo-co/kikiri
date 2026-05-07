@@ -10,15 +10,18 @@ interface PostCardProps {
 }
 
 const PostCard: React.FC<PostCardProps> = ({ post }) => {
+  const postIdentifier = post.postId || String(post.id);
   const postUser = post.user;
   const postUsername = postUser?.username || 'User';
   const postAvatar = postUser?.profile?.avatarUrl || postUser?.profilePictureUrl || null;
+  const postImageUrls = post.imageUrls ?? [];
+  const postAudioUrl = post.audioUrl ?? null;
   const [liked, setLiked] = useState(post.isLiked ?? false);
   const [likesCount, setLikesCount] = useState(post._count?.likes ?? 0);
   const queryClient = useQueryClient();
 
   const likeMutation = useMutation({
-    mutationFn: () => (liked ? postService.unlikePost(post.id) : postService.likePost(post.id)),
+    mutationFn: () => (liked ? postService.unlikePost(postIdentifier) : postService.likePost(postIdentifier)),
     onSuccess: () => {
       setLiked(!liked);
       setLikesCount(liked ? likesCount - 1 : likesCount + 1);
@@ -28,15 +31,17 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
   const handleShare = async () => {
     try {
-      await postService.sharePost(post.id);
-      alert('Post shared successfully!');
+      await postService.sharePost(postIdentifier);
+      const deepLink = `${window.location.origin}/profile/${post.userId}#post-${postIdentifier}`;
+      await navigator.clipboard.writeText(deepLink);
+      alert('Post link copied to clipboard!');
     } catch (err) {
       console.error('Failed to share post', err);
     }
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+    <div id={`post-${postIdentifier}`} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       <div className="p-4 flex items-center space-x-3">
         <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
           {postAvatar ? (
@@ -56,26 +61,26 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         <p className="text-gray-700 whitespace-pre-wrap">{post.body}</p>
       </div>
 
-      {post.imageKeys && post.imageKeys.length > 0 && (
+      {postImageUrls.length > 0 && (
         <div className="px-4 pb-4">
           <div className="grid grid-cols-1 gap-2">
-             {/* Note: In a real app, we'd resolve these keys to URLs. 
-                 For now, we'll assume the backend provides urls or we have a helper. */}
-             <div className="bg-gray-100 aspect-video rounded-lg flex items-center justify-center text-gray-400 text-sm">
-               Images attached ({post.imageKeys.length})
-             </div>
+            {postImageUrls.map((imageUrl, index) => (
+              <img
+                key={`${postIdentifier}-image-${index}`}
+                src={imageUrl}
+                alt={`${post.title} image ${index + 1}`}
+                className="w-full rounded-lg object-cover"
+              />
+            ))}
           </div>
         </div>
       )}
 
-      {post.audioKey && (
+      {postAudioUrl && (
         <div className="px-4 pb-4">
-          <div className="bg-indigo-50 p-3 rounded-lg flex items-center space-x-3">
-             <div className="flex-1 h-2 bg-indigo-200 rounded-full overflow-hidden">
-               <div className="w-1/3 h-full bg-indigo-600"></div>
-             </div>
-             <span className="text-xs font-medium text-indigo-700">Audio clip</span>
-          </div>
+          <audio controls className="w-full" preload="none" src={postAudioUrl}>
+            Your browser does not support the audio element.
+          </audio>
         </div>
       )}
 

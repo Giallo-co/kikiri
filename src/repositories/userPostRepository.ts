@@ -4,6 +4,7 @@ import { docClient, TABLE_NAME } from '../lib/dynamo';
 import { MediaAttachment, PostItem } from '../models/postModel';
 
 export interface UserPostRecord {
+  postId: string;
   userId: string;
   createdOn: number;
   Title: string;
@@ -50,6 +51,7 @@ function mapItemToRecord(item: Record<string, unknown>): UserPostRecord {
       : Date.parse(String(item.createdAt ?? ''));
 
   const rec: UserPostRecord = {
+    postId: String(item.postId ?? ''),
     userId: String(Number.isFinite(authorId) ? authorId : ''),
     createdOn: Number.isFinite(createdOn) ? createdOn : Date.now(),
     Title: title,
@@ -67,7 +69,7 @@ export class UserPostRepository {
    * Writes into the same single-table (`KikiriSocial`) as {@link PostRepository}:
    * PK/SK + GSI1 (per-user) + GSI2 (global feed).
    */
-  async putPost(record: UserPostRecord): Promise<void> {
+  async putPost(record: UserPostRecord): Promise<string> {
     const postId = crypto.randomUUID();
     const authorId = parseInt(record.userId, 10);
     if (!Number.isFinite(authorId)) {
@@ -111,6 +113,7 @@ export class UserPostRepository {
         Item: item
       })
     );
+    return postId;
   }
 
   async listByUserId(userId: string, limit: number = 50): Promise<UserPostRecord[]> {

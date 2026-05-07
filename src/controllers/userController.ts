@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { UserService } from '../services/userService';
 import { logger } from '../lib/logger';
 import { getAuthUserId } from '../utils/authRequest';
-import { objectPublicUrl } from '../utils/mediaUrls';
+import { objectReadUrl } from '../utils/mediaUrls';
 
 export class UserController {
     constructor(private readonly userService: UserService) {}
@@ -89,7 +89,7 @@ export class UserController {
                 return res.status(404).json({ message: "User not found" });
             }
             const { password, ...rest } = user;
-            const profilePictureUrl = objectPublicUrl(rest.profilePictureKey ?? undefined);
+            const profilePictureUrl = await objectReadUrl(rest.profilePictureKey ?? undefined);
             return res.status(200).json({ ...rest, profilePictureUrl });
         } catch (error) {
             next(error);
@@ -109,7 +109,7 @@ export class UserController {
             const { profilePictureKey } = req.body as { profilePictureKey?: string };
             const updated = await this.userService.setProfilePictureKey(actorId, targetId, profilePictureKey ?? '');
             const { password, ...rest } = updated;
-            const profilePictureUrl = objectPublicUrl(rest.profilePictureKey ?? undefined);
+            const profilePictureUrl = await objectReadUrl(rest.profilePictureKey ?? undefined);
             return res.status(200).json({
                 message: 'Profile picture updated',
                 user: { ...rest, profilePictureUrl }

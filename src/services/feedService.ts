@@ -1,8 +1,8 @@
 import { PostRepository } from '../repositories/postRepository';
 import { UserRepository } from '../repositories/userRepository';
 import { EnrichedPost } from '../models/postModel';
-import { FeedResponse, FeedItem } from '../models/feedModel';
-import { objectPublicUrl } from '../utils/mediaUrls';
+import { FeedResponse } from '../models/feedModel';
+import { objectReadUrl } from '../utils/mediaUrls';
 
 export class FeedService {
   constructor(
@@ -11,34 +11,34 @@ export class FeedService {
   ) {}
 
   async generateFeed(userId: number): Promise<FeedResponse> {
-    // 1. Obtener los posts de DynamoDB
-    const posts = await this.postRepository.getAll();
+    const followingIds = await this.userRepository.getFollowingIds(userId);
+    const authorIds = Array.from(new Set([userId, ...followingIds]));
+    const postsByAuthor = await Promise.all(authorIds.map((authorId) => this.postRepository.getByAuthor(authorId)));
+    const posts = postsByAuthor
+      .flat()
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     
     if (posts.length === 0) {
         return { userId, items: [] };
     }
 
-    // 2. Extraer IDs de autores únicos
-    const authorIds = [...new Set(posts.map(post => post.authorId))];
-
-    // 3. Consultar perfiles (Stitching)
-    const users = await this.userRepository.findByIds(authorIds);
-
-    // 4. Crear un diccionario para acceso rapido O(1)
+    const users = await this.userRepository.findByIds([...new Set(posts.map(post => post.authorId))]);
     const userMap = new Map(users.map(u => [u.id, u]));
 
-    // 5. Ensamblar los datos
-    const enrichedPosts: EnrichedPost[] = posts.map(post => {
+    const enrichedPosts: EnrichedPost[] = await Promise.all(posts.map(async (post) => {
       const authorData = userMap.get(post.authorId);
-      const profilePictureUrl = objectPublicUrl(authorData?.profilePictureKey as string | undefined);
+      const profilePictureUrl = await objectReadUrl(authorData?.profilePictureKey as string | undefined);
+      const imageKeys = (post.media ?? []).filter((m) => m.type === 'image').map((m) => m.url);
+      const audioKey = (post.media ?? []).find((m) => m.type === 'audio')?.url;
+      const imageUrls = (await Promise.all(imageKeys.map((key) => objectReadUrl(key)))).filter(
+        (url): url is string => Boolean(url)
+      );
+      const audioUrl = await objectReadUrl(audioKey);
       const author: EnrichedPost['author'] = {
         username: authorData?.username || "Usuario Desconocido",
-        avatarUrl: authorData?.profile?.avatarUrl || null
+        avatarUrl: profilePictureUrl || null
       };
-      if (profilePictureUrl !== undefined) {
-        author.profilePictureUrl = profilePictureUrl;
-      }
-      return {
+      const enriched: EnrichedPost = {
         postId: post.postId,
         authorId: post.authorId,
         content: post.content,
@@ -48,11 +48,18 @@ export class FeedService {
         sharesCount: post.sharesCount,
         author
       };
-    });
+      if (imageUrls.length > 0) {
+        enriched.imageUrls = imageUrls;
+      }
+      if (audioUrl) {
+        enriched.audioUrl = audioUrl;
+      }
+      return enriched;
+    }));
 
     return {
       userId,
-      items: enrichedPosts.slice(0, 10)
+      items: enrichedPosts
     };
   }
 

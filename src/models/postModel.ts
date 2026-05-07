@@ -49,7 +49,7 @@ export interface EnrichedPost extends Omit<PostItem, 'PK' | 'SK' | 'GSI1PK' | 'G
     author: {
         username: string;
         avatarUrl: string | null;
-        /** Resolved from SQL `profile_picture_key` + `S3_PUBLIC_BASE_URL` when set */
-        profilePictureUrl?: string;
     };
+    imageUrls?: string[];
+    audioUrl?: string;
 }

@@ -16,12 +16,15 @@ export interface Profile {
 
 export interface Post {
   id: number;
+  postId?: string;
   title: string;
   body: string;
   userId: number;
   user: User;
   audioKey?: string | null;
+  audioUrl?: string;
   imageKeys: string[];
+  imageUrls?: string[];
   createdAt: string;
   _count?: {
     likes: number;

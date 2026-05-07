@@ -38,7 +38,7 @@ const HomePage: React.FC = () => {
     <MainLayout>
       <div className="space-y-6">
         {posts && posts.length > 0 ? (
-          posts.map((post) => <PostCard key={post.id} post={post} />)
+          posts.map((post) => <PostCard key={post.postId || post.id} post={post} />)
         ) : (
           <div className="text-center py-12 bg-white rounded-xl border border-gray-200 shadow-sm">
             <p className="text-gray-500 text-lg">Your feed is empty. Start following users!</p>

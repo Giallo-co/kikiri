@@ -1,11 +1,11 @@
 import { UserPostRepository, UserPostRecord } from '../repositories/userPostRepository';
 import { ServiceException } from '../errors/ServiceException';
 import { S3PresignService } from './s3PresignService';
-import { objectPublicUrl } from '../utils/mediaUrls';
+import { objectReadUrl } from '../utils/mediaUrls';
 import { TABLE_NAME } from '../lib/dynamo';
 
 export interface UserPostView extends UserPostRecord {
-  imageUrls: (string | undefined)[];
+  imageUrls: string[];
   audioUrl?: string;
 }
 
@@ -44,6 +44,7 @@ export class UserPostService {
 
     const createdOn = Date.now();
     const record: UserPostRecord = {
+      postId: '',
       userId: String(actorId),
       createdOn,
       Title: title,
@@ -52,23 +53,25 @@ export class UserPostService {
       Audio: audioKey
     };
 
-    await this.userPostRepository.putPost(record);
+    record.postId = await this.userPostRepository.putPost(record);
     return this.toView(record);
   }
 
   async listPostsForUser(requesterId: number, targetUserId: number): Promise<UserPostView[]> {
     this.assertDynamoConfigured();
     const rows = await this.userPostRepository.listByUserId(String(targetUserId));
-    return rows.map((r) => this.toView(r));
+    return Promise.all(rows.map((r) => this.toView(r)));
   }
 
-  private toView(record: UserPostRecord): UserPostView {
-    const imageUrls = record.Images.map((k) => objectPublicUrl(k));
+  private async toView(record: UserPostRecord): Promise<UserPostView> {
+    const imageUrls = (await Promise.all(record.Images.map((k) => objectReadUrl(k)))).filter(
+      (url): url is string => Boolean(url)
+    );
     const view: UserPostView = {
       ...record,
       imageUrls
     };
-    const audioUrl = objectPublicUrl(record.Audio);
+    const audioUrl = await objectReadUrl(record.Audio);
     if (audioUrl !== undefined) {
       view.audioUrl = audioUrl;
     }

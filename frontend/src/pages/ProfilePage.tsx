@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { authService } from '../api/authService';
@@ -77,6 +77,17 @@ const ProfilePage: React.FC = () => {
       setEditError(err?.response?.data?.message || err?.message || 'Could not update profile picture.');
     }
   });
+
+  useEffect(() => {
+    if (!posts || posts.length === 0) return;
+    const hash = window.location.hash;
+    if (!hash || !hash.startsWith('#post-')) return;
+    const target = document.getElementById(hash.slice(1));
+    if (!target) return;
+    setTimeout(() => {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  }, [posts]);
 
   if (userLoading) {
     return (
@@ -205,7 +216,7 @@ const ProfilePage: React.FC = () => {
         ) : posts && posts.length > 0 ? (
           posts.map((post) => (
             <PostCard
-              key={post.id}
+              key={post.postId || post.id}
               post={{
                 ...post,
                 user: {
