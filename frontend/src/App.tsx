@@ -32,6 +32,7 @@ interface GraphData {
 }
 
 export default function App() {
+  const forceAuthOnly = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('auth') === '1'
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [username, setUsername] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<NavItem>('Home')
@@ -557,6 +558,15 @@ export default function App() {
       initialSearchHandledRef.current = true
     }
   }, [isLoggedIn, rawNodes, handleSearch])
+
+  if (forceAuthOnly) {
+    return (
+      <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden', backgroundColor: '#ebebeb' }}>
+        <CustomCursor />
+        <Login onLogin={handleLoginSuccess} isTransitioning={isTransitioning} />
+      </div>
+    )
+  }
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden', backgroundColor: '#ebebeb' }}>
