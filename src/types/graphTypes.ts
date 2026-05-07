@@ -21,6 +21,7 @@ export interface AuthorNode extends BaseNode {
   node_type: 'Author';
   author_id: string;
   author_name: string;
+  author_email: string;
   author_real_name: string;
   author_description: string;
   author_profile_picture: string; // Guardará la URL pública de S3

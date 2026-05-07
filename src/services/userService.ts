@@ -62,6 +62,7 @@ export class UserService {
         node_name: newUser.username,
         author_id: String(newUser.id),
         author_name: newUser.username,
+        author_email: newUser.email,
         author_real_name: newUser.username,
         author_description: 'New user joined the network',
       });
@@ -147,11 +148,18 @@ export class UserService {
     }
 
     // Req 6.3: Sincronizar actualización en DynamoDB
+    const syncData: any = {};
     if (updateData.username) {
-      await this.nodeService.updateNode(String(userId), { 
-        node_name: updatedUser.username,
-        author_name: updatedUser.username 
-      }).catch(err => logger.error('sync_update_dynamo_failed', { userId, err }));
+      syncData.node_name = updatedUser.username;
+      syncData.author_name = updatedUser.username;
+    }
+    if (updateData.email) {
+      syncData.author_email = updatedUser.email;
+    }
+
+    if (Object.keys(syncData).length > 0) {
+      await this.nodeService.updateNode(String(userId), syncData)
+        .catch(err => logger.error('sync_update_dynamo_failed', { userId, err }));
     }
 
     const jwtSecretKey = process.env.JWT_SECRET_KEY as string;
@@ -269,6 +277,11 @@ export class UserService {
     if (!updated) {
       throw new ServiceException(1002, 'User not found.');
     }
+
+    // Sincronizar con DynamoDB
+    await this.nodeService.updateNode(String(targetUserId), { profilePictureKey: key })
+      .catch(err => logger.error('sync_profile_picture_dynamo_failed', { userId: targetUserId, err }));
+
     return updated;
   }
 }
