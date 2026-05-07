@@ -12,6 +12,7 @@ const userController = new UserController(userService);
 
 // Rutas CRUD user
 router.post("/v1/register", (req, res, next) => userController.register(req, res, next));
+router.post("/v1/login", (req, res, next) => userController.login(req, res, next));
 router.get("/v1/users/email/:email", authenticateToken, (req, res, next) => userController.getByEmail(req, res, next));
 router.get("/v1/users/id/:id", authenticateToken, (req, res, next) => userController.getById(req, res, next));
 router.patch("/v1/users/:id/profile-picture", authenticateToken, (req, res, next) => userController.patchProfilePicture(req, res, next));

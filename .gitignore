@@ -140,4 +140,4 @@ vite.config.ts.timestamp-*
 
 # Prisma generated files
 /src/generated/prisma
-.divine-key
+divine_key/

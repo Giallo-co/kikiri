@@ -63,8 +63,9 @@ jobs:
             DATABASE_PORT=${{ secrets.DATABASE_PORT }}
             JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
             AWS_REGION=us-east-1
-            DYNAMODB_TABLE_NAME=KikiriSocial
-            GRAPH_NODES_TABLE_NAME=node
+            DYNAMODB_TABLE_NAME=node
+            S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }}
+            S3_PUBLIC_BASE_URL=${{ secrets.S3_PUBLIC_BASE_URL }}
             EOF
 
             # Winston log directory (idempotent)

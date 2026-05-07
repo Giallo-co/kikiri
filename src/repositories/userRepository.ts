@@ -1,7 +1,7 @@
 import prisma from '../lib/prisma';
 import { User } from '../models/userModel';
 import { docClient, TABLE_NAME } from "../lib/dynamo";
-import { PutCommand, DeleteCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { PutCommand, DeleteCommand, QueryCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
 
 export class UserRepository {
 
@@ -126,39 +126,20 @@ export class UserRepository {
   };
 
   async followUser(followerId: number, followingId: number): Promise<void> {
-    await docClient.send(new PutCommand({
-        TableName: TABLE_NAME,
-        Item: {
-            PK: `USER#${followerId}`,
-            SK: `FOLLOWS#${followingId}`,
-            GSI1PK: `USER#${followingId}`,
-            GSI1SK: `FOLLOWER#${followerId}`,
-            followerId,
-            followingId,
-            createdAt: new Date().toISOString()
-        }
-    }));
+    // Handled by NodeService in UserService
   }
 
   async unfollowUser(followerId: number, followingId: number): Promise<void> {
-    await docClient.send(new DeleteCommand({
-        TableName: TABLE_NAME,
-        Key: {
-            PK: `USER#${followerId}`,
-            SK: `FOLLOWS#${followingId}`
-        }
-    }));
+    // Handled by NodeService in UserService
   }
 
   async getFollowingIds(userId: number): Promise<number[]> {
-    const result = await docClient.send(new QueryCommand({
+    // This now needs to read from the AuthorNode in DynamoDB
+    const result = await docClient.send(new GetCommand({
         TableName: TABLE_NAME,
-        KeyConditionExpression: "PK = :pk AND begins_with(SK, :sk)",
-        ExpressionAttributeValues: {
-            ":pk": `USER#${userId}`,
-            ":sk": "FOLLOWS#"
-        }
+        Key: { node_id: String(userId) }
     }));
-    return (result.Items || []).map(item => item.followingId);
+    const node = result.Item as any;
+    return (node?.node_author_links_next || []).map((id: string) => parseInt(id, 10));
   }
 }

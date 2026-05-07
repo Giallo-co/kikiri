@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import * as d3 from 'd3'
 import type { NodeDatum, LinkDatum, GraphConfig } from '../types/graph'
 import type { Music } from '../types/music'
-import { apiUrl } from '../lib/apiBase'
 import './GraphView.css'
 import './Login/Login.css'
 
@@ -597,7 +596,7 @@ export default function GraphView({ nodes, links, config, selectedId, playingNod
 
             onNodeClickRef.current(d.id, content)
 
-            fetch(apiUrl('/api/node-selected'), {
+            fetch('/api/node-selected', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ id: d.id, name: d.name, content })

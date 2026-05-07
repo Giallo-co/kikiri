@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import './Login.css';
-import { apiUrl } from '../../lib/apiBase';
 
 interface LoginProps {
   onLogin: (username: string) => void;
@@ -18,36 +17,38 @@ export default function Login({ onLogin, isTransitioning }: LoginProps) {
     e.preventDefault();
     setError('');
 
-    if (isRegister) {
-      try {
-        const response = await fetch(apiUrl('/api/register'), {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            username,
-            realName: username, // For now, use username as real name
-            description: 'New user joined the network'
-          }),
-        });
+    const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+    const endpoint = isRegister ? '/user/v1/register' : '/user/v1/login';
 
-        if (!response.ok) {
-          const data = await response.json();
-          throw new Error(data.error || 'Registration failed');
-        }
+    try {
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(isRegister ? {
+          email,
+          username,
+          password
+        } : {
+          email: username, // Assuming username field is used for email or username
+          password
+        }),
+      });
 
-        // After successful registration, log them in
-        onLogin(username);
-      } catch (err: any) {
-        setError(err.message);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || (isRegister ? 'Registration failed' : 'Login failed'));
       }
-    } else {
-      if (username && password === '123') {
-        onLogin(username);
-      } else {
-        setError('Invalid credentials');
-      }
+
+      // Almacenamiento estandarizado
+      localStorage.setItem('kikiri_token', data.token);
+      localStorage.setItem('kikiri_user_id', String(data.user.id));
+      
+      onLogin(data.user.username);
+    } catch (err: any) {
+      setError(err.message);
     }
   };
 

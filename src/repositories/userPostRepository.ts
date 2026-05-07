@@ -1,7 +1,9 @@
-import { PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
+import { GetCommand, BatchGetCommand, TransactWriteCommand } from '@aws-sdk/lib-dynamodb';
 import crypto from 'crypto';
 import { docClient, TABLE_NAME } from '../lib/dynamo';
-import { MediaAttachment, PostItem } from '../models/postModel';
+import { NodeRepository } from './nodeRepository';
+import { MusicNode } from '../types/graphTypes';
+import config from '../config/config';
 
 export interface UserPostRecord {
   userId: string;
@@ -10,130 +12,115 @@ export interface UserPostRecord {
   Body: string;
   Images: string[];
   Audio?: string;
-}
-
-function buildMedia(imageKeys: string[], audioKey?: string): MediaAttachment[] | undefined {
-  const media: MediaAttachment[] = [];
-  for (const url of imageKeys) {
-    if (url) media.push({ url, type: 'image' });
-  }
-  if (audioKey) {
-    media.push({ url: audioKey, type: 'audio' });
-  }
-  return media.length > 0 ? media : undefined;
-}
-
-function mapItemToRecord(item: Record<string, unknown>): UserPostRecord {
-  const authorId = Number(item.authorId);
-  const content = String(item.content ?? '');
-  const parts = content.split('\n\n');
-  const titleFromContent = parts[0] ?? '';
-  const bodyFromContent = parts.length > 1 ? parts.slice(1).join('\n\n') : '';
-
-  const title = item.Title !== undefined && item.Title !== null ? String(item.Title) : titleFromContent;
-  const body = item.Body !== undefined && item.Body !== null ? String(item.Body) : bodyFromContent;
-
-  const images = Array.isArray(item.Images) ? (item.Images as string[]) : [];
-
-  let audio: string | undefined;
-  if (item.Audio !== undefined && item.Audio !== null && String(item.Audio) !== '') {
-    audio = String(item.Audio);
-  } else if (Array.isArray(item.media)) {
-    const m = (item.media as MediaAttachment[]).find((x) => x.type === 'audio');
-    if (m?.url) audio = m.url;
-  }
-
-  const createdOnRaw = item.createdOn;
-  const createdOn =
-    typeof createdOnRaw === 'number' && Number.isFinite(createdOnRaw)
-      ? createdOnRaw
-      : Date.parse(String(item.createdAt ?? ''));
-
-  const rec: UserPostRecord = {
-    userId: String(Number.isFinite(authorId) ? authorId : ''),
-    createdOn: Number.isFinite(createdOn) ? createdOn : Date.now(),
-    Title: title,
-    Body: body,
-    Images: images
-  };
-  if (audio !== undefined) {
-    rec.Audio = audio;
-  }
-  return rec;
+  nodeId?: string;
 }
 
 export class UserPostRepository {
-  /**
-   * Writes into the same single-table (`KikiriSocial`) as {@link PostRepository}:
-   * PK/SK + GSI1 (per-user) + GSI2 (global feed).
-   */
+  private nodeRepository = new NodeRepository();
+
+  private buildPublicUrl(key: string): string {
+    return `${config.s3PublicBaseUrl}/${key}`;
+  }
+
   async putPost(record: UserPostRecord): Promise<void> {
     const postId = crypto.randomUUID();
-    const authorId = parseInt(record.userId, 10);
-    if (!Number.isFinite(authorId)) {
-      throw new Error('Invalid userId for user post');
-    }
+    const authorId = record.userId;
 
-    const timestamp = new Date(record.createdOn).toISOString();
-    const media = buildMedia(record.Images, record.Audio);
-
-    const item: PostItem & {
-      Title: string;
-      Body: string;
-      Images: string[];
-      Audio?: string;
-      createdOn: number;
-    } = {
-      PK: `POST#${postId}`,
-      SK: 'METADATA',
-      GSI1PK: `USER#${authorId}`,
-      GSI1SK: `POST#${timestamp}`,
-      GSI2PK: 'POST',
-      GSI2SK: timestamp,
-      postId,
-      authorId,
-      content: `${record.Title}\n\n${record.Body}`,
-      createdAt: timestamp,
-      likesCount: 0,
-      commentsCount: 0,
-      sharesCount: 0,
-      ...(media !== undefined ? { media } : {}),
-      Title: record.Title,
-      Body: record.Body,
-      Images: record.Images,
-      ...(record.Audio !== undefined && record.Audio !== '' ? { Audio: record.Audio } : {}),
-      createdOn: record.createdOn
+    const musicNode: MusicNode = {
+      node_id: postId,
+      node_type: 'Music',
+      node_name: record.Title,
+      node_color: '#1db954',
+      music_id: postId,
+      music_name: record.Title,
+      music_description: record.Body,
+      music_author: record.userId,
+      music_cover_url: record.Images && record.Images.length > 0 ? this.buildPublicUrl(record.Images[0] as string) : '',
+      music_url: record.Audio ? this.buildPublicUrl(record.Audio) : '',
+      music_album: 'Single',
+      likes: 0,
+      views: 0,
+      shares: 0,
+      comments: 0,
+      node_music_links_next: [],
+      node_music_links_previous: [],
+      node_tag_links_next: [],
+      node_tag_links_previous: [],
+      node_author_links_next: [],
+      node_author_links_previous: [],
+      node_album_links_next: [],
+      node_album_links_previous: []
     };
 
-    await docClient.send(
-      new PutCommand({
-        TableName: TABLE_NAME,
-        Item: item
+    // Use transaction to create MusicNode and link to AuthorNode
+    await docClient.send(new TransactWriteCommand({
+      TransactItems: [
+        {
+          Put: {
+            TableName: TABLE_NAME,
+            Item: musicNode
+          }
+        },
+        {
+          Update: {
+            TableName: TABLE_NAME,
+            Key: { node_id: authorId },
+            UpdateExpression: 'SET node_music_links_next = list_append(if_not_exists(node_music_links_next, :empty_list), :new_id)',
+            ExpressionAttributeNames: {
+              '#edgeField': 'node_music_links_next'
+            },
+            ExpressionAttributeValues: {
+              ':empty_list': [],
+              ':new_id': [postId]
+            }
+          }
+        }
+      ].map(item => {
+        // Fix for reserved words or dynamic field names if needed
+        if (item.Update) {
+            item.Update.UpdateExpression = item.Update.UpdateExpression!.replace('node_music_links_next', '#edgeField');
+        }
+        return item;
       })
-    );
+    }));
   }
 
   async listByUserId(userId: string, limit: number = 50): Promise<UserPostRecord[]> {
-    const authorId = parseInt(userId, 10);
-    if (!Number.isFinite(authorId)) {
+    const authorNode = await this.nodeRepository.getNodeById(userId);
+    if (!authorNode || !authorNode.node_music_links_next || authorNode.node_music_links_next.length === 0) {
       return [];
     }
 
-    const out = await docClient.send(
-      new QueryCommand({
-        TableName: TABLE_NAME,
-        IndexName: 'GSI1',
-        KeyConditionExpression: 'GSI1PK = :pk AND begins_with(GSI1SK, :sk)',
-        ExpressionAttributeValues: {
-          ':pk': `USER#${authorId}`,
-          ':sk': 'POST#'
-        },
-        ScanIndexForward: false,
-        Limit: limit
-      })
-    );
+    const musicIds = authorNode.node_music_links_next.slice(-limit); // Last ones first if we want recent
+    
+    // BatchGet the music nodes
+    const out = await docClient.send(new BatchGetCommand({
+      RequestItems: {
+        [TABLE_NAME]: {
+          Keys: musicIds.map(id => ({ node_id: id }))
+        }
+      }
+    }));
 
-    const items = (out.Items ?? []) as Record<string, unknown>[];
-    return items.map((row) => mapItemToRecord(row));
+    const items = (out.Responses?.[TABLE_NAME] ?? []) as MusicNode[];
+    
+    return items.map(item => {
+      // Extract keys from absolute URLs if they were stored as such
+      const getKey = (url?: string) => {
+        if (!url) return '';
+        const base = config.s3PublicBaseUrl.replace(/\/$/, '');
+        return url.replace(`${base}/`, '');
+      };
+
+      return {
+        userId: String(item.music_author),
+        createdOn: Date.now(), 
+        Title: item.music_name,
+        Body: item.music_description,
+        Images: item.music_cover_url ? [getKey(item.music_cover_url)] : [],
+        Audio: getKey(item.music_url),
+        nodeId: item.node_id
+      };
+    });
   }
 }

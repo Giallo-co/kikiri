@@ -1,69 +1,81 @@
-import { PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { PutCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
 import crypto from "crypto";
 import { docClient, TABLE_NAME } from "../lib/dynamo";
 import { PostItem, MediaAttachment } from "../models/postModel";
+import { NodeRepository } from "./nodeRepository";
+import { NodeService } from "../services/nodeService";
+import { MusicNode } from "../types/graphTypes";
 
 export class PostRepository {
-    async getAll(): Promise<PostItem[]> {
-        const params = {
-            TableName: TABLE_NAME,
-            IndexName: "GSI2", // Utilizaremos este índice
-            KeyConditionExpression: "GSI2PK = :pk",
-            ExpressionAttributeValues: {
-                ":pk": "POST"
-            },
-            ScanIndexForward: false, // descendente (más recientes primero)
-            Limit: 50 // Límite de seguridad
-        };
+    private nodeRepository = new NodeRepository();
+    private nodeService = new NodeService(this.nodeRepository);
 
-        const result = await docClient.send(new QueryCommand(params));
-        return (result.Items as PostItem[]) || [];
+    async getAll(): Promise<PostItem[]> {
+        // En la arquitectura de grafo, obtener "todos los posts" 
+        // requiere escanear por tipo 'Music'
+        const result = await this.nodeRepository.getNodesByType('Music');
+        
+        return result.map(node => this.mapNodeToPost(node as MusicNode));
     }
 
     async getByAuthor(authorId: number): Promise<PostItem[]> {
-        const params = {
-            TableName: TABLE_NAME,
-            IndexName: "GSI1",
-            KeyConditionExpression: "GSI1PK = :pk AND begins_with(GSI1SK, :sk)",
-            ExpressionAttributeValues: {
-                ":pk": `USER#${authorId}`,
-                ":sk": "POST#"
-            },
-            ScanIndexForward: false // Newest first
-        };
+        const authorNode = await this.nodeRepository.getNodeById(String(authorId));
+        if (!authorNode || !authorNode.node_music_links_next) return [];
 
-        const result = await docClient.send(new QueryCommand(params));
-        return (result.Items as PostItem[]) || [];
+        // Para simplicidad en esta fase, devolvemos los metadatos básicos 
+        // de los nodos musicales vinculados
+        const musicNodes = await Promise.all(
+            authorNode.node_music_links_next.map(id => this.nodeRepository.getNodeById(id))
+        );
+
+        return musicNodes
+            .filter(n => n && n.node_type === 'Music')
+            .map(n => this.mapNodeToPost(n as MusicNode));
     }
 
     async save(post: { content: string; authorId: number; media?: MediaAttachment[] }): Promise<PostItem> {
-        const postId = crypto.randomUUID();
-        const timestamp = new Date().toISOString();
+        // En la nueva arquitectura, un "Post" es un MusicNode
+        const musicNode = await this.nodeService.createNode({
+            node_type: 'Music',
+            node_name: post.content.substring(0, 50),
+            node_color: '#1db954',
+            music_name: post.content.substring(0, 50),
+            music_description: post.content,
+            music_author: String(post.authorId),
+            music_cover_url: post.media?.find(m => m.type === 'image')?.url || '',
+            music_url: post.media?.find(m => m.type === 'audio')?.url || '',
+            music_album: 'Post',
+            likes: 0,
+            views: 0,
+            shares: 0,
+            comments: 0
+        });
 
-        const item: PostItem = {
-            PK: `POST#${postId}`,
-            SK: `METADATA`,
-            GSI1PK: `USER#${post.authorId}`,
-            GSI1SK: `POST#${timestamp}`,
-            // NUEVOS ATRIBUTOS PARA EL FEED GLOBAL
-            GSI2PK: `POST`, 
-            GSI2SK: timestamp,
-            postId,
-            authorId: post.authorId,
-            content: post.content,
-            createdAt: timestamp,
-            likesCount: 0,
-            commentsCount: 0,
-            sharesCount: 0,
-            // Solo insertamos la propiedad 'media' si viene definida en el argumento
-            ...(post.media !== undefined && { media: post.media })
+        // Vincular al autor
+        await this.nodeRepository.addEdgeBetweenNodes(
+            String(post.authorId),
+            musicNode.node_id,
+            'node_music_links_next'
+        );
+
+        return this.mapNodeToPost(musicNode as MusicNode);
+    }
+
+    private mapNodeToPost(node: MusicNode): PostItem {
+        return {
+            PK: `POST#${node.node_id}`,
+            SK: 'METADATA',
+            postId: node.node_id,
+            authorId: Number(node.music_author),
+            content: node.music_description,
+            createdAt: new Date().toISOString(), // Fallback
+            likesCount: node.likes || 0,
+            commentsCount: node.comments || 0,
+            sharesCount: node.shares || 0,
+            media: [
+                ...(node.music_cover_url ? [{ url: node.music_cover_url, type: 'image' as const }] : []),
+                ...(node.music_url ? [{ url: node.music_url, type: 'audio' as const }] : [])
+            ]
         };
-
-        await docClient.send(new PutCommand({
-            TableName: TABLE_NAME,
-            Item: item
-        }));
-
-        return item;
     }
 }

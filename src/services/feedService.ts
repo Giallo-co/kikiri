@@ -38,6 +38,11 @@ export class FeedService {
       if (profilePictureUrl !== undefined) {
         author.profilePictureUrl = profilePictureUrl;
       }
+      const media = post.media?.map(m => ({
+        ...m,
+        url: m.url.startsWith('http') ? m.url : objectPublicUrl(m.url) || m.url
+      }));
+
       return {
         postId: post.postId,
         authorId: post.authorId,
@@ -46,6 +51,7 @@ export class FeedService {
         likesCount: post.likesCount,
         commentsCount: post.commentsCount,
         sharesCount: post.sharesCount,
+        media: media || [],
         author
       };
     });

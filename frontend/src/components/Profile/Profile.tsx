@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './Profile.css';
 import { RawNode } from '../../types/graph';
-import { apiUrl } from '../../lib/apiBase';
 
 interface ProfileProps {
   userNode: RawNode;
@@ -23,7 +22,7 @@ export default function Profile({ userNode, onUpdate, onClose }: ProfileProps) {
     setLoading(true);
 
     try {
-      const response = await fetch(apiUrl('/api/profile/update'), {
+      const response = await fetch('/api/profile/update', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
