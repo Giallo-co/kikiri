@@ -43,6 +43,7 @@ app.use(config.apiBasePath, uploadRoutes);
 app.use(config.apiBasePath, userPostRoutes);
 app.use(config.apiBasePath, nodeRoutes);
 app.use("/api/profile-picture", profilePictureRoutes);
+app.use("/api", graphApiRoutes);
 
 app.use(errorHandler); 
 export default app;
