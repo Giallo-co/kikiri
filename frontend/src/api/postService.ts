@@ -1,5 +1,5 @@
 import api from './axios';
-import { Post, Comment } from '../types';
+import type { Post, Comment } from '../types';
 
 export const postService = {
   getFeed: async (userId: number): Promise<Post[]> => {

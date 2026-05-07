@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Post } from '../types';
+import type { Post } from '../types';
 import { Heart, MessageCircle, Share2, User as UserIcon } from 'lucide-react';
 import { postService } from '../api/postService';
 import { useMutation, useQueryClient } from '@tanstack/react-query';

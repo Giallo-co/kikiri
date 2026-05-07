@@ -1,5 +1,5 @@
 import api from './axios';
-import { User } from '../types';
+import type { User } from '../types';
 
 export const userService = {
   followUser: async (userId: number, targetId: number): Promise<void> => {

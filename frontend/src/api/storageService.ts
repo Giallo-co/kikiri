@@ -1,6 +1,6 @@
 import api from './axios';
 import axios from 'axios';
-import { PresignedUrlResponse } from '../types';
+import type { PresignedUrlResponse } from '../types';
 
 export const storageService = {
   getPresignedUrl: async (kind: 'avatar' | 'post_audio' | 'post_image', file: File): Promise<PresignedUrlResponse> => {
