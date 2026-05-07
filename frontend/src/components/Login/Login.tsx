@@ -7,6 +7,8 @@ interface LoginProps {
 }
 
 export default function Login({ onLogin, isTransitioning }: LoginProps) {
+  const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? '';
+  const apiUrl = (path: string) => `${apiBaseUrl}${path.startsWith('/') ? path : `/${path}`}`;
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
@@ -19,7 +21,7 @@ export default function Login({ onLogin, isTransitioning }: LoginProps) {
 
     if (isRegister) {
       try {
-        const response = await fetch('/api/register', {
+        const response = await fetch(apiUrl('/api/register'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -33,8 +35,8 @@ export default function Login({ onLogin, isTransitioning }: LoginProps) {
         });
 
         if (!response.ok) {
-          const data = await response.json();
-          throw new Error(data.message || 'Registration failed');
+          const data = await response.json().catch(() => ({}));
+          throw new Error((data as { message?: string }).message || 'Registration failed');
         }
 
         const data = await response.json();
@@ -45,7 +47,7 @@ export default function Login({ onLogin, isTransitioning }: LoginProps) {
       }
     } else {
       try {
-        const response = await fetch('/api/login', {
+        const response = await fetch(apiUrl('/api/login'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -57,8 +59,8 @@ export default function Login({ onLogin, isTransitioning }: LoginProps) {
         });
 
         if (!response.ok) {
-          const data = await response.json();
-          throw new Error(data.message || 'Login failed');
+          const data = await response.json().catch(() => ({}));
+          throw new Error((data as { message?: string }).message || 'Login failed');
         }
 
         const data = await response.json();
