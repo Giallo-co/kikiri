@@ -13,28 +13,28 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-indigo-950 to-slate-900 flex flex-col">
+      <nav className="bg-slate-950/90 border-b border-indigo-900/60 backdrop-blur sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link to="/" className="text-2xl font-bold text-indigo-600 tracking-tight">
+          <Link to="/" className="text-2xl font-bold tracking-tight bg-gradient-to-r from-violet-400 via-indigo-300 to-emerald-300 bg-clip-text text-transparent">
             Kikiri
           </Link>
           <div className="flex items-center space-x-6">
-            <Link to="/" className="text-gray-700 hover:text-indigo-600 transition-colors">
+            <Link to="/" className="text-slate-300 hover:text-violet-300 transition-colors">
               <Home size={24} />
             </Link>
-            <Link to="/search" className="text-gray-700 hover:text-indigo-600 transition-colors">
+            <Link to="/search" className="text-slate-300 hover:text-violet-300 transition-colors">
               <Search size={24} />
             </Link>
-            <Link to="/create" className="text-gray-700 hover:text-indigo-600 transition-colors">
+            <Link to="/create" className="text-slate-300 hover:text-emerald-300 transition-colors">
               <PlusSquare size={24} />
             </Link>
-            <Link to={`/profile/${user?.id}`} className="text-gray-700 hover:text-indigo-600 transition-colors">
+            <Link to={`/profile/${user?.id}`} className="text-slate-300 hover:text-violet-300 transition-colors">
               <User size={24} />
             </Link>
             <button
               onClick={handleLogout}
-              className="text-gray-700 hover:text-red-600 transition-colors"
+              className="text-slate-300 hover:text-red-400 transition-colors"
             >
               <LogOut size={24} />
             </button>

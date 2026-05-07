@@ -109,15 +109,15 @@ const ProfilePage: React.FC = () => {
 
   return (
     <MainLayout>
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mb-8">
-        <div className="h-32 bg-indigo-600"></div>
+      <div className="bg-slate-900/80 rounded-2xl border border-indigo-800/60 shadow-lg shadow-indigo-950/40 overflow-hidden mb-8">
+        <div className="h-24 bg-gradient-to-r from-indigo-700 via-violet-700 to-emerald-600"></div>
         <div className="px-8 pb-8">
-          <div className="relative flex justify-between items-end -mt-12 mb-6">
-            <div className="w-32 h-32 rounded-full border-4 border-white bg-gray-200 flex items-center justify-center overflow-hidden shadow-md">
+          <div className="relative flex justify-between items-end -mt-8 mb-6">
+            <div className="w-20 h-20 rounded-full border-4 border-slate-900 bg-slate-700 ring-2 ring-violet-400/40 flex items-center justify-center overflow-hidden shadow-md">
               {getAvatarUrl(user) ? (
                 <img src={getAvatarUrl(user)!} alt={user.username} className="w-full h-full object-cover" />
               ) : (
-                <UserIcon className="text-gray-400" size={60} />
+                <UserIcon className="text-slate-300" size={32} />
               )}
             </div>
             <div className="flex space-x-3 mb-2">
@@ -127,7 +127,7 @@ const ProfilePage: React.FC = () => {
                     setEditError('');
                     setIsEditingProfile((prev) => !prev);
                   }}
-                  className="flex items-center space-x-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg font-semibold hover:bg-gray-200 transition-colors border border-gray-300"
+                  className="flex items-center space-x-2 bg-slate-800 text-slate-100 px-4 py-2 rounded-lg font-semibold hover:bg-slate-700 transition-colors border border-indigo-700/60"
                 >
                   <Settings size={18} />
                   <span>{isEditingProfile ? 'Close Edit' : 'Edit Profile'}</span>
@@ -137,8 +137,8 @@ const ProfilePage: React.FC = () => {
                   onClick={() => followMutation.mutate()}
                   className={`flex items-center space-x-2 px-6 py-2 rounded-lg font-semibold transition-colors ${
                     isFollowing
-                      ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300'
-                      : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                      ? 'bg-slate-800 text-slate-100 hover:bg-slate-700 border border-indigo-700/60'
+                      : 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:from-indigo-500 hover:to-violet-500'
                   }`}
                 >
                   {isFollowing ? (
@@ -157,10 +157,10 @@ const ProfilePage: React.FC = () => {
             </div>
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{user.username}</h1>
-            <p className="text-gray-500">{user.email}</p>
+            <h1 className="text-2xl font-bold text-slate-100">{user.username}</h1>
+            <p className="text-slate-400">{user.email}</p>
             {user.profile?.bio && (
-              <p className="mt-4 text-gray-700 leading-relaxed max-w-2xl">
+              <p className="mt-4 text-slate-200 leading-relaxed max-w-2xl">
                 {user.profile.bio}
               </p>
             )}
@@ -169,9 +169,9 @@ const ProfilePage: React.FC = () => {
       </div>
 
       {isOwnProfile && isEditingProfile && (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-8">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Edit Profile</h2>
-          <p className="text-sm text-gray-500 mb-4">Username changes are disabled. You can update your profile picture here.</p>
+        <div className="bg-slate-900/80 rounded-2xl border border-indigo-800/60 shadow-lg shadow-indigo-950/40 p-6 mb-8">
+          <h2 className="text-lg font-bold text-slate-100 mb-4">Edit Profile</h2>
+          <p className="text-sm text-slate-400 mb-4">Username changes are disabled. You can update your profile picture here.</p>
           {editError && (
             <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm font-medium">
               {editError}
@@ -182,13 +182,13 @@ const ProfilePage: React.FC = () => {
               type="file"
               accept="image/*"
               onChange={(e) => setProfilePictureFile(e.target.files?.[0] || null)}
-              className="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+              className="block w-full text-sm text-slate-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-indigo-600/20 file:text-indigo-200 hover:file:bg-indigo-600/30"
             />
             <div className="flex items-center gap-3">
               <button
                 onClick={() => profilePictureMutation.mutate()}
                 disabled={!profilePictureFile || profilePictureMutation.isPending}
-                className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                className="bg-gradient-to-r from-indigo-600 to-violet-600 text-white px-4 py-2 rounded-lg font-semibold hover:from-indigo-500 hover:to-violet-500 transition-colors disabled:opacity-50"
               >
                 {profilePictureMutation.isPending ? 'Uploading...' : 'Save Profile Picture'}
               </button>
@@ -198,7 +198,7 @@ const ProfilePage: React.FC = () => {
                   setEditError('');
                   setIsEditingProfile(false);
                 }}
-                className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg font-semibold hover:bg-gray-200 transition-colors border border-gray-300"
+                className="bg-slate-800 text-slate-100 px-4 py-2 rounded-lg font-semibold hover:bg-slate-700 transition-colors border border-indigo-700/60"
               >
                 Cancel
               </button>
@@ -208,7 +208,7 @@ const ProfilePage: React.FC = () => {
       )}
 
       <div className="space-y-6">
-        <h2 className="text-xl font-bold text-gray-900 border-b border-gray-200 pb-2">Posts</h2>
+        <h2 className="text-xl font-bold text-slate-100 border-b border-indigo-800/60 pb-2">Posts</h2>
         {postsLoading ? (
            <div className="flex justify-center py-6">
              <div className="animate-spin rounded-sm h-6 w-6 border-b-2 border-indigo-600"></div>
@@ -231,8 +231,8 @@ const ProfilePage: React.FC = () => {
             />
           ))
         ) : (
-          <div className="text-center py-12 bg-white rounded-xl border border-gray-200 shadow-sm">
-            <p className="text-gray-500">No posts yet.</p>
+          <div className="text-center py-12 bg-slate-900/80 rounded-2xl border border-indigo-800/60 shadow-lg shadow-indigo-950/40">
+            <p className="text-slate-400">No posts yet.</p>
           </div>
         )}
       </div>

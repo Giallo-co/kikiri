@@ -25,12 +25,12 @@ const SearchPage: React.FC = () => {
 
   return (
     <MainLayout>
-      <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm mb-8">
+      <div className="bg-slate-900/80 p-6 rounded-2xl border border-indigo-800/60 shadow-lg shadow-indigo-950/40 mb-8">
         <div className="relative mb-6">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
           <input
             type="text"
-            className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+            className="w-full pl-12 pr-4 py-3 bg-slate-800 border border-indigo-800/60 text-slate-100 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition-all"
             placeholder="Search users or posts..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -40,7 +40,7 @@ const SearchPage: React.FC = () => {
           <button
             onClick={() => setType('users')}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              type === 'users' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              type === 'users' ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
             }`}
           >
             Users
@@ -48,7 +48,7 @@ const SearchPage: React.FC = () => {
           <button
             onClick={() => setType('posts')}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              type === 'posts' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              type === 'posts' ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
             }`}
           >
             Posts
@@ -58,7 +58,7 @@ const SearchPage: React.FC = () => {
 
       <div className="space-y-6">
         {query.length <= 2 ? (
-          <div className="text-center py-12 text-gray-500">
+          <div className="text-center py-12 text-slate-400">
             Type at least 3 characters to start searching.
           </div>
         ) : type === 'users' ? (
@@ -72,24 +72,24 @@ const SearchPage: React.FC = () => {
                 <Link
                   key={user.id}
                   to={`/profile/${user.id}`}
-                  className="bg-white p-4 rounded-xl border border-gray-200 flex items-center space-x-4 hover:shadow-md transition-shadow"
+                  className="bg-slate-900/80 p-4 rounded-2xl border border-indigo-800/60 flex items-center space-x-3 hover:border-violet-500/70 transition-colors"
                 >
-                  <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
+                  <div className="w-9 h-9 rounded-full bg-slate-700 ring-2 ring-violet-400/30 flex-shrink-0 flex items-center justify-center overflow-hidden">
                     {user.profile?.avatarUrl ? (
                       <img src={user.profile.avatarUrl} alt={user.username} className="w-full h-full object-cover" />
                     ) : (
-                      <UserIcon className="text-gray-400" />
+                      <UserIcon className="text-slate-300" size={16} />
                     )}
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900">{user.username}</h3>
-                    <p className="text-sm text-gray-500">{user.email}</p>
+                    <h3 className="font-semibold text-slate-100">{user.username}</h3>
+                    <p className="text-sm text-slate-400">{user.email}</p>
                   </div>
                 </Link>
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 text-gray-500">No users found.</div>
+            <div className="text-center py-12 text-slate-400">No users found.</div>
           )
         ) : postsLoading ? (
           <div className="flex justify-center py-12">
@@ -98,7 +98,7 @@ const SearchPage: React.FC = () => {
         ) : postResults && postResults.length > 0 ? (
           postResults.map((post) => <PostCard key={post.postId || post.id} post={post} />)
         ) : (
-          <div className="text-center py-12 text-gray-500">No posts found.</div>
+          <div className="text-center py-12 text-slate-400">No posts found.</div>
         )}
       </div>
     </MainLayout>

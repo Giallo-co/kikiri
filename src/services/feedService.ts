@@ -12,7 +12,10 @@ export class FeedService {
 
   async generateFeed(userId: number): Promise<FeedResponse> {
     const followingIds = await this.userRepository.getFollowingIds(userId);
-    const authorIds = Array.from(new Set([userId, ...followingIds]));
+    const authorIds = Array.from(new Set(followingIds));
+    if (authorIds.length === 0) {
+      return { userId, items: [] };
+    }
     const postsByAuthor = await Promise.all(authorIds.map((authorId) => this.postRepository.getByAuthor(authorId)));
     const posts = postsByAuthor
       .flat()

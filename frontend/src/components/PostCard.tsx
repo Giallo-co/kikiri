@@ -41,24 +41,24 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   };
 
   return (
-    <div id={`post-${postIdentifier}`} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+    <div id={`post-${postIdentifier}`} className="bg-slate-900/80 rounded-2xl border border-indigo-800/60 shadow-lg shadow-indigo-950/40 overflow-hidden">
       <div className="p-4 flex items-center space-x-3">
-        <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+        <div className="w-8 h-8 rounded-full bg-slate-700 ring-2 ring-violet-400/40 flex-shrink-0 flex items-center justify-center overflow-hidden">
           {postAvatar ? (
             <img src={postAvatar} alt={postUsername} className="w-full h-full object-cover" />
           ) : (
-            <UserIcon className="text-gray-400" size={20} />
+            <UserIcon className="text-slate-300" size={16} />
           )}
         </div>
-        <div>
-          <h3 className="font-semibold text-gray-900">{postUsername}</h3>
-          <p className="text-xs text-gray-500">{new Date(post.createdAt).toLocaleDateString()}</p>
+        <div className="min-w-0">
+          <h3 className="font-semibold text-slate-100 truncate">{postUsername}</h3>
+          <p className="text-xs text-slate-400">{new Date(post.createdAt).toLocaleDateString()}</p>
         </div>
       </div>
 
       <div className="px-4 pb-3">
-        <h2 className="text-xl font-bold text-gray-900 mb-2">{post.title}</h2>
-        <p className="text-gray-700 whitespace-pre-wrap">{post.body}</p>
+        <h2 className="text-xl font-bold text-violet-200 mb-2">{post.title}</h2>
+        <p className="text-slate-200 whitespace-pre-wrap">{post.body}</p>
       </div>
 
       {postImageUrls.length > 0 && (
@@ -69,7 +69,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                 key={`${postIdentifier}-image-${index}`}
                 src={imageUrl}
                 alt={`${post.title} image ${index + 1}`}
-                className="w-full rounded-lg object-cover"
+                className="w-full max-h-72 rounded-xl object-cover border border-indigo-800/40"
               />
             ))}
           </div>
@@ -78,19 +78,19 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
       {postAudioUrl && (
         <div className="px-4 pb-4">
-          <audio controls className="w-full" preload="none" src={postAudioUrl}>
+          <audio controls className="w-full opacity-90" preload="none" src={postAudioUrl}>
             Your browser does not support the audio element.
           </audio>
         </div>
       )}
 
-      <div className="px-4 py-3 border-t border-gray-100 flex items-center justify-between">
+      <div className="px-4 py-3 border-t border-indigo-900/40 flex items-center justify-between">
         <div className="flex items-center space-x-6">
           <button
             onClick={() => likeMutation.mutate()}
             className={clsx(
               "flex items-center space-x-2 transition-colors",
-              liked ? "text-red-500" : "text-gray-500 hover:text-red-500"
+              liked ? "text-rose-400" : "text-slate-300 hover:text-rose-400"
             )}
           >
             <Heart size={20} fill={liked ? "currentColor" : "none"} />
@@ -99,7 +99,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         </div>
         <button
           onClick={handleShare}
-          className="text-gray-500 hover:text-indigo-600 transition-colors"
+          className="text-slate-300 hover:text-emerald-300 transition-colors"
         >
           <Share2 size={20} />
         </button>
