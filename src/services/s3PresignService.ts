@@ -7,26 +7,50 @@ import { ServiceException } from '../errors/ServiceException';
 
 export type UploadKind = 'avatar' | 'post_audio' | 'post_image';
 
-const AVATAR_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const AVATAR_TYPES = new Set([
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+  'image/heic',
+  'image/heif'
+]);
 const POST_AUDIO_TYPES = new Set([
   'audio/mpeg',
+  'audio/mp3',
   'audio/mp4',
+  'audio/x-m4a',
+  'audio/aac',
   'audio/webm',
   'audio/wav',
   'audio/x-wav',
   'audio/flac',
   'audio/ogg'
 ]);
-const POST_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+const POST_IMAGE_TYPES = new Set([
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+  'image/heic',
+  'image/heif'
+]);
 
 function extensionForContentType(contentType: string): string {
   const map: Record<string, string> = {
     'image/jpeg': 'jpg',
+    'image/jpg': 'jpg',
     'image/png': 'png',
     'image/webp': 'webp',
     'image/gif': 'gif',
+    'image/heic': 'heic',
+    'image/heif': 'heif',
     'audio/mpeg': 'mp3',
+    'audio/mp3': 'mp3',
     'audio/mp4': 'm4a',
+    'audio/x-m4a': 'm4a',
+    'audio/aac': 'aac',
     'audio/webm': 'webm',
     'audio/wav': 'wav',
     'audio/x-wav': 'wav',

@@ -12,6 +12,7 @@ const CreatePostPage: React.FC = () => {
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -26,14 +27,13 @@ const CreatePostPage: React.FC = () => {
 
   const createPostMutation = useMutation({
     mutationFn: async () => {
+      if (!audioFile) {
+        throw new Error('Audio is required to publish a post.');
+      }
       setUploading(true);
       try {
-        let audioKey = '';
-        if (audioFile) {
-          const { url, headers, key } = await storageService.getPresignedUrl('post_audio', audioFile);
-          await storageService.uploadToS3(url, headers, audioFile);
-          audioKey = key;
-        }
+        const { url, headers, key: audioKey } = await storageService.getPresignedUrl('post_audio', audioFile);
+        await storageService.uploadToS3(url, headers, audioFile);
 
         const imageKeys: string[] = [];
         for (const file of imageFiles) {
@@ -45,7 +45,7 @@ const CreatePostPage: React.FC = () => {
         return await postService.createPost({
           title,
           body,
-          audioKey: audioKey || undefined,
+          audioKey,
           imageKeys,
         });
       } finally {
@@ -53,17 +53,31 @@ const CreatePostPage: React.FC = () => {
       }
     },
     onSuccess: () => {
+      setError('');
       navigate('/');
     },
+    onError: (err: any) => {
+      setError(err?.response?.data?.message || err?.message || 'Could not create post.');
+    }
   });
 
   return (
     <MainLayout>
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 max-w-2xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">Create New Post</h1>
+        {error && (
+          <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-6 text-sm font-medium">
+            {error}
+          </div>
+        )}
         <form
           onSubmit={(e) => {
             e.preventDefault();
+            setError('');
+            if (!audioFile) {
+              setError('Audio is required to publish a post.');
+              return;
+            }
             createPostMutation.mutate();
           }}
           className="space-y-6"
@@ -93,7 +107,7 @@ const CreatePostPage: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">Audio (Optional)</label>
+              <label className="block text-sm font-semibold text-gray-700">Audio (Required)</label>
               <div className="relative">
                 <input
                   type="file"

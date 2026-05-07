@@ -1,6 +1,6 @@
 import api from './axios';
 import axios from 'axios';
-import type { PresignedUrlResponse } from '../types';
+import type { PresignedUrlResponse, User } from '../types';
 
 export const storageService = {
   getPresignedUrl: async (kind: 'avatar' | 'post_audio' | 'post_image', file: File): Promise<PresignedUrlResponse> => {
@@ -27,8 +27,9 @@ export const storageService = {
     });
   },
 
-  confirmProfilePicture: async (userId: number, key: string): Promise<void> => {
-    await api.patch(`/v1/users/${userId}/profile-picture`, { profilePictureKey: key });
+  confirmProfilePicture: async (userId: number, key: string): Promise<User> => {
+    const response = await api.patch(`/v1/users/${userId}/profile-picture`, { profilePictureKey: key });
+    return response.data.user;
   },
 
   confirmUploadLegacy: async (key: string): Promise<void> => {

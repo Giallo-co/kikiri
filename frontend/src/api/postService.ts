@@ -12,7 +12,7 @@ export const postService = {
     return Array.isArray(response.data?.posts) ? response.data.posts : [];
   },
 
-  createPost: async (data: { title: string; body: string; audioKey?: string; imageKeys?: string[] }): Promise<Post> => {
+  createPost: async (data: { title: string; body: string; audioKey: string; imageKeys?: string[] }): Promise<Post> => {
     const response = await api.post('/v1/user-posts', data);
     return response.data.post;
   },

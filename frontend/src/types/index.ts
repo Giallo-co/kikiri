@@ -4,6 +4,7 @@ export interface User {
   username: string;
   role: string;
   profilePictureKey?: string | null;
+  profilePictureUrl?: string | null;
   profile?: Profile;
 }
 
