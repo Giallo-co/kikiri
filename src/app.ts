@@ -22,7 +22,7 @@ const PORT = config.port;
 app.use(cors({
   origin: [
     'http://localhost:5173',
-    'https://TU-APP.amplifyapp.com'
+    'https://main.d1zuli3x9jzxj9.amplifyapp.com/'
   ],
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
