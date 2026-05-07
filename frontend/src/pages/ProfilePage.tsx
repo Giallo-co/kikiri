@@ -203,7 +203,22 @@ const ProfilePage: React.FC = () => {
              <div className="animate-spin rounded-sm h-6 w-6 border-b-2 border-indigo-600"></div>
            </div>
         ) : posts && posts.length > 0 ? (
-          posts.map((post) => <PostCard key={post.id} post={post} />)
+          posts.map((post) => (
+            <PostCard
+              key={post.id}
+              post={{
+                ...post,
+                user: {
+                  ...post.user,
+                  id: user.id,
+                  username: user.username,
+                  email: user.email,
+                  profile: user.profile,
+                  profilePictureUrl: user.profilePictureUrl,
+                },
+              }}
+            />
+          ))
         ) : (
           <div className="text-center py-12 bg-white rounded-xl border border-gray-200 shadow-sm">
             <p className="text-gray-500">No posts yet.</p>

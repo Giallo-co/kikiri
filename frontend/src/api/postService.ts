@@ -1,6 +1,15 @@
 import api from './axios';
 import type { Post, Comment } from '../types';
 
+interface UserPostApiRecord {
+  userId: string;
+  createdOn: number;
+  Title: string;
+  Body: string;
+  Images: string[];
+  Audio?: string;
+}
+
 export const postService = {
   getFeed: async (userId: number): Promise<Post[]> => {
     const response = await api.get(`/v1/feed/${userId}`);
@@ -9,7 +18,27 @@ export const postService = {
 
   getUserPosts: async (userId: number): Promise<Post[]> => {
     const response = await api.get(`/v1/user-posts/${userId}`);
-    return Array.isArray(response.data?.posts) ? response.data.posts : [];
+    const posts = Array.isArray(response.data?.posts) ? (response.data.posts as UserPostApiRecord[]) : [];
+    return posts.map((post) => ({
+      id: post.createdOn,
+      title: post.Title,
+      body: post.Body,
+      userId: Number(post.userId),
+      user: {
+        id: Number(post.userId),
+        username: '',
+        email: '',
+        role: 'user',
+      },
+      audioKey: post.Audio ?? null,
+      imageKeys: Array.isArray(post.Images) ? post.Images : [],
+      createdAt: new Date(post.createdOn).toISOString(),
+      _count: {
+        likes: 0,
+        comments: 0,
+      },
+      isLiked: false,
+    }));
   },
 
   createPost: async (data: { title: string; body: string; audioKey: string; imageKeys?: string[] }): Promise<Post> => {

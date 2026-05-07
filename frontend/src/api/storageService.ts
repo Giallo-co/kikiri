@@ -19,9 +19,10 @@ export const storageService = {
   },
 
   uploadToS3: async (url: string, headers: Record<string, string>, file: File): Promise<void> => {
+    const { ['Content-Length']: _contentLength, ['content-length']: _contentLengthLower, ...safeHeaders } = headers;
     await axios.put(url, file, {
       headers: {
-        ...headers,
+        ...safeHeaders,
         'Content-Type': file.type || 'application/octet-stream',
       },
     });

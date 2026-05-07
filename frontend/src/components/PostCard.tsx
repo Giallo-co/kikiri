@@ -10,6 +10,9 @@ interface PostCardProps {
 }
 
 const PostCard: React.FC<PostCardProps> = ({ post }) => {
+  const postUser = post.user;
+  const postUsername = postUser?.username || 'User';
+  const postAvatar = postUser?.profile?.avatarUrl || postUser?.profilePictureUrl || null;
   const [liked, setLiked] = useState(post.isLiked ?? false);
   const [likesCount, setLikesCount] = useState(post._count?.likes ?? 0);
   const queryClient = useQueryClient();
@@ -36,14 +39,14 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       <div className="p-4 flex items-center space-x-3">
         <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-          {post.user.profile?.avatarUrl ? (
-            <img src={post.user.profile.avatarUrl} alt={post.user.username} className="w-full h-full object-cover" />
+          {postAvatar ? (
+            <img src={postAvatar} alt={postUsername} className="w-full h-full object-cover" />
           ) : (
             <UserIcon className="text-gray-400" size={20} />
           )}
         </div>
         <div>
-          <h3 className="font-semibold text-gray-900">{post.user.username}</h3>
+          <h3 className="font-semibold text-gray-900">{postUsername}</h3>
           <p className="text-xs text-gray-500">{new Date(post.createdAt).toLocaleDateString()}</p>
         </div>
       </div>
