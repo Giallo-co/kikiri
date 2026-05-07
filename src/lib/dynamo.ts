@@ -20,5 +20,5 @@ const client = new DynamoDBClient(clientConfig);
 
 const docClient = DynamoDBDocumentClient.from(client);
 
-export const TABLE_NAME = process.env.DYNAMODB_TABLE_NAME || "KikiriSocial";
+export const TABLE_NAME = process.env.DYNAMODB_TABLE_NAME || "node";
 export { client, docClient };

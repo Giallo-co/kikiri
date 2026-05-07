@@ -123,4 +123,93 @@ export class NodeRepository {
 
     await docClient.send(command);
   }
+
+  public async updateNode(nodeId: string, updateData: Partial<BaseNode>): Promise<void> {
+    const expressions: string[] = [];
+    const attributeNames: Record<string, string> = {};
+    const attributeValues: Record<string, any> = {};
+
+    for (const [key, value] of Object.entries(updateData)) {
+      if (value !== undefined) {
+        const attrName = `#${key}`;
+        const attrValue = `:${key}`;
+        expressions.push(`${attrName} = ${attrValue}`);
+        attributeNames[attrName] = key;
+        attributeValues[attrValue] = value;
+      }
+    }
+
+    if (expressions.length === 0) return;
+
+    const command = new TransactWriteCommand({
+      TransactItems: [
+        {
+          Update: {
+            TableName: this.tableName,
+            Key: { node_id: nodeId },
+            UpdateExpression: `SET ${expressions.join(", ")}`,
+            ExpressionAttributeNames: attributeNames,
+            ExpressionAttributeValues: attributeValues,
+          },
+        },
+      ],
+    });
+
+    await docClient.send(command);
+  }
+
+  public async deleteNode(nodeId: string): Promise<void> {
+    const command = new TransactWriteCommand({
+      TransactItems: [
+        {
+          Delete: {
+            TableName: this.tableName,
+            Key: { node_id: nodeId },
+          },
+        },
+      ],
+    });
+
+    await docClient.send(command);
+  }
+
+  public async removeEdgeBetweenNodes(
+    sourceId: string,
+    targetId: string,
+    sourceEdgeField: string
+  ): Promise<void> {
+    // Note: list_remove is tricky in DynamoDB because it uses indexes.
+    // For simplicity and matching the request, we would ideally use a Set, 
+    // but the schema uses List []. 
+    // A common workaround is to read, filter, and write, or use a different schema.
+    // Given the constraints, I will implement a read-modify-write for removing from list.
+    
+    const node = await this.getNodeById(sourceId);
+    if (!node) return;
+
+    const list = (node as any)[sourceEdgeField] as string[];
+    if (!list || !list.includes(targetId)) return;
+
+    const newList = list.filter(id => id !== targetId);
+
+    const command = new TransactWriteCommand({
+      TransactItems: [
+        {
+          Update: {
+            TableName: this.tableName,
+            Key: { node_id: sourceId },
+            UpdateExpression: "SET #edgeField = :newList",
+            ExpressionAttributeNames: {
+              "#edgeField": sourceEdgeField,
+            },
+            ExpressionAttributeValues: {
+              ":newList": newList,
+            },
+          },
+        },
+      ],
+    });
+
+    await docClient.send(command);
+  }
 }

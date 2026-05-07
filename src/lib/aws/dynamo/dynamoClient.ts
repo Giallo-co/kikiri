@@ -22,4 +22,4 @@ export const docClient = DynamoDBDocumentClient.from(client, {
   marshallOptions: { removeUndefinedValues: true },
 });
 
-export const TABLE_NAME = process.env.DYNAMODB_TABLE_NAME || "KikiriSocial";
+export const TABLE_NAME = process.env.DYNAMODB_TABLE_NAME || "node";

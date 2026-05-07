@@ -85,21 +85,20 @@ export async function scanAll(limit = 50): Promise<UserPost[]> {
   return (result.Items as UserPost[]) ?? [];
 }
 
-export async function searchPosts(query: string): Promise<UserPost[]> {
+export async function searchPosts(query: string): Promise<any[]> {
   const result = await docClient.send(new ScanCommand({
     TableName: TABLE_NAME,
     FilterExpression:
-      "contains(#title, :q) OR contains(#content, :q) OR contains(#status, :q)",
+      "contains(#name, :q) OR contains(#description, :q)",
     ExpressionAttributeNames: {
-      "#title": "title",
-      "#content": "content",
-      "#status": "status",
+      "#name": "node_name",
+      "#description": "music_description",
     },
     ExpressionAttributeValues: {
       ":q": query,
     },
   }));
-  return (result.Items as UserPost[]) ?? [];
+  return (result.Items as any[]) ?? [];
 }
 
 /*

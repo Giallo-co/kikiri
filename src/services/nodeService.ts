@@ -91,4 +91,24 @@ export class NodeService {
       targetEdgeField
     );
   }
+
+  public async updateNode(id: string, updateData: any): Promise<void> {
+    const data = { ...updateData };
+    if (data.profilePictureKey) {
+      data.author_profile_picture = this.buildPublicUrl(data.profilePictureKey);
+    }
+    await this.nodeRepository.updateNode(id, data);
+  }
+
+  public async deleteNode(id: string): Promise<void> {
+    await this.nodeRepository.deleteNode(id);
+  }
+
+  public async unlinkNodes(
+    sourceId: string,
+    targetId: string,
+    sourceEdgeField: string
+  ): Promise<void> {
+    await this.nodeRepository.removeEdgeBetweenNodes(sourceId, targetId, sourceEdgeField);
+  }
 }
