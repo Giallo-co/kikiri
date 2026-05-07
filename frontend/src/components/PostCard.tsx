@@ -63,13 +63,13 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
       {postImageUrls.length > 0 && (
         <div className="px-4 pb-4">
-          <div className="grid grid-cols-1 gap-2">
+          <div className="flex flex-wrap gap-3">
             {postImageUrls.map((imageUrl, index) => (
               <img
                 key={`${postIdentifier}-image-${index}`}
                 src={imageUrl}
                 alt={`${post.title} image ${index + 1}`}
-                className="w-full max-h-72 rounded-xl object-cover border border-indigo-800/40"
+                className="h-20 w-20 sm:h-24 sm:w-24 rounded-full object-cover border border-indigo-800/50 shadow-sm shadow-indigo-950/40"
               />
             ))}
           </div>
