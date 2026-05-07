@@ -1,4 +1,4 @@
-import { PutCommand } from "@aws-sdk/lib-dynamodb";
+import { PutCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
 import { docClient, NODE_TABLE_NAME } from "../lib/dynamo";
 
 export interface AuthorNode {
@@ -23,8 +23,28 @@ export interface AuthorNode {
 }
 
 export class NodeService {
+  private async getNextNodeId(): Promise<number> {
+    const result = await docClient.send(
+      new ScanCommand({
+        TableName: NODE_TABLE_NAME,
+        ProjectionExpression: "node_id",
+      })
+    );
+
+    const items = result.Items || [];
+    if (items.length === 0) {
+      return 1;
+    }
+
+    const ids = items.map((item) => Number(item.node_id)).filter((id) => !isNaN(id));
+    if (ids.length === 0) return 1;
+    
+    const maxId = Math.max(...ids);
+    return maxId + 1;
+  }
+
   public async createAuthorNode(authorId: number, username: string): Promise<AuthorNode> {
-    const nodeId = Date.now();
+    const nodeId = await this.getNextNodeId();
     
     const node: AuthorNode = {
       node_id: nodeId,
