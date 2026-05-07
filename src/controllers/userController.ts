@@ -38,13 +38,18 @@ export class UserController {
 
     public async login(req: Request, res: Response, next: NextFunction) {
         try {
-            const { email, password } = req.body;
+            const { email, username, password } = req.body as {
+                email?: string;
+                username?: string;
+                password?: string;
+            };
+            const identifier = username ?? email;
 
-            if (!email || !password) {
-                return res.status(400).json({ message: "Email and password are required" });
+            if (!identifier || !password) {
+                return res.status(400).json({ message: "Username/email and password are required" });
             }
 
-            const authData = await this.userService.loginUser(email, password);
+            const authData = await this.userService.loginUser(identifier, password);
 
             logger.info('user_login', { userId: authData.user.id });
 

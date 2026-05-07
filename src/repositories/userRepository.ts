@@ -24,6 +24,15 @@ export class UserRepository {
     return user ? (user as unknown as User) : undefined;
   }
 
+  async findByEmailOrUsername(identifier: string): Promise<User | undefined> {
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [{ email: identifier }, { username: identifier }]
+      }
+    });
+    return user ? (user as unknown as User) : undefined;
+  }
+
   async findById(id: number): Promise<User | undefined> {
     const user = await prisma.user.findUnique({
       where: { id },

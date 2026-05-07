@@ -7,9 +7,7 @@ export const authService = {
     return response.data;
   },
 
-  login: async (data: any): Promise<AuthResponse> => {
-    // Assuming /v1/login exists based on standard practices, although not explicitly in endpoints.md
-    // If not, I'll adjust. The prompt mentioned "Formularios de registro y login".
+  login: async (data: { username: string; password: string }): Promise<AuthResponse> => {
     const response = await api.post('/v1/login', data);
     return response.data;
   },

@@ -68,8 +68,8 @@ export class UserService {
     };
   }
 
-  public async loginUser(email: string, plainPassword: string): Promise<AuthResponse> {
-    const user = await this.userRepository.findByEmail(email);
+  public async loginUser(identifier: string, plainPassword: string): Promise<AuthResponse> {
+    const user = await this.userRepository.findByEmailOrUsername(identifier);
     
     if (!user) {
       throw new ServiceException(1002, "Invalid credentials.");

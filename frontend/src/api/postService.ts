@@ -9,12 +9,12 @@ export const postService = {
 
   getUserPosts: async (userId: number): Promise<Post[]> => {
     const response = await api.get(`/v1/user-posts/${userId}`);
-    return response.data;
+    return Array.isArray(response.data?.posts) ? response.data.posts : [];
   },
 
   createPost: async (data: { title: string; body: string; audioKey?: string; imageKeys?: string[] }): Promise<Post> => {
     const response = await api.post('/v1/user-posts', data);
-    return response.data;
+    return response.data.post;
   },
 
   likePost: async (postId: number): Promise<void> => {
@@ -45,6 +45,6 @@ export const postService = {
 
   searchPosts: async (query: string): Promise<Post[]> => {
     const response = await api.get('/v1/search/posts', { params: { q: query } });
-    return response.data;
+    return Array.isArray(response.data?.data) ? response.data.data : [];
   },
 };
