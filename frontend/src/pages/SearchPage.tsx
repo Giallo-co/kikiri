@@ -96,7 +96,7 @@ const SearchPage: React.FC = () => {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
           </div>
         ) : postResults && postResults.length > 0 ? (
-          postResults.map((post) => <PostCard key={post.id} post={post} />)
+          postResults.map((post) => <PostCard key={post.postId || post.id} post={post} />)
         ) : (
           <div className="text-center py-12 text-gray-500">No posts found.</div>
         )}

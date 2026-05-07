@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { Post } from '../types';
-import { Heart, MessageCircle, Share2, User as UserIcon } from 'lucide-react';
+import { Heart, Share2, User as UserIcon } from 'lucide-react';
 import { postService } from '../api/postService';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { clsx } from 'clsx';
@@ -96,10 +96,6 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
             <Heart size={20} fill={liked ? "currentColor" : "none"} />
             <span className="text-sm font-medium">{likesCount}</span>
           </button>
-          <div className="flex items-center space-x-2 text-gray-500">
-            <MessageCircle size={20} />
-            <span className="text-sm font-medium">{post._count?.comments ?? 0}</span>
-          </div>
         </div>
         <button
           onClick={handleShare}

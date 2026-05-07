@@ -125,6 +125,36 @@ export const postService = {
 
   searchPosts: async (query: string): Promise<Post[]> => {
     const response = await api.get('/v1/search/posts', { params: { q: query } });
-    return Array.isArray(response.data?.data) ? response.data.data : [];
+    const items = Array.isArray(response.data?.data) ? (response.data.data as FeedApiItem[]) : [];
+    return items.map((item) => {
+      const parts = item.content.split('\n\n');
+      const title = parts[0] ?? '';
+      const body = parts.length > 1 ? parts.slice(1).join('\n\n') : '';
+      return {
+        id: Number(item.postId) || Date.parse(item.createdAt),
+        postId: item.postId,
+        title,
+        body,
+        userId: item.authorId,
+        user: {
+          id: item.authorId,
+          username: item.author.username,
+          email: '',
+          role: 'user',
+          profile: item.author.avatarUrl ? { userId: item.authorId, avatarUrl: item.author.avatarUrl } : undefined,
+          profilePictureUrl: item.author.avatarUrl,
+        },
+        audioKey: item.audioUrl ?? null,
+        audioUrl: item.audioUrl,
+        imageKeys: [],
+        imageUrls: item.imageUrls ?? [],
+        createdAt: item.createdAt,
+        _count: {
+          likes: item.likesCount ?? 0,
+          comments: item.commentsCount ?? 0,
+        },
+        isLiked: false,
+      };
+    });
   },
 };
