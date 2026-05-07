@@ -381,14 +381,12 @@ router.post("/album/upload", async (req, res) => {
 });
 
 router.post("/register", async (req, res) => {
-  const { username, realName, description } = req.body as {
-    username?: string;
-    realName?: string;
-    description?: string;
-  };
-  if (!username) {
+  const { username } = req.body as { username?: string };
+  if (!username || typeof username !== "string" || !username.trim()) {
     return res.status(400).json({ error: "Username is required" });
   }
+
+  const trimmedUsername = username.trim();
 
   try {
     const scanCommand = new ScanCommand({
@@ -398,7 +396,9 @@ router.post("/register", async (req, res) => {
     const nodes = (scanResult.Items || []) as Record<string, any>[];
 
     const exists = nodes.some(
-      (n) => n.node_type === "Author" && (n.node_name === username || n.author_name === username)
+      (n) =>
+        n.node_type === "Author" &&
+        (n.node_name === trimmedUsername || n.author_name === trimmedUsername)
     );
     if (exists) {
       return res.status(400).json({ error: "User already exists" });
@@ -422,8 +422,8 @@ router.post("/register", async (req, res) => {
     const newNode = {
       node_id: newNodeId,
       node_type: "Author",
-      node_name: username,
-      node_color: "#FF0000",
+      node_name: trimmedUsername,
+      node_color: "#636363",
       node_music_links_next: [],
       node_music_links_previous: [],
       node_tag_links_next: [],
@@ -433,9 +433,9 @@ router.post("/register", async (req, res) => {
       node_album_links_next: [],
       node_album_links_previous: [],
       author_id: newAuthorId,
-      author_name: username,
-      author_real_name: realName || username,
-      author_description: description || "New user",
+      author_name: trimmedUsername,
+      author_real_name: "",
+      author_description: "",
       author_profile_picture: "",
       node_music_likes: [],
     };
@@ -446,7 +446,7 @@ router.post("/register", async (req, res) => {
     });
     await docClient.send(putCommand);
 
-    logger.info("graph_author_registered", { username, newNodeId });
+    logger.info("graph_author_registered", { username: trimmedUsername, newNodeId, newAuthorId });
     res.status(201).json({ message: "User registered successfully", node: newNode });
   } catch (error) {
     logger.error("graph_register_failed", {
