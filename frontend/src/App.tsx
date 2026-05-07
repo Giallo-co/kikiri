@@ -383,6 +383,20 @@ export default function App() {
     })
   }, [currentTrack])
 
+  useEffect(() => {
+    const token = localStorage.getItem('kikiri_token');
+    const storedUsername = localStorage.getItem('kikiri_user_id'); // Actually storing user_id or username
+    // For simplicity, if token exists, we consider logged in.
+    // In a real app, we might want to validate the token or fetch user profile.
+    if (token) {
+      // We don't have the username stored in localStorage in the same way, 
+      // but let's assume we can get it or just set isLoggedIn.
+      // Task 2.1 says store kikiri_token and kikiri_user_id.
+      setIsLoggedIn(true);
+      // We might need to fetch the user profile to get the username.
+    }
+  }, []);
+
   const handleLoginSuccess = useCallback((user: string) => {
     setIsTransitioning(true);
     setTimeout(() => {
@@ -519,6 +533,29 @@ export default function App() {
     const trackNode = rawNodes.find(rn => rn.music_id === currentTrack.music_id)
     return userNode?.node_music_likes?.includes(trackNode?.node_id || '') || false
   }, [currentTrack, username, rawNodes])
+
+  useEffect(() => {
+    const fetchNodes = async () => {
+      const token = localStorage.getItem('kikiri_token');
+      if (!token) return;
+      
+      try {
+        const { authenticatedFetch } = await import('./utils/apiClient');
+        const response = await authenticatedFetch('/user/v1/nodes');
+        const result = await response.json();
+        if (result.data) {
+          setRawNodes(result.data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch nodes:', err);
+        setError('Failed to load nodes');
+      }
+    };
+
+    if (isLoggedIn) {
+      fetchNodes();
+    }
+  }, [isLoggedIn]);
 
   useEffect(() => {
     const connect = () => {

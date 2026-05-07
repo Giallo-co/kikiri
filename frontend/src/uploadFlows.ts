@@ -115,13 +115,49 @@ export async function uploadUserPost(
   return JSON.stringify(data, null, 2);
 }
 
-export async function fetchUserPosts(token: string, userId: number): Promise<string> {
-  const res = await fetch(`${API}/v1/user-posts/${userId}`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new Error(typeof data.message === 'string' ? data.message : JSON.stringify(data));
+export async function uploadMusicNode(
+  token: string,
+  sourceId: string,
+  nodeData: {
+    node_name: string;
+    music_description: string;
+    node_color?: string;
+    audioFile: File;
+    coverFile?: File;
   }
-  return JSON.stringify(data, null, 2);
+): Promise<any> {
+  const audioPresign = await presign(token, 'post_audio', nodeData.audioFile);
+  await putToS3(audioPresign.url, audioPresign.headers, nodeData.audioFile);
+
+  let coverKey = '';
+  if (nodeData.coverFile) {
+    const coverPresign = await presign(token, 'post_image', nodeData.coverFile);
+    await putToS3(coverPresign.url, coverPresign.headers, nodeData.coverFile);
+    coverKey = coverPresign.key;
+  }
+
+  const payload = {
+    node_type: 'Music',
+    node_name: nodeData.node_name,
+    music_description: nodeData.music_description,
+    node_color: nodeData.node_color || '#1db954',
+    audioKey: audioPresign.key,
+    coverKey: coverKey,
+    edgeFieldNext: 'node_music_links_next'
+  };
+
+  const res = await fetch(`${API}/v1/nodes/${sourceId}/edges`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || 'Failed to create music node');
+  }
+  return data.data;
 }
