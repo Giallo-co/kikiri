@@ -25,27 +25,46 @@ export default function Login({ onLogin, isTransitioning }: LoginProps) {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
+            email,
             username,
-            realName: username, // For now, use username as real name
-            description: 'New user joined the network'
+            password,
+            role: 0
           }),
         });
 
         if (!response.ok) {
           const data = await response.json();
-          throw new Error(data.error || 'Registration failed');
+          throw new Error(data.message || 'Registration failed');
         }
 
+        const data = await response.json();
         // After successful registration, log them in
-        onLogin(username);
+        onLogin(data.user.username);
       } catch (err: any) {
         setError(err.message);
       }
     } else {
-      if (username && password === '123') {
-        onLogin(username);
-      } else {
-        setError('Invalid credentials');
+      try {
+        const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: username, // Assuming 'username' field in UI might be used for email or username
+            password
+          }),
+        });
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.message || 'Login failed');
+        }
+
+        const data = await response.json();
+        onLogin(data.user.username);
+      } catch (err: any) {
+        setError(err.message);
       }
     }
   };

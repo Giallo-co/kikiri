@@ -35,6 +35,7 @@ app.get("/", (_req, _res) => {
 });
 
 app.use(config.apiBasePath, userRoutes);
+app.use("/api", userRoutes); // Direct compatibility for frontend fetch('/api/login')
 app.use(config.apiBasePath, feedRoutes);
 app.use(config.apiBasePath, searchRoutes);
 app.use(config.apiBasePath, interactionRoutes);
