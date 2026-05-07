@@ -41,17 +41,19 @@ const broadcastTrack = (track: object) => {
 };
 
 let lastContent = "";
-setInterval(async () => {
-  try {
-    const current = await fetchNodesFromDynamo();
-    if (current !== lastContent) {
-      lastContent = current;
-      broadcast(current);
+if (process.env.NODE_ENV !== "test") {
+  setInterval(async () => {
+    try {
+      const current = await fetchNodesFromDynamo();
+      if (current !== lastContent) {
+        lastContent = current;
+        broadcast(current);
+      }
+    } catch {
+      /* ignore */
     }
-  } catch {
-    /* ignore */
-  }
-}, 1000);
+  }, 1000);
+}
 
 router.get("/nodes", async (_req, res) => {
   try {

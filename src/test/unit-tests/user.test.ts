@@ -2,6 +2,9 @@ import { UserService } from '../../services/userService';
 import { UserRepository } from '../../repositories/userRepository';
 import { ServiceException } from '../../errors/ServiceException';
 import { User } from '../../models/userModel';
+import { NodeService } from '../../services/nodeService';
+
+jest.mock('../../services/nodeService');
 
 const simulateExecution = (): Promise<void> =>
   new Promise(resolve => setTimeout(resolve, 500));
@@ -12,6 +15,12 @@ describe('UserService - CRUD', () => {
     let userRepositoryMock: Partial<UserRepository>;
 
     beforeEach(() => {
+        jest.clearAllMocks();
+        (NodeService.prototype.createNode as jest.Mock).mockResolvedValue({});
+        (NodeService.prototype.updateNode as jest.Mock).mockResolvedValue({});
+        (NodeService.prototype.getNodeById as jest.Mock).mockResolvedValue({});
+        (NodeService.prototype.deleteNode as jest.Mock).mockResolvedValue({});
+        
         userRepositoryMock = {
             save: jest.fn().mockResolvedValue({
                 id: 1,
@@ -23,7 +32,8 @@ describe('UserService - CRUD', () => {
             } as User),
             findByEmail: jest.fn(),
             findById: jest.fn(),
-            findByPublicId: jest.fn()
+            findByPublicId: jest.fn(),
+            delete: jest.fn().mockResolvedValue(true)
         };
 
         userService = new UserService(userRepositoryMock as UserRepository);

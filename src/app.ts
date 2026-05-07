@@ -13,6 +13,7 @@ import uploadRoutes from './routes/uploadRoutes';
 import userPostRoutes from './routes/userPostRoutes';
 import profilePictureRoutes from './routes/profilePicture';
 import nodeRoutes from './routes/nodeRoutes';
+import graphApiRoutes from './routes/graphApiRoutes';
 import cors from 'cors';
 
 const app = express();
