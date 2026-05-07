@@ -24,6 +24,13 @@ export class UserRepository {
     return user ? (user as unknown as User) : undefined;
   }
 
+  async findByUsername(username: string): Promise<User | undefined> {
+    const user = await prisma.user.findUnique({
+      where: { username },
+    });
+    return user ? (user as unknown as User) : undefined;
+  }
+
   async findById(id: number): Promise<User | undefined> {
     const user = await prisma.user.findUnique({
       where: { id },

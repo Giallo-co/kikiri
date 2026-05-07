@@ -51,7 +51,7 @@ export default function Login({ onLogin, isTransitioning }: LoginProps) {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            email: username, // Assuming 'username' field in UI might be used for email or username
+            username,
             password
           }),
         });
