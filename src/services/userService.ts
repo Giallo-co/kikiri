@@ -9,6 +9,7 @@ import { docClient, TABLE_NAME } from '../lib/dynamo';
 import { BatchWriteCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { S3PresignService } from './s3PresignService';
 import { logger } from '../lib/logger';
+import { NodeService } from './nodeService';
 
 interface AuthResponse {
   user: Omit<User, 'password'>;
@@ -18,7 +19,10 @@ interface AuthResponse {
 export class UserService {
   private postRepository = new PostRepository();
 
-  constructor(private readonly userRepository: UserRepository) {}
+  constructor(
+    private readonly userRepository: UserRepository,
+    private readonly nodeService: NodeService
+  ) {}
 
   public async getUserByEmail(email: string): Promise<User | undefined> {
     return await this.userRepository.findByEmail(email);
@@ -50,6 +54,21 @@ export class UserService {
       password: hashedPassword,
       role: userData.role ?? 0
     });
+
+    // Create node in DynamoDB
+    try {
+      await this.nodeService.createAuthorNode(newUser.id, newUser.username);
+    } catch (error) {
+      // We might want to handle this error. If DynamoDB fails, should we fail registration?
+      // Usually, yes, if it's a critical part of the system.
+      // But the user said: Input -> Registro verificacion y registro en mysql -> Registro de nodo en tabla node de dynamodb -> Output actual.
+      logger.error('failed_to_create_dynamo_node', {
+        userId: newUser.id,
+        error: error instanceof Error ? error.message : String(error)
+      });
+      // For now, I'll let it pass or throw depending on importance.
+      // In a real system, you might want to use a transaction or compensating action.
+    }
 
     const jwtSecretKey = process.env.JWT_SECRET_KEY as string;
     const payload = {

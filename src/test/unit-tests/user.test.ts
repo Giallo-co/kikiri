@@ -1,5 +1,6 @@
 import { UserService } from '../../services/userService';
 import { UserRepository } from '../../repositories/userRepository';
+import { NodeService } from '../../services/nodeService';
 import { ServiceException } from '../../errors/ServiceException';
 import { User } from '../../models/userModel';
 
@@ -10,6 +11,7 @@ describe('UserService - CRUD', () => {
 
     let userService: UserService;
     let userRepositoryMock: Partial<UserRepository>;
+    let nodeServiceMock: Partial<NodeService>;
 
     beforeEach(() => {
         userRepositoryMock = {
@@ -23,10 +25,16 @@ describe('UserService - CRUD', () => {
             } as User),
             findByEmail: jest.fn(),
             findById: jest.fn(),
-            findByPublicId: jest.fn()
+            findByPublicId: jest.fn(),
+            update: jest.fn(),
+            delete: jest.fn(),
         };
 
-        userService = new UserService(userRepositoryMock as UserRepository);
+        nodeServiceMock = {
+            createAuthorNode: jest.fn().mockResolvedValue({})
+        };
+
+        userService = new UserService(userRepositoryMock as UserRepository, nodeServiceMock as NodeService);
     });
 
     it('Should throw ServiceException if password is too short', async () => {
@@ -36,15 +44,15 @@ describe('UserService - CRUD', () => {
         ).rejects.toThrow(ServiceException);
     });
 
-    it('Should create user successfully', async () => {
+    it('Should create user successfully and call DynamoDB node creation', async () => {
         await simulateExecution();
         const result = await userService.registerUserAsync({
             email: 'test@test.com', username: 'testuser', password: '12345678'
         });
         
         expect(result.user.id).toBe(1);
-        
         expect(typeof result.token).toBe('string');
+        expect(nodeServiceMock.createAuthorNode).toHaveBeenCalledWith(1, 'testuser');
     });
 
     it('Should return user when email exists', async () => {

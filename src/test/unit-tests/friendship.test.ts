@@ -1,21 +1,25 @@
 import { UserRepository } from "../../repositories/userRepository";
 import { UserService } from "../../services/userService";
+import { NodeService } from "../../services/nodeService";
 import { User } from "../../models/userModel";
 
 const simulateExecution = (): Promise<void> =>
   new Promise(resolve => setTimeout(resolve, 500));
 
 jest.mock("../../repositories/userRepository");
+jest.mock("../../services/nodeService");
 
 describe('UserService - Follow Logic', () => {
     let userService: UserService;
     let userRepository: UserRepository;
+    let nodeService: NodeService;
     let dummyUser: User;
     let targetUser: User;
 
     beforeEach(() => {
         userRepository = new UserRepository();
-        userService = new UserService(userRepository);
+        nodeService = new NodeService();
+        userService = new UserService(userRepository, nodeService);
 
         dummyUser = {
             id: 1, publicId: "uuid-1", email: "test@gmail.com", username: "Test", password: "encrypted", role: 0

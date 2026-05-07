@@ -1,0 +1,60 @@
+import { PutCommand } from "@aws-sdk/lib-dynamodb";
+import { docClient, NODE_TABLE_NAME } from "../lib/dynamo";
+
+export interface AuthorNode {
+  node_id: number;
+  node_type: "Author";
+  node_name: string;
+  node_color: string;
+  node_music_links_next: number[];
+  node_music_links_previous: number[];
+  node_tag_links_next: number[];
+  node_tag_links_previous: number[];
+  node_author_links_next: number[];
+  node_author_links_previous: number[];
+  node_album_links_next: number[];
+  node_album_links_previous: number[];
+  author_id: number;
+  author_name: string;
+  author_real_name: string;
+  author_description: string;
+  author_profile_picture: string;
+  node_music_likes: number[];
+}
+
+export class NodeService {
+  public async createAuthorNode(authorId: number, username: string): Promise<AuthorNode> {
+    const nodeId = Date.now();
+    
+    const node: AuthorNode = {
+      node_id: nodeId,
+      node_type: "Author",
+      node_name: username,
+      node_color: "#636363",
+      node_music_links_next: [],
+      node_music_links_previous: [],
+      node_tag_links_next: [],
+      node_tag_links_previous: [],
+      node_author_links_next: [],
+      node_author_links_previous: [],
+      node_album_links_next: [],
+      node_album_links_previous: [],
+      author_id: authorId,
+      author_name: username,
+      author_real_name: "",
+      author_description: "",
+      author_profile_picture: "",
+      node_music_likes: []
+    };
+
+    await docClient.send(
+      new PutCommand({
+        TableName: NODE_TABLE_NAME,
+        Item: node,
+        ConditionExpression: "attribute_not_exists(node_id)",
+      })
+    );
+
+    return node;
+  }
+}

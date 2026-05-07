@@ -2,12 +2,14 @@ import { Router } from 'express';
 import { UserController } from '../controllers/userController';
 import { UserService } from '../services/userService';
 import { UserRepository } from '../repositories/userRepository';
+import { NodeService } from '../services/nodeService';
 import { authenticateToken } from '../middlewares/authMiddleware';
 
 const router = Router();
 
 const userRepository = new UserRepository();
-const userService = new UserService(userRepository);
+const nodeService = new NodeService();
+const userService = new UserService(userRepository, nodeService);
 const userController = new UserController(userService);
 
 // Rutas CRUD user

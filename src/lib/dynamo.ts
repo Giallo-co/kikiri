@@ -1,11 +1,9 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
-import dotenv from "dotenv";
-
-dotenv.config();
+import config from "../config/config";
 
 const clientConfig: any = {
-  region: process.env.AWS_REGION || "us-east-1",
+  region: config.awsRegion,
 };
 
 if (process.env.DYNAMODB_ENDPOINT) {
@@ -21,4 +19,5 @@ const client = new DynamoDBClient(clientConfig);
 const docClient = DynamoDBDocumentClient.from(client);
 
 export const TABLE_NAME = process.env.DYNAMODB_TABLE_NAME || "KikiriSocial";
+export const NODE_TABLE_NAME = config.dynamodbNodeTableName;
 export { client, docClient };

@@ -1,5 +1,6 @@
 import { UserService } from '../../services/userService';
 import { UserRepository } from '../../repositories/userRepository';
+import { NodeService } from '../../services/nodeService';
 import { ServiceException } from '../../errors/ServiceException';
 
 describe('UserService.setProfilePictureKey', () => {
@@ -9,7 +10,9 @@ describe('UserService.setProfilePictureKey', () => {
     updateProfilePictureKey
   } as unknown as UserRepository;
 
-  const service = new UserService(repo);
+  const nodeService = {} as NodeService;
+
+  const service = new UserService(repo, nodeService);
 
   beforeEach(() => {
     updateProfilePictureKey.mockReset();
