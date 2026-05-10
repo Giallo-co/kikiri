@@ -1,0 +1,79 @@
+name: Deploy (dev)
+
+on:
+  push:
+    branches: [dev]
+
+jobs:
+  deploy-dev:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.2
+
+      - name: Setup Node
+        uses: actions/setup-node@v6.3.0
+        with:
+          node-version: 24
+          cache: 'npm'
+
+      - name: Install dependencies and build
+        run: |
+          npm ci
+          npm run build
+
+      - name: Deploy to EC2 (dev)
+        uses: appleboy/scp-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST_DEV }}
+          username: ${{ secrets.EC2_USER_DEV }}
+          key: ${{ secrets.EC2_SSH_KEY_DEV }}
+          source: "dist,node_modules,package.json,prisma,systemd,prisma.config.ts"
+          target: "/var/www/kikiri/kikiri"
+          overwrite: true
+
+      - name: Restart service (dev)
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.EC2_HOST_DEV }}
+          username: ${{ secrets.EC2_USER_DEV }}
+          key: ${{ secrets.EC2_SSH_KEY_DEV }}
+          script: |
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+
+            cd /var/www/kikiri/kikiri
+
+            sudo cp systemd/social-media-api.service /etc/systemd/system/
+            sudo systemctl daemon-reload
+
+            # .env del entorno dev: misma RDS y S3 que prod, DynamoDB distinto (KikiriSocialDev)
+            cat <<EOF > /var/www/kikiri/kikiri/.env
+            NODE_ENV=production
+            LOG_DIR=/var/log/social-media
+            PORT=${{ secrets.PORT_DEV }}
+            HOST=0.0.0.0
+            PROTOCOL=http
+            API_BASE_PATH=/user
+            DATABASE_URL=${{ secrets.DATABASE_URL }}
+            DATABASE_USER=${{ secrets.DATABASE_USER }}
+            DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
+            DATABASE_NAME=${{ secrets.DATABASE_NAME }}
+            DATABASE_HOST=${{ secrets.DATABASE_HOST }}
+            DATABASE_PORT=${{ secrets.DATABASE_PORT }}
+            JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
+            AWS_REGION=us-east-1
+            DYNAMODB_TABLE_NAME=node
+            S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }}
+            S3_PUBLIC_BASE_URL=${{ secrets.S3_PUBLIC_BASE_URL }}
+            EOF
+
+            sudo mkdir -p /var/log/social-media
+            sudo chown ubuntu:ubuntu /var/log/social-media
+
+            npx prisma migrate deploy
+            sudo systemctl restart social-media-api
+            systemctl is-active --quiet social-media-api && echo "Service Running (dev)" || exit 1
+
+            grep -R "Winston probe" /var/www/kikiri/kikiri/dist || (echo "Missing Winston build in dist" && exit 1)
+            ls -la /var/log/social-media
