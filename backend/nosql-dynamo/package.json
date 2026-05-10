@@ -1,0 +1,17 @@
+{
+  "name": "nosql-dynamo",
+  "version": "1.0.0",
+  "main": "dist/crud.js",
+  "scripts": {
+    "build": "tsc",
+    "crud": "tsc && node dist/crud.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.821.0",
+    "@aws-sdk/lib-dynamodb": "^3.821.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.21",
+    "typescript": "^5.8.3"
+  }
+}

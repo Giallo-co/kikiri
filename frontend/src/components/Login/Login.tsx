@@ -19,7 +19,7 @@ export default function Login({ onLogin, isTransitioning }: LoginProps) {
 
     if (isRegister) {
       try {
-        const response = await fetch('http://localhost:5002/api/register', {
+        const response = await fetch('/api/register', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
