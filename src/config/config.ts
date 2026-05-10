@@ -25,6 +25,7 @@ function parseCorsOrigins(value: string | undefined): string[] {
   }
   return [
     'http://localhost:5173',
+    'http://100.30.192.240:3000',
     'https://dev.d2ue26m8qd77du.amplifyapp.com',
     'https://dev.d1zuli3x9jzxj9.amplifyapp.com'
   ];
