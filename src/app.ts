@@ -19,33 +19,9 @@ const PORT = config.port;
 
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-
-      // Normalizamos el origin para evitar problemas de espacios o barras finales
-      const normalizedOrigin = origin.trim().replace(/\/$/, '');
-      const allowedOrigins = config.corsOrigins.map(o => o.trim().replace(/\/$/, ''));
-
-      const isAmplify = normalizedOrigin.endsWith('.amplifyapp.com');
-      const isLocal = normalizedOrigin.includes('localhost') || normalizedOrigin.includes('127.0.0.1');
-      const isInList = allowedOrigins.includes(normalizedOrigin);
-
-      if (isInList || isAmplify || isLocal || config.nodeEnv === 'development') {
-        callback(null, true);
-      } else {
-        logger.warn('CORS_BLOCKED', { 
-          origin: normalizedOrigin, 
-          allowedOrigins, 
-          envCORS: process.env.CORS_ORIGINS,
-          nodeEnv: config.nodeEnv 
-        });
-        callback(null, false);
-      }
-    },
+    origin: config.corsOrigins,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
-    credentials: true,
-    optionsSuccessStatus: 200,
+    allowedHeaders: ['Content-Type', 'Authorization'],
   })
 );
 app.use(express.json());

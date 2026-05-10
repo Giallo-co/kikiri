@@ -23,12 +23,7 @@ function parseCorsOrigins(value: string | undefined): string[] {
   if (value?.trim()) {
     return value.split(',').map((s) => s.trim()).filter(Boolean);
   }
-  return [
-    'http://localhost:5173',
-    'http://100.30.192.240:3000',
-    'https://dev.d2ue26m8qd77du.amplifyapp.com',
-    'https://dev.d1zuli3x9jzxj9.amplifyapp.com'
-  ];
+  return ['http://localhost:5173', 'https://dev.d2ue26m8qd77du.amplifyapp.com'];
 }
 
 function parseNumber(
