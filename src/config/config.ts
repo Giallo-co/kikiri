@@ -15,6 +15,15 @@ interface Config {
   s3PublicBaseUrl: string;
   dynamodbUserPostTableName: string;
   dynamodbNodeTableName: string;
+  /** Orígenes permitidos para CORS (Amplify, dominio custom, localhost en dev). */
+  corsOrigins: string[];
+}
+
+function parseCorsOrigins(value: string | undefined): string[] {
+  if (value?.trim()) {
+    return value.split(',').map((s) => s.trim()).filter(Boolean);
+  }
+  return ['http://localhost:5173', 'https://dev.d2ue26m8qd77du.amplifyapp.com'];
 }
 
 function parseNumber(
@@ -52,7 +61,8 @@ const config: Config = {
   s3PublicBaseUrl: (process.env.S3_PUBLIC_BASE_URL || '').replace(/\/$/, ''),
   /** @deprecated User posts use single-table `DYNAMODB_TABLE_NAME`; kept for backward-compatible env reads */
   dynamodbUserPostTableName: process.env.DYNAMODB_USER_POST_TABLE_NAME || process.env.DYNAMODB_TABLE_NAME || 'KikiriSocial',
-  dynamodbNodeTableName: process.env.DYNAMODB_NODE_TABLE_NAME || 'node'
+  dynamodbNodeTableName: process.env.DYNAMODB_NODE_TABLE_NAME || 'node',
+  corsOrigins: parseCorsOrigins(process.env.CORS_ORIGINS),
 };
 
 export default config;
