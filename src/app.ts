@@ -20,15 +20,25 @@ const PORT = config.port;
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Permitir peticiones sin origin (como herramientas de testeo o apps móviles)
       if (!origin) return callback(null, true);
 
-      if (config.corsOrigins.includes(origin) || config.nodeEnv === 'development') {
+      // Normalizamos el origin para evitar problemas de espacios o barras finales
+      const normalizedOrigin = origin.trim().replace(/\/$/, '');
+      const allowedOrigins = config.corsOrigins.map(o => o.trim().replace(/\/$/, ''));
+
+      const isAmplify = normalizedOrigin.endsWith('.amplifyapp.com');
+      const isLocal = normalizedOrigin.includes('localhost') || normalizedOrigin.includes('127.0.0.1');
+      const isInList = allowedOrigins.includes(normalizedOrigin);
+
+      if (isInList || isAmplify || isLocal || config.nodeEnv === 'development') {
         callback(null, true);
       } else {
-        logger.warn('CORS_BLOCKED', { origin, allowedOrigins: config.corsOrigins });
-        // No pasamos error al callback para que no rompa el proceso, 
-        // pero al pasar 'false' el middleware no añade las cabeceras CORS.
+        logger.warn('CORS_BLOCKED', { 
+          origin: normalizedOrigin, 
+          allowedOrigins, 
+          envCORS: process.env.CORS_ORIGINS,
+          nodeEnv: config.nodeEnv 
+        });
         callback(null, false);
       }
     },
