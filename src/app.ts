@@ -19,9 +19,23 @@ const PORT = config.port;
 
 app.use(
   cors({
-    origin: config.corsOrigins,
+    origin: (origin, callback) => {
+      // Permitir peticiones sin origin (como herramientas de testeo o apps móviles)
+      if (!origin) return callback(null, true);
+
+      if (config.corsOrigins.includes(origin) || config.nodeEnv === 'development') {
+        callback(null, true);
+      } else {
+        logger.warn('CORS_BLOCKED', { origin, allowedOrigins: config.corsOrigins });
+        // No pasamos error al callback para que no rompa el proceso, 
+        // pero al pasar 'false' el middleware no añade las cabeceras CORS.
+        callback(null, false);
+      }
+    },
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
+    credentials: true,
+    optionsSuccessStatus: 200,
   })
 );
 app.use(express.json());
