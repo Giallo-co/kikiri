@@ -51,7 +51,7 @@ jobs:
             cat <<EOF > /var/www/kikiri/kikiri/.env
             NODE_ENV=production
             LOG_DIR=/var/log/social-media
-            PORT=${{ secrets.PORT_DEV }}
+            PORT=3000
             HOST=0.0.0.0
             PROTOCOL=http
             API_BASE_PATH=/user
