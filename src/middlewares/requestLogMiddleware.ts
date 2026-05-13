@@ -1,10 +1,15 @@
 import type { Request, Response, NextFunction } from "express";
 import { logger } from "../lib/logger";
+import { shouldSkipHeavyObservability } from "./observabilityPaths";
 
 /**
  * Access log (Winston → consola + archivo JSON en producción). Colocar antes de las rutas.
  */
 export function requestLog(req: Request, res: Response, next: NextFunction) {
+  if (shouldSkipHeavyObservability(req)) {
+    return next();
+  }
+
   const start = process.hrtime.bigint();
 
   res.on("finish", () => {

@@ -1,9 +1,18 @@
 import { CloudWatchClient, PutMetricDataCommand } from "@aws-sdk/client-cloudwatch";
 import type { Request, Response, NextFunction } from "express";
+import { shouldSkipHeavyObservability } from "./observabilityPaths";
 
 const cw = new CloudWatchClient({ region: process.env.AWS_REGION || "us-east-1" });
 
+const metricsEnabled =
+  process.env.CLOUDWATCH_METRICS_ENABLED !== "false" &&
+  process.env.CLOUDWATCH_METRICS_ENABLED !== "0";
+
 export function latencyMetric(req: Request, res: Response, next: NextFunction) {
+  if (!metricsEnabled || shouldSkipHeavyObservability(req)) {
+    return next();
+  }
+
   const start = process.hrtime.bigint();
 
   res.on("finish", () => {

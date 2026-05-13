@@ -10,13 +10,22 @@ import { graphConfig } from './graphConfig'
 import type { NodeDatum, LinkDatum, RawNode } from './types/graph'
 import type { Music } from "./types/music";
 
+/**
+ * Base HTTPS pública del media (bucket S3 público o CloudFront). Sin barra final.
+ * Las keys deben coincidir: `music/...`, `music-cover/...`.
+ * En Amplify se configura como variable de entorno `VITE_MEDIA_BASE_URL` por branch.
+ */
+const MEDIA_BASE_URL = ((import.meta.env.VITE_MEDIA_BASE_URL as string | undefined) ?? '')
+  .trim()
+  .replace(/\/$/, '');
+
 const DEFAULT_TRACK: Music = {
   music_id: "59",
   music_name: "Key",
   music_description: "Key from C418",
   music_author: "C418",
-  music_cover_url: "http://localhost:9000/music-cover/c418/volume-alpha.jpg",
-  music_url: "http://localhost:9000/music/c418/volume-alpha/01-key.mp3",
+  music_cover_url: MEDIA_BASE_URL ? `${MEDIA_BASE_URL}/music-cover/c418/volume-alpha.jpg` : '',
+  music_url: MEDIA_BASE_URL ? `${MEDIA_BASE_URL}/music/c418/volume-alpha/01-key.mp3` : '',
   music_album: "Volume Alpha",
   likes: 0,
   views: 0,
@@ -522,9 +531,24 @@ export default function App() {
   }, [currentTrack, username, rawNodes])
 
   useEffect(() => {
+    let cancelled = false
+    const retryRef = { ms: 2000 }
+    const maxRetryMs = 60_000
+
+    const streamUrl = (() => {
+      const base = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '').trim() ?? ''
+      return base ? `${base}/api/nodes/stream` : '/api/nodes/stream'
+    })()
+
     const connect = () => {
-      const es = new EventSource('/api/nodes/stream'); esRef.current = es
-      es.onopen = () => { setConnected(true); setError(null) }
+      if (cancelled) return
+      const es = new EventSource(streamUrl)
+      esRef.current = es
+      es.onopen = () => {
+        setConnected(true)
+        setError(null)
+        retryRef.ms = 2000
+      }
       es.onmessage = (event) => {
         try {
           const parsed = JSON.parse(event.data)
@@ -535,11 +559,26 @@ export default function App() {
           }
           const incomingNodes: RawNode[] = parsed
           if (Array.isArray(incomingNodes) && incomingNodes.length) setRawNodes(incomingNodes)
-        } catch (e) { setError('parse error') }
+        } catch (e) {
+          setError('parse error')
+        }
       }
-      es.onerror = () => { setConnected(false); setError('connection error'); es.close(); setTimeout(connect, 2000) }
+      es.onerror = () => {
+        setConnected(false)
+        setError('connection error')
+        es.close()
+        const wait = retryRef.ms
+        retryRef.ms = Math.min(maxRetryMs, Math.floor(retryRef.ms * 1.5))
+        setTimeout(() => {
+          if (!cancelled) connect()
+        }, wait)
+      }
     }
-    connect(); return () => { esRef.current?.close() }
+    connect()
+    return () => {
+      cancelled = true
+      esRef.current?.close()
+    }
   }, [])
 
   useEffect(() => {
