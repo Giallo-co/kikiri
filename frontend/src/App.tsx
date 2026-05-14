@@ -45,7 +45,6 @@ export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [username, setUsername] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<NavItem>('Home')
-  console.log('App Rendering:', { isLoggedIn, username, activeTab });
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [graphData, setGraphData] = useState<GraphData | null>(null)
   const [rawNodes, setRawNodes] = useState<RawNode[]>([])
@@ -405,7 +404,6 @@ export default function App() {
   }, [])
 
   const handleNavSelect = useCallback((item: NavItem) => {
-    console.log('Nav item selected:', item);
     setActiveTab(item);
     if (item !== 'Search') {
       setSearchQuery('')
@@ -642,16 +640,11 @@ export default function App() {
       {isLoggedIn && (
         <>
           {activeTab === 'Profile' && (
-            <>
-              <div style={{ position: 'fixed', top: 10, left: 10, background: 'red', color: 'white', zIndex: 9999, padding: '20px' }}>
-                PROFILE TAB ACTIVE (DEBUG)
-              </div>
-              <Profile 
-                userNode={rawNodes.find(n => n.node_type === 'Author' && (n.node_name === username || n.author_name === username)) || { node_id: '0', node_type: 'Author', node_name: username || '', node_color: '#636363', author_name: username || '' } as RawNode} 
-                onUpdate={handleProfileUpdate} 
-                onClose={() => setActiveTab('Home')} 
-              />
-            </>
+            <Profile 
+              userNode={rawNodes.find(n => n.node_type === 'Author' && (n.node_name === username || n.author_name === username)) || { node_id: '0', node_type: 'Author', node_name: username || '', node_color: '#636363', author_name: username || '' } as RawNode} 
+              onUpdate={handleProfileUpdate} 
+              onClose={() => setActiveTab('Home')} 
+            />
           )}
 
           {activeTab === 'Post' && (

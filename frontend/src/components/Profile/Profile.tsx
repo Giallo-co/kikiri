@@ -11,10 +11,6 @@ interface ProfileProps {
 }
 
 export default function Profile({ userNode, onUpdate, onClose }: ProfileProps) {
-  useEffect(() => {
-    console.log('Profile component MOUNTED');
-  }, []);
-  console.log('Rendering Profile component with userNode:', userNode);
   const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '').trim() ?? '';
   const apiUrl = (path: string) => `${apiBaseUrl}${path.startsWith('/') ? path : `/${path}`}`;
 

@@ -9,7 +9,6 @@
   justify-content: center;
   align-items: center;
   font-family: 'Inter', -apple-system, sans-serif;
-  background: rgba(255, 0, 0, 0.2); /* RED BACKGROUND FOR DEBUGGING */
 }
 
 .profile-container .profile-glass-overlay {
@@ -180,6 +179,7 @@
   box-sizing: border-box;
   outline: none;
   font-size: 0.85rem;
+  font-family: 'Inter', -apple-system, sans-serif;
   color: white;
   transition: all 0.3s ease;
   margin-bottom: 8px;
@@ -219,6 +219,7 @@
   background: rgba(255, 255, 255, 0.05);
   box-sizing: border-box;
   font-size: 0.85rem;
+  font-family: 'Inter', -apple-system, sans-serif;
   color: rgba(255, 255, 255, 0.6);
   cursor: pointer;
   transition: all 0.3s ease;
@@ -244,6 +245,7 @@
   padding: 12px;
   border-radius: 4px;
   font-size: 0.85rem;
+  font-family: 'Inter', -apple-system, sans-serif;
   cursor: pointer;
   transition: all 0.3s ease;
 }
