@@ -31,7 +31,7 @@ app.use(requestLog);
 app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/", (_req, _res) => {
-  _res.send("Hello World! :)");
+  _res.send("Hello World!");
 });
 
 app.use(config.apiBasePath, userRoutes);
