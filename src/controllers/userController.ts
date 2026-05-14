@@ -229,7 +229,7 @@ export class UserController {
         await sendNodes();
 
         // Poll for updates every 10 seconds (basic implementation)
-        const intervalId = setInterval(sendNodes, 10000);
+        const intervalId = setInterval(sendNodes, 5000);
 
         req.on('close', () => {
             clearInterval(intervalId);

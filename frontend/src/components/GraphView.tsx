@@ -21,20 +21,21 @@ interface Props {
   searchTrigger?: number
   onNodeClick: (nodeId: string, content: any) => void
   onDeselect?: () => void
-  onSearch?: (query: string) => void
+  /** Return true when the graph should pull back to overview zoom (2+ matches). Single/empty → false (node focus or unchanged). */
+  onSearch?: (query: string) => boolean
 }
 
 const BASE_COLOR = '#2a2a2a'
 const SELECTED_COLOR = '#ab90df'
 const LINK_BASE = '#b0aca6'
 const LINK_SELECTED = '#ab90df'
-const FOCUS_ZOOM_LEVEL = 1.5 // variable to control zoom depth
-const SEARCH_FOCUS_ZOOM = 1.0 // Configurable zoom depth for search results
-const DESELECT_ZOOM_LEVEL = 0.4 // variable to control zoom when deselecting
-const LINK_EXCLUSION_OPACITY = 0.2 // opacity of links when passing through the center (0 to 1)
-const EXCLUSION_TRANSITION_SPEED = 200 // speed at which the exclusion radius changes (pixels per tick)
-const OUTER_EXCLUSION_TRANSITION_SPEED = 1000 // speed at which the outer radius returns
-const ENABLE_DYNAMIC_EXCLUSION = false // true: radius changes on selection, false: radius is constant
+const FOCUS_ZOOM_LEVEL = 1.5
+const SEARCH_FOCUS_ZOOM = 1.0
+const DESELECT_ZOOM_LEVEL = 0.4
+const ZOOM_TRANSITION_MS = 750
+const LINK_EXCLUSION_OPACITY = 0.2
+const EXCLUSION_TRANSITION_SPEED = 200
+const OUTER_EXCLUSION_TRANSITION_SPEED = 1000
 
 export default function GraphView({ nodes, links, config, selectedId, playingNodeId, fixedNodeId, shouldFocus = true, showComment = false, isLoggedIn, centerBackground = false, searchQuery, showSearchBar, searchTrigger, onNodeClick, onDeselect, onSearch }: Props) {
   const svgRef = useRef<SVGSVGElement>(null)
@@ -59,9 +60,6 @@ export default function GraphView({ nodes, links, config, selectedId, playingNod
   const searchInputRef = useRef<HTMLInputElement>(null)
   const [hideOverlay, setHideOverlay] = useState(false)
 
-  // Variable para configurar el objetivo del enfoque. Si es null, se enfoca el centro visual.
-  const focusTarget = { x: null, y: null };
-
   useEffect(() => {
     if (showSearchBar) {
       if (searchQuery) {
@@ -76,12 +74,12 @@ export default function GraphView({ nodes, links, config, selectedId, playingNod
         const height = rect.height
         const visualCenterY = centerBackground ? (height / 2) : ((height - 72) / 2)
 
-        const targetX = focusTarget.x ?? (width / 2)
-        const targetY = focusTarget.y ?? visualCenterY
+        const targetX = width / 2
+        const targetY = visualCenterY
 
         d3.select(svgRef.current)
           .transition()
-          .duration(750)
+          .duration(ZOOM_TRANSITION_MS)
           .call(
             zoomRef.current.transform,
             d3.zoomIdentity
@@ -113,7 +111,7 @@ export default function GraphView({ nodes, links, config, selectedId, playingNod
         simulationRef.current.alpha(0.3).restart()
       }
     }
-  }, [showSearchBar, searchTrigger])
+  }, [showSearchBar, searchTrigger, searchQuery, centerBackground])
 
   useEffect(() => {
     configRef.current = config
@@ -213,6 +211,7 @@ export default function GraphView({ nodes, links, config, selectedId, playingNod
     const simulation = d3.forceSimulation<NodeDatum>()
       .force('link', d3.forceLink<NodeDatum, any>().id(d => d.id))
       .force('charge', d3.forceManyBody())
+      .force('collide', d3.forceCollide<NodeDatum>().radius(d => configRef.current.nodeSize + 4).iterations(2))
       .force('center', d3.forceCenter(width / 2, visualCenterY))
       .force('exclusion', () => {
         if (!exclusionActiveRef.current) return
@@ -347,10 +346,16 @@ export default function GraphView({ nodes, links, config, selectedId, playingNod
     if (linkForce) linkForce.strength(config.linkForce).distance(config.linkDistance)
 
     const chargeForce = simulation.force<d3.ForceManyBody<NodeDatum>>('charge')
-    if (chargeForce) chargeForce.strength(config.repelForce * config.repelForcePercentage)
+    if (chargeForce) {
+      chargeForce.strength(config.repelForce * config.repelForcePercentage)
+      chargeForce.theta(0.85)
+    }
 
     const centerForce = simulation.force<d3.ForceCenter<NodeDatum>>('center')
     if (centerForce) centerForce.strength(config.centerForce)
+
+    const collideForce = simulation.force<d3.ForceCollide<NodeDatum>>('collide')
+    if (collideForce) collideForce.radius(d => config.nodeSize + 4)
 
     const oldNodes = simulation.nodes()
     const nodeMap = new Map(oldNodes.map(n => [n.id, n]))
@@ -520,7 +525,7 @@ export default function GraphView({ nodes, links, config, selectedId, playingNod
         const x = node.x ?? width / 2
         const y = node.y ?? visualCenterY
 
-        svg.transition().duration(750).call(
+        svg.transition().duration(ZOOM_TRANSITION_MS).call(
           zoomRef.current.transform,
           d3.zoomIdentity
             .translate(width / 2, visualCenterY)
@@ -605,7 +610,7 @@ export default function GraphView({ nodes, links, config, selectedId, playingNod
           if (zoomRef.current && svgRef.current) {
             const rect = svgRef.current.getBoundingClientRect()
             const visualCenterY = centerBackground ? (rect.height / 2) : ((rect.height - 72) / 2)
-            d3.select(svgRef.current).transition().duration(750)
+            d3.select(svgRef.current).transition().duration(ZOOM_TRANSITION_MS)
               .call(
                 zoomRef.current.transform, 
                 d3.zoomIdentity
@@ -648,7 +653,7 @@ export default function GraphView({ nodes, links, config, selectedId, playingNod
     } else if (!selectedId && !searchQuery && svgRef.current && zoomRef.current) {
       const rect = svgRef.current.getBoundingClientRect()
       const visualCenterY = centerBackground ? (rect.height / 2) : ((rect.height - 72) / 2)
-      d3.select(svgRef.current).transition().duration(750).call(
+      d3.select(svgRef.current).transition().duration(ZOOM_TRANSITION_MS).call(
         zoomRef.current.transform,
         d3.zoomIdentity
           .translate(rect.width / 2, visualCenterY)
@@ -680,7 +685,7 @@ export default function GraphView({ nodes, links, config, selectedId, playingNod
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   const val = e.currentTarget.value
-                  onSearch?.(val)
+                  const useOverviewZoom = onSearch?.(val) === true
                   setHideOverlay(true)
                   configRef.current = {
                     ...configRef.current,
@@ -689,14 +694,14 @@ export default function GraphView({ nodes, links, config, selectedId, playingNod
                   if (simulationRef.current) {
                     simulationRef.current.alpha(0.3).restart()
                   }
-                  if (svgRef.current && zoomRef.current) {
+                  if (useOverviewZoom && svgRef.current && zoomRef.current) {
                     const rect = svgRef.current.getBoundingClientRect()
                     const width = rect.width
                     const height = rect.height
                     const visualCenterY = centerBackground ? (height / 2) : ((height - 72) / 2)
                     d3.select(svgRef.current)
                       .transition()
-                      .duration(750)
+                      .duration(ZOOM_TRANSITION_MS)
                       .call(
                         zoomRef.current.transform,
                         d3.zoomIdentity

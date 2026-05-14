@@ -67,6 +67,7 @@ export default function App() {
   const normalizeNode = useCallback((n: any): RawNode => ({
     ...n,
     node_id: String(n.node_id),
+    music_id: n.music_id != null ? String(n.music_id) : n.music_id,
     node_music_links_next: (n.node_music_links_next || []).map((id: any) => String(id)),
     node_music_links_previous: (n.node_music_links_previous || []).map((id: any) => String(id)),
     node_tag_links_next: (n.node_tag_links_next || []).map((id: any) => String(id)),
@@ -139,7 +140,7 @@ export default function App() {
         )
 
         if (matches.length === 1 && (matches[0].node_type === 'Author' || matches[0].node_type === 'Tag')) {
-          const reachableIds = getReachableFrom([matches[0]], 1)
+          const reachableIds = getReachableFrom([matches[0]], 2)
           return rawNodes.filter(rn => reachableIds.has(String(rn.node_id)))
         }
 
@@ -215,23 +216,53 @@ export default function App() {
   const handleNext = useCallback(() => {
     if (!currentTrack || !visibleNodes.length) return
     const currentNode = visibleNodes.find(rn => String(rn.node_id) === String(selectedNodeId))
-    const baseNode = currentNode || visibleNodes.find(rn => rn.music_id === currentTrack.music_id)
+    const playingMusicNode = visibleNodes.find(
+      rn => rn.node_type === 'Music' && rn.music_id === currentTrack.music_id
+    )
+    const baseNode =
+      currentNode?.node_type === 'Music' ? currentNode : playingMusicNode || currentNode
     if (!baseNode) return
 
-    if (baseNode.node_album_links_next?.length > 0) {
-      const nextId = String(baseNode.node_album_links_next[0])
-      const nextNode = visibleNodes.find(rn => String(rn.node_id) === nextId)
-      if (nextNode && nextNode.node_type === "Music") {
-        handleTrackChange(nextNode as unknown as Music, String(nextNode.node_id), true, isManualSelection)
+    if (baseNode.node_type === 'Music') {
+      if (baseNode.node_album_links_next?.length > 0) {
+        const nextId = String(baseNode.node_album_links_next[0])
+        const nextNode = visibleNodes.find(rn => String(rn.node_id) === nextId)
+        if (nextNode && nextNode.node_type === 'Music') {
+          handleTrackChange(nextNode as unknown as Music, String(nextNode.node_id), true, isManualSelection)
+          return
+        }
+      }
+      if (baseNode.node_music_links_next?.length > 0) {
+        const nextId = String(baseNode.node_music_links_next[0])
+        const nextNode = visibleNodes.find(rn => String(rn.node_id) === nextId)
+        if (nextNode && nextNode.node_type === 'Music') {
+          handleTrackChange(nextNode as unknown as Music, String(nextNode.node_id), true, isManualSelection)
+          return
+        }
+      }
+      if (baseNode.node_author_links_next?.length > 0) {
+        const authorId = String(baseNode.node_author_links_next[0])
+        if (visibleNodes.some(n => String(n.node_id) === authorId)) {
+          setSelectedNodeId(authorId)
+          setShouldFocus(isManualSelection)
+        }
         return
       }
+      if (baseNode.node_tag_links_next?.length > 0) {
+        const tagId = String(baseNode.node_tag_links_next[0])
+        if (visibleNodes.some(n => String(n.node_id) === tagId)) {
+          setSelectedNodeId(tagId)
+          setShouldFocus(isManualSelection)
+        }
+      }
+      return
     }
 
-    if (baseNode.node_author_links_next?.length > 0) {
-      const authorId = String(baseNode.node_author_links_next[0])
-      if (visibleNodes.some(n => String(n.node_id) === authorId)) {
-        setSelectedNodeId(authorId)
-        setShouldFocus(isManualSelection)
+    if (baseNode.node_type === 'Album' && baseNode.node_music_links_next?.length > 0) {
+      const nextId = String(baseNode.node_music_links_next[0])
+      const nextNode = visibleNodes.find(rn => String(rn.node_id) === nextId)
+      if (nextNode && nextNode.node_type === 'Music') {
+        handleTrackChange(nextNode as unknown as Music, String(nextNode.node_id), true, isManualSelection)
       }
     }
   }, [currentTrack, visibleNodes, selectedNodeId, isManualSelection, handleTrackChange])
@@ -239,30 +270,62 @@ export default function App() {
   const handlePrevious = useCallback(() => {
     if (!currentTrack || !visibleNodes.length) return
     const currentNode = visibleNodes.find(rn => String(rn.node_id) === String(selectedNodeId))
-    const baseNode = currentNode || visibleNodes.find(rn => rn.music_id === currentTrack.music_id)
+    const playingMusicNode = visibleNodes.find(
+      rn => rn.node_type === 'Music' && rn.music_id === currentTrack.music_id
+    )
+    const baseNode =
+      currentNode?.node_type === 'Music' ? currentNode : playingMusicNode || currentNode
     if (!baseNode) return
 
-    if (baseNode.node_album_links_previous?.length > 0) {
-      const prevId = String(baseNode.node_album_links_previous[0])
-      const prevNode = visibleNodes.find(rn => String(rn.node_id) === prevId)
-      if (prevNode && prevNode.node_type === "Music") {
-        handleTrackChange(prevNode as unknown as Music, String(prevNode.node_id), false, isManualSelection)
+    if (baseNode.node_type === 'Music') {
+      if (baseNode.node_album_links_previous?.length > 0) {
+        const prevId = String(baseNode.node_album_links_previous[0])
+        const prevNode = visibleNodes.find(rn => String(rn.node_id) === prevId)
+        if (prevNode && prevNode.node_type === 'Music') {
+          handleTrackChange(prevNode as unknown as Music, String(prevNode.node_id), false, isManualSelection)
+          return
+        }
+      }
+      if (baseNode.node_music_links_previous?.length > 0) {
+        const prevId = String(baseNode.node_music_links_previous[0])
+        const prevNode = visibleNodes.find(rn => String(rn.node_id) === prevId)
+        if (prevNode && prevNode.node_type === 'Music') {
+          handleTrackChange(prevNode as unknown as Music, String(prevNode.node_id), false, isManualSelection)
+          return
+        }
+      }
+      if (baseNode.node_author_links_previous?.length > 0) {
+        const authorId = String(baseNode.node_author_links_previous[0])
+        if (visibleNodes.some(n => String(n.node_id) === authorId)) {
+          setSelectedNodeId(authorId)
+          setShouldFocus(isManualSelection)
+        }
         return
       }
+      if (baseNode.node_tag_links_previous?.length > 0) {
+        const tagId = String(baseNode.node_tag_links_previous[0])
+        if (visibleNodes.some(n => String(n.node_id) === tagId)) {
+          setSelectedNodeId(tagId)
+          setShouldFocus(isManualSelection)
+        }
+      }
+      return
     }
 
-    if (baseNode.node_author_links_next?.length > 0) {
-      const authorId = String(baseNode.node_author_links_next[0])
-      if (visibleNodes.some(n => String(n.node_id) === authorId)) {
-        setSelectedNodeId(authorId)
-        setShouldFocus(isManualSelection)
+    if (baseNode.node_type === 'Album' && baseNode.node_music_links_previous?.length > 0) {
+      const prevId = String(baseNode.node_music_links_previous[0])
+      const prevNode = visibleNodes.find(rn => String(rn.node_id) === prevId)
+      if (prevNode && prevNode.node_type === 'Music') {
+        handleTrackChange(prevNode as unknown as Music, String(prevNode.node_id), false, isManualSelection)
       }
     }
   }, [currentTrack, visibleNodes, selectedNodeId, isManualSelection, handleTrackChange])
 
   const playingNodeId = useMemo(() => {
     if (!currentTrack) return null
-    const node = visibleNodes.find(rn => rn.music_id === currentTrack.music_id)
+    const node = visibleNodes.find(
+      rn => rn.node_type === 'Music' && rn.music_id === currentTrack.music_id
+    )
     return node ? String(node.node_id) : null
   }, [currentTrack, visibleNodes])
 
@@ -446,10 +509,11 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleGlobalKeyDown)
   }, [handleDeselect])
 
-  const handleSearch = useCallback((query: string) => {
-    setSearchQuery(query)
-    if (!query) return
-    const q = query.toLowerCase()
+  const handleSearch = useCallback((query: string): boolean => {
+    const trimmed = query.trim()
+    setSearchQuery(trimmed)
+    if (!trimmed) return false
+    const q = trimmed.toLowerCase()
     const matches = rawNodes.filter(rn => 
       (rn.node_name?.toLowerCase().includes(q)) ||
       (rn.music_author?.toLowerCase().includes(q)) ||
@@ -469,7 +533,9 @@ export default function App() {
         setIsManualSelection(true);
         setShouldFocus(true);
       }
+      return false
     }
+    return matches.length >= 2
   }, [rawNodes, handleTrackChange])
 
   useEffect(() => {
