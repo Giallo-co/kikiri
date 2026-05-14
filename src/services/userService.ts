@@ -290,6 +290,14 @@ export class UserService {
       return await this.userRepository.getFollowingIds(userId);
   }
 
+  public async toggleNodeLike(username: string, musicNodeId: number): Promise<void> {
+    await this.nodeService.toggleLike(username, musicNodeId);
+  }
+
+  public async updateNode(nodeId: number, data: any): Promise<void> {
+    await this.nodeService.updateNode(nodeId, data);
+  }
+
   async setProfilePictureKey(actorId: number, targetUserId: number, profilePictureKey: string): Promise<User> {
     if (actorId !== targetUserId) {
       throw new ServiceException(4030, 'You can only update your own profile picture.', 403);

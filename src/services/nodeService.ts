@@ -1,4 +1,4 @@
-import { PutCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
+import { PutCommand, ScanCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { docClient, NODE_TABLE_NAME } from "../lib/dynamo";
 
 export interface AuthorNode {
@@ -166,5 +166,67 @@ export class NodeService {
     );
 
     return node;
+  }
+
+  public async toggleLike(username: string, musicNodeId: number): Promise<void> {
+    const items = await docClient.send(
+      new ScanCommand({
+        TableName: NODE_TABLE_NAME,
+        FilterExpression: "node_type = :type AND (node_name = :name OR author_name = :name)",
+        ExpressionAttributeValues: {
+          ":type": "Author",
+          ":name": username,
+        },
+      })
+    );
+
+    const userNode = items.Items?.[0];
+    if (!userNode) throw new Error("User node not found");
+
+    const likes = (userNode.node_music_likes || []) as number[];
+    const isLiked = likes.includes(musicNodeId);
+    
+    let newLikes;
+    if (isLiked) {
+      newLikes = likes.filter(id => id !== musicNodeId);
+    } else {
+      newLikes = [...likes, musicNodeId];
+    }
+
+    await docClient.send(
+      new UpdateCommand({
+        TableName: NODE_TABLE_NAME,
+        Key: { node_id: userNode.node_id },
+        UpdateExpression: "SET node_music_likes = :likes",
+        ExpressionAttributeValues: {
+          ":likes": newLikes,
+        },
+      })
+    );
+  }
+
+  public async updateNode(nodeId: number, data: any): Promise<void> {
+    const fields = Object.entries(data).filter(([_, v]) => v !== undefined);
+    if (fields.length === 0) return;
+
+    const names: Record<string, string> = {};
+    const values: Record<string, any> = {};
+    const parts: string[] = [];
+
+    fields.forEach(([k, v]) => {
+      names[`#${k}`] = k;
+      values[`:${k}`] = v;
+      parts.push(`#${k} = :${k}`);
+    });
+
+    await docClient.send(
+      new UpdateCommand({
+        TableName: NODE_TABLE_NAME,
+        Key: { node_id: nodeId },
+        UpdateExpression: `SET ${parts.join(", ")}`,
+        ExpressionAttributeNames: names,
+        ExpressionAttributeValues: values,
+      })
+    );
   }
 }

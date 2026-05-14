@@ -34,4 +34,8 @@ router.get("/v1/users/:userId/following", authenticateToken, (req, res, next) =>
 // Rutas ejemplos
 router.get("/v1/simulation", authenticateToken, (req, res, next) => userController.simulate(req, res));
 
+// Node interactions
+router.post("/like", (req, res, next) => userController.toggleLike(req, res, next));
+router.post("/profile/update", (req, res, next) => userController.updateProfileNode(req, res, next));
+
 export default router;

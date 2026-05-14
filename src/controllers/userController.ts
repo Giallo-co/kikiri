@@ -172,4 +172,41 @@ export class UserController {
             next(error); 
         }
     }
-}
+
+    public toggleLike = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const { username, musicNodeId } = req.body;
+            if (!username || !musicNodeId) {
+                return res.status(400).json({ message: "Username and musicNodeId are required" });
+            }
+            await this.userService.toggleNodeLike(username, Number(musicNodeId));
+            res.status(200).json({ message: "Like toggled successfully" });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    public updateProfileNode = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const { node_id, node_name, author_name, author_description, node_color } = req.body;
+            await this.userService.updateNode(Number(node_id), {
+                node_name,
+                author_name,
+                author_description,
+                node_color
+            });
+            res.status(200).json({
+                message: "Profile updated successfully",
+                node: {
+                    node_id,
+                    node_name,
+                    author_name,
+                    author_description,
+                    node_color
+                }
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+    }

@@ -124,6 +124,7 @@ export default function App() {
           (rn.author_name?.toLowerCase().includes(q))
         )
 
+        // Contextual navigation: If Author or Tag, show neighborhood
         if (matches.length === 1 && (matches[0].node_type === 'Author' || matches[0].node_type === 'Tag')) {
           const reachableIds = getReachableFrom([matches[0]], 1)
           return rawNodes.filter(rn => reachableIds.has(rn.node_id))
@@ -131,38 +132,31 @@ export default function App() {
 
         return matches
       } else {
-        // Union of Home and Explore: basically everything reachable
-        const homeMusic = rawNodes.filter(rn => rn.node_type === 'Music' && likedMusicIds.includes(rn.node_id))
-        const exploreMusic = rawNodes.filter(rn => rn.node_type === 'Music' && !likedMusicIds.includes(rn.node_id))
-        
-        const homeReachable = getReachableFrom(homeMusic, 2)
-        const exploreReachable = getReachableFrom(exploreMusic, 100)
-        
-        const unionIds = new Set([...homeReachable, ...exploreReachable])
+        // Default Search view (before typing): show a mix or everything
         return rawNodes.filter(rn => {
           if (rn.node_type === 'Author' && (!rn.node_music_links_next || rn.node_music_links_next.length === 0)) return false
           if (rn.node_id === userNode?.node_id) return true
-          return unionIds.has(rn.node_id)
+          return true
         })
       }
     }
 
-    // --- NORMAL TABS LOGIC ---
-    const visibleMusicNodes = rawNodes.filter(rn => {
+    // --- NORMAL TABS LOGIC (Home / Explore) ---
+    const filteredBaseMusic = rawNodes.filter(rn => {
       if (rn.node_type !== 'Music') return false
       if (activeTab === 'Home') return likedMusicIds.includes(rn.node_id)
       if (activeTab === 'Explore') return !likedMusicIds.includes(rn.node_id)
       return true
     })
     
-    const visibleMusicIds = new Set(visibleMusicNodes.map(m => m.node_id))
-    const maxDepth = activeTab === 'Home' ? 2 : 100 
-    const reachableIds = getReachableFrom(visibleMusicNodes, maxDepth)
+    const maxDepth = activeTab === 'Home' ? 1 : 100 
+    const reachableIds = getReachableFrom(filteredBaseMusic, maxDepth)
 
     return rawNodes.filter(rn => {
-      if (rn.node_type === 'Author' && (!rn.node_music_links_next || rn.node_music_links_next.length === 0)) return false
+      // Always show current user node if logged in
       if (rn.node_id === userNode?.node_id) return true
-      if (rn.node_type === 'Music' && !visibleMusicIds.has(rn.node_id)) return false
+      
+      // For Home/Explore, only show reachable nodes from the filtered base music
       return reachableIds.has(rn.node_id)
     })
   }, [rawNodes, activeTab, isLoggedIn, username, searchQuery])
@@ -442,21 +436,12 @@ export default function App() {
     )
     if (matches.length === 1) {
       const match = matches[0]
+      setSelectedNodeId(match.node_id);
+      setIsManualSelection(true);
+      setShouldFocus(true);
+      
       if (match.node_type === 'Music') {
-        setSelectedNodeId(match.node_id); 
-        setIsManualSelection(true); 
-        setShouldFocus(true)
         handleTrackChange(match as unknown as Music, match.node_id, true, true)
-      } else {
-        // For Author or Tag, we don't just select it, we want to see its neighborhood
-        setSelectedNodeId(match.node_id);
-        setIsManualSelection(true);
-        setShouldFocus(true);
-        
-        // The visibleNodes memo will handle showing the reachable nodes 
-        // because it uses activeTab === 'Search' logic.
-        // However, we need to ensure the search results visible list 
-        // includes the related nodes if it's a single match of Author/Tag.
       }
     }
   }, [rawNodes, handleTrackChange])
@@ -473,6 +458,7 @@ export default function App() {
     )
     if (matches.length >= 2) {
       setSelectedNodeId(null) 
+      setShouldFocus(false)
       setCurrentConfig(prev => ({ ...prev, outerExclusionRadius: matches.length * 5 }))
     } else {
       setCurrentConfig(graphConfig)
