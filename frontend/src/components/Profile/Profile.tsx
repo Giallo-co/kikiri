@@ -41,7 +41,7 @@ export default function Profile({ userNode, onUpdate, onClose }: ProfileProps) {
   };
 
   const presign = async (body: Record<string, unknown>) => {
-    const res = await fetch(apiUrl('/v1/uploads/presign'), {
+    const res = await fetch(apiUrl('/user/v1/uploads/presign'), {
       method: 'POST',
       headers: authHeaders(),
       body: JSON.stringify(body),
@@ -81,7 +81,7 @@ export default function Profile({ userNode, onUpdate, onClose }: ProfileProps) {
         finalAvatarUrl = avatarPresign.publicUrl || '';
       }
 
-      const response = await fetch(apiUrl('/profile/update'), {
+      const response = await fetch(apiUrl('/user/profile/update'), {
         method: 'POST',
         headers: authHeaders(),
         body: JSON.stringify({
