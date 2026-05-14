@@ -24,6 +24,8 @@ router.get("/v1/users/email/:email", authenticateToken, (req, res, next) => user
 router.get("/v1/users/id/:id", authenticateToken, (req, res, next) => userController.getById(req, res, next));
 router.patch("/v1/users/:id/profile-picture", authenticateToken, (req, res, next) => userController.patchProfilePicture(req, res, next));
 router.put("/v1/users/:id", authenticateToken, (req, res, next) => userController.update(req, res, next));
+router.post("/profile/update", authenticateToken, (req, res, next) => userController.updateAuthorProfile(req, res, next));
+router.post("/v1/profile/update", authenticateToken, (req, res, next) => userController.updateAuthorProfile(req, res, next));
 router.delete("/v1/users/:id", authenticateToken, (req, res, next) => userController.delete(req, res, next));
 
 // Rutas CRUD follow, menos update

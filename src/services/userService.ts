@@ -290,6 +290,15 @@ export class UserService {
       return await this.userRepository.getFollowingIds(userId);
   }
 
+  async updateAuthorNode(nodeId: number, updates: {
+    author_name?: string;
+    author_description?: string;
+    author_profile_picture?: string;
+    node_color?: string;
+  }) {
+    return await this.nodeService.updateAuthorNode(nodeId, updates);
+  }
+
   async setProfilePictureKey(actorId: number, targetUserId: number, profilePictureKey: string): Promise<User> {
     if (actorId !== targetUserId) {
       throw new ServiceException(4030, 'You can only update your own profile picture.', 403);
