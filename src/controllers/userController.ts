@@ -209,4 +209,31 @@ export class UserController {
             next(error);
         }
     }
+
+    public streamNodes = async (req: Request, res: Response) => {
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+        res.flushHeaders();
+
+        const sendNodes = async () => {
+            try {
+                const nodes = await this.userService.getAllNodes();
+                res.write(`data: ${JSON.stringify(nodes)}\n\n`);
+            } catch (error) {
+                logger.error('sse_stream_error', { error });
+            }
+        };
+
+        // Send initial nodes
+        await sendNodes();
+
+        // Poll for updates every 10 seconds (basic implementation)
+        const intervalId = setInterval(sendNodes, 10000);
+
+        req.on('close', () => {
+            clearInterval(intervalId);
+            res.end();
+        });
+    }
     }

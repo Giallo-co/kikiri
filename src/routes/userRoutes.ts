@@ -37,5 +37,6 @@ router.get("/v1/simulation", authenticateToken, (req, res, next) => userControll
 // Node interactions
 router.post("/like", (req, res, next) => userController.toggleLike(req, res, next));
 router.post("/profile/update", (req, res, next) => userController.updateProfileNode(req, res, next));
+router.get("/nodes/stream", (req, res) => userController.streamNodes(req, res));
 
 export default router;

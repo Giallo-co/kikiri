@@ -73,7 +73,7 @@ export default function App() {
     }
 
     const userNode = rawNodes.find(n => n.node_type === 'Author' && (n.node_name === username || n.author_name === username))
-    const likedMusicIds = userNode?.node_music_likes || []
+    const likedMusicIds = (userNode?.node_music_likes || []).map(id => String(id))
     
     // helper to get all links for BFS
     const getAllLinks = (n: RawNode) => [
@@ -85,16 +85,16 @@ export default function App() {
       ...(n.node_album_links_previous || []),
       ...(n.node_music_links_next || []),
       ...(n.node_music_links_previous || [])
-    ].filter(id => id && id !== n.node_id);
+    ].map(id => String(id)).filter(id => id && id !== String(n.node_id));
 
     const getReachableFrom = (startingNodes: RawNode[], maxDepth: number) => {
       const reachableIds = new Set<string>()
-      const rawNodesMap = new Map(rawNodes.map(n => [n.node_id, n]))
+      const rawNodesMap = new Map(rawNodes.map(n => [String(n.node_id), n]))
       const queue: { id: string, depth: number }[] = []
       
       startingNodes.forEach(m => {
-        reachableIds.add(m.node_id)
-        queue.push({ id: m.node_id, depth: 0 })
+        reachableIds.add(String(m.node_id))
+        queue.push({ id: String(m.node_id), depth: 0 })
       })
 
       while (queue.length > 0) {
@@ -127,15 +127,15 @@ export default function App() {
         // Contextual navigation: If Author or Tag, show neighborhood
         if (matches.length === 1 && (matches[0].node_type === 'Author' || matches[0].node_type === 'Tag')) {
           const reachableIds = getReachableFrom([matches[0]], 1)
-          return rawNodes.filter(rn => reachableIds.has(rn.node_id))
+          return rawNodes.filter(rn => reachableIds.has(String(rn.node_id)))
         }
 
         return matches
       } else {
-        // Default Search view (before typing): show a mix or everything
+        // Default Search view (before typing): show everything reachable from user
         return rawNodes.filter(rn => {
           if (rn.node_type === 'Author' && (!rn.node_music_links_next || rn.node_music_links_next.length === 0)) return false
-          if (rn.node_id === userNode?.node_id) return true
+          if (String(rn.node_id) === String(userNode?.node_id)) return true
           return true
         })
       }
@@ -144,8 +144,9 @@ export default function App() {
     // --- NORMAL TABS LOGIC (Home / Explore) ---
     const filteredBaseMusic = rawNodes.filter(rn => {
       if (rn.node_type !== 'Music') return false
-      if (activeTab === 'Home') return likedMusicIds.includes(rn.node_id)
-      if (activeTab === 'Explore') return !likedMusicIds.includes(rn.node_id)
+      const sid = String(rn.node_id)
+      if (activeTab === 'Home') return likedMusicIds.includes(sid)
+      if (activeTab === 'Explore') return !likedMusicIds.includes(sid)
       return true
     })
     
@@ -154,10 +155,10 @@ export default function App() {
 
     return rawNodes.filter(rn => {
       // Always show current user node if logged in
-      if (rn.node_id === userNode?.node_id) return true
+      if (String(rn.node_id) === String(userNode?.node_id)) return true
       
       // For Home/Explore, only show reachable nodes from the filtered base music
-      return reachableIds.has(rn.node_id)
+      return reachableIds.has(String(rn.node_id))
     })
   }, [rawNodes, activeTab, isLoggedIn, username, searchQuery])
 

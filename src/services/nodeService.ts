@@ -85,6 +85,22 @@ export class NodeService {
     return maxId + 1;
   }
 
+  public async scanAllNodes(): Promise<any[]> {
+    const items: any[] = [];
+    let ExclusiveStartKey: any;
+    do {
+      const res = await docClient.send(
+        new ScanCommand({
+          TableName: NODE_TABLE_NAME,
+          ExclusiveStartKey,
+        })
+      );
+      if (res.Items?.length) items.push(...res.Items);
+      ExclusiveStartKey = res.LastEvaluatedKey;
+    } while (ExclusiveStartKey);
+    return items;
+  }
+
   public async createAuthorNode(authorId: number, username: string): Promise<AuthorNode> {
     const nodeId = await this.getNextNodeId();
     

@@ -298,6 +298,10 @@ export class UserService {
     await this.nodeService.updateNode(nodeId, data);
   }
 
+  public async getAllNodes(): Promise<any[]> {
+    return await this.nodeService.scanAllNodes();
+  }
+
   async setProfilePictureKey(actorId: number, targetUserId: number, profilePictureKey: string): Promise<User> {
     if (actorId !== targetUserId) {
       throw new ServiceException(4030, 'You can only update your own profile picture.', 403);
