@@ -40,7 +40,18 @@ export default function Login({ onLogin, isTransitioning }: LoginProps) {
         }
 
         const data = await response.json();
-        // After successful registration, log them in
+        if (!data.token || !data.user) {
+          throw new Error('Invalid server response');
+        }
+        localStorage.setItem('kikiri_token', data.token);
+        localStorage.setItem(
+          'kikiri_user',
+          JSON.stringify({
+            id: data.user.id,
+            username: data.user.username,
+            email: data.user.email,
+          })
+        );
         onLogin(data.user.username);
       } catch (err: any) {
         setError(err.message);
@@ -64,6 +75,18 @@ export default function Login({ onLogin, isTransitioning }: LoginProps) {
         }
 
         const data = await response.json();
+        if (!data.token || !data.user) {
+          throw new Error('Invalid server response');
+        }
+        localStorage.setItem('kikiri_token', data.token);
+        localStorage.setItem(
+          'kikiri_user',
+          JSON.stringify({
+            id: data.user.id,
+            username: data.user.username,
+            email: data.user.email,
+          })
+        );
         onLogin(data.user.username);
       } catch (err: any) {
         setError(err.message);

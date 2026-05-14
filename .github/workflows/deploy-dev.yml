@@ -63,7 +63,9 @@ jobs:
             DATABASE_PORT=${{ secrets.DATABASE_PORT }}
             JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
             AWS_REGION=us-east-1
-            CORS_ORIGINS=http://localhost:5173,https://dev.d2ue26m8qd77du.amplifyapp.com,https://dev.d1zuli3x9jzxj9.amplifyapp.com
+            DYNAMODB_TABLE_NAME=KikiriSocialDev
+            DYNAMODB_NODE_TABLE_NAME=node
+            CORS_ORIGINS=${{ secrets.CORS_ORIGINS_DEV }}
             S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }}
             S3_PUBLIC_BASE_URL=${{ secrets.S3_PUBLIC_BASE_URL }}
             EOF

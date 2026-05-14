@@ -10,9 +10,10 @@ import feedRoutes from './routes/feedRoutes';
 import searchRoutes from './routes/searchRoutes';
 import interactionRoutes from './routes/interactionRoutes';
 import uploadRoutes from './routes/uploadRoutes';
-import userPostRoutes from './routes/userPostRoutes';
+import userPostRoutes, { albumController } from './routes/userPostRoutes';
 import profilePictureRoutes from './routes/profilePicture';
 import cors from 'cors';
+import { authenticateToken } from './middlewares/authMiddleware';
 
 const app = express();
 const PORT = config.port; 
@@ -40,6 +41,9 @@ app.use(config.apiBasePath, searchRoutes);
 app.use(config.apiBasePath, interactionRoutes);
 app.use(config.apiBasePath, uploadRoutes);
 app.use(config.apiBasePath, userPostRoutes);
+app.use("/api", userPostRoutes);
+/** Vite dev proxy strips `/api` — same handler as `POST /api/album/upload`. */
+app.post("/album/upload", authenticateToken, (req, res, next) => albumController.publish(req, res, next));
 app.use("/api/profile-picture", profilePictureRoutes);
 
 app.use(errorHandler); 

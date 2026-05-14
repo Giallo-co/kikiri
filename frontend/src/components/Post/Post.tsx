@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import './Post.css';
+
+const TOKEN_KEY = 'kikiri_token';
 
 interface TrackInput {
   name: string;
-  url: string;
   description: string;
   tag: string;
+  file: File | null;
 }
 
 interface PostProps {
@@ -15,20 +17,57 @@ interface PostProps {
 }
 
 export default function Post({ username, onClose, onSuccess }: PostProps) {
+  const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '').trim() ?? '';
+  const apiUrl = (path: string) => `${apiBaseUrl}${path.startsWith('/') ? path : `/${path}`}`;
+
   const [albumName, setAlbumName] = useState('');
-  const [authorName, setAuthorName] = useState(username);
   const [generalTag, setGeneralTag] = useState('');
-  const [tracks, setTracks] = useState<TrackInput[]>([{ name: '', url: '', description: '', tag: '' }]);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [tracks, setTracks] = useState<TrackInput[]>([
+    { name: '', description: '', tag: '', file: null },
+  ]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const coverInputRef = useRef<HTMLInputElement>(null);
 
-  const handleAddTrack = () => {
-    setTracks([...tracks, { name: '', url: '', description: '', tag: '' }]);
+  const token = () => localStorage.getItem(TOKEN_KEY);
+
+  const authHeaders = (): HeadersInit => {
+    const t = token();
+    const h: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (t) h.Authorization = `Bearer ${t}`;
+    return h;
   };
 
-  const handleTrackChange = (index: number, field: keyof TrackInput, value: string) => {
+  const presign = async (body: Record<string, unknown>) => {
+    const res = await fetch(apiUrl('/user/v1/uploads/presign'), {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error((data as { message?: string }).message || `Presign failed (${res.status})`);
+    }
+    return data as { url: string; headers: Record<string, string>; key: string };
+  };
+
+  const putToS3 = async (upload: { url: string; headers: Record<string, string> }, file: File) => {
+    const h = new Headers();
+    Object.entries(upload.headers).forEach(([k, v]) => h.set(k, v));
+    const res = await fetch(upload.url, { method: 'PUT', headers: h, body: file });
+    if (!res.ok) {
+      throw new Error(`S3 upload failed: ${res.status}`);
+    }
+  };
+
+  const handleAddTrack = () => {
+    setTracks([...tracks, { name: '', description: '', tag: '', file: null }]);
+  };
+
+  const handleTrackChange = (index: number, field: keyof TrackInput, value: string | File | null) => {
     const newTracks = [...tracks];
-    (newTracks[index] as any)[field] = value;
+    (newTracks[index] as Record<string, unknown>)[field] = value;
     setTracks(newTracks);
   };
 
@@ -42,29 +81,87 @@ export default function Post({ username, onClose, onSuccess }: PostProps) {
     setLoading(true);
     setError('');
 
+    if (!token()) {
+      setError('You must be logged in again to upload (missing session token).');
+      setLoading(false);
+      return;
+    }
+
+    if (!coverFile) {
+      setError('Album cover image is required.');
+      setLoading(false);
+      return;
+    }
+
+    for (let i = 0; i < tracks.length; i++) {
+      if (!tracks[i].name.trim()) {
+        setError(`Track ${i + 1}: name is required.`);
+        setLoading(false);
+        return;
+      }
+      if (!tracks[i].file) {
+        setError(`Track ${i + 1}: audio file is required.`);
+        setLoading(false);
+        return;
+      }
+    }
+
     try {
-      const response = await fetch('/api/album/upload', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const coverType = coverFile.type || 'image/jpeg';
+      const coverPresign = await presign({
+        kind: 'album_cover',
+        contentType: coverType,
+        contentLength: coverFile.size,
+        albumName,
+      });
+      await putToS3(coverPresign, coverFile);
+
+      const audioKeys: string[] = [];
+      for (let i = 0; i < tracks.length; i++) {
+        const tr = tracks[i];
+        const file = tr.file as File;
+        const audioType = file.type || 'application/octet-stream';
+        const audioPresign = await presign({
+          kind: 'album_track',
+          contentType: audioType,
+          contentLength: file.size,
           albumName,
-          authorName,
-          coverUrl: '', // Removed from UI
-          generalTag,
-          tracks,
-          postedBy: username
-        })
+          trackIndex: i + 1,
+          trackName: tr.name.trim(),
+        });
+        await putToS3(audioPresign, file);
+        audioKeys.push(audioPresign.key);
+      }
+
+      const publishRes = await fetch(apiUrl('/user/v1/albums/publish'), {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({
+          albumName: albumName.trim(),
+          generalTag: generalTag.trim(),
+          coverKey: coverPresign.key,
+          tracks: tracks.map((tr, i) => ({
+            name: tr.name.trim(),
+            description: tr.description.trim(),
+            tag: tr.tag.trim(),
+            audioKey: audioKeys[i],
+          })),
+        }),
       });
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to upload album');
+      const pubData = await publishRes.json().catch(() => ({}));
+      if (!publishRes.ok) {
+        throw new Error(
+          (pubData as { message?: string }).message ||
+            (pubData as { error?: string }).error ||
+            `Publish failed (${publishRes.status})`
+        );
       }
 
       onSuccess();
       onClose();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Upload failed');
     } finally {
       setLoading(false);
     }
@@ -73,13 +170,27 @@ export default function Post({ username, onClose, onSuccess }: PostProps) {
   return (
     <div className="post-container">
       <div className="post-glass-overlay" />
-      
+
       <div className="post-content-layer">
         <div className="post-card">
           <div className="post-card-inner">
             <div className="post-header">
-              <button type="button" className="post-header-btn">
-                [ Album Cover ]
+              <input
+                ref={coverInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                style={{ display: 'none' }}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  setCoverFile(f ?? null);
+                }}
+              />
+              <button
+                type="button"
+                className="post-header-btn"
+                onClick={() => coverInputRef.current?.click()}
+              >
+                [ Album Cover ]{coverFile ? ` — ${coverFile.name}` : ''}
               </button>
               <p>Share your music with the network.</p>
             </div>
@@ -90,30 +201,24 @@ export default function Post({ username, onClose, onSuccess }: PostProps) {
                   <h3>Album Info</h3>
                   <div className="form-group">
                     <label>Album Name</label>
-                    <input 
-                      type="text" 
-                      value={albumName} 
-                      onChange={(e) => setAlbumName(e.target.value)} 
+                    <input
+                      type="text"
+                      value={albumName}
+                      onChange={(e) => setAlbumName(e.target.value)}
                       placeholder="e.g. Volume Beta"
-                      required 
+                      required
                     />
                   </div>
                   <div className="form-group">
-                    <label>Artist Name</label>
-                    <input 
-                      type="text" 
-                      value={authorName} 
-                      onChange={(e) => setAuthorName(e.target.value)} 
-                      placeholder="e.g. C418"
-                      required 
-                    />
+                    <label>Artist (account)</label>
+                    <input type="text" value={username} readOnly disabled />
                   </div>
                   <div className="form-group">
                     <label>General Tag(s)</label>
-                    <input 
-                      type="text" 
-                      value={generalTag} 
-                      onChange={(e) => setGeneralTag(e.target.value)} 
+                    <input
+                      type="text"
+                      value={generalTag}
+                      onChange={(e) => setGeneralTag(e.target.value)}
                       placeholder="e.g. Soundtrack, Indie, Electronic"
                     />
                   </div>
@@ -122,49 +227,57 @@ export default function Post({ username, onClose, onSuccess }: PostProps) {
                 <div className="form-section">
                   <div className="section-header">
                     <h3>Tracks</h3>
-                    <button type="button" onClick={handleAddTrack} className="add-track-btn">+ Add Track</button>
+                    <button type="button" onClick={handleAddTrack} className="add-track-btn">
+                      + Add Track
+                    </button>
                   </div>
-                  
+
                   {tracks.map((track, index) => (
                     <div key={index} className="track-input-group">
                       <div className="track-header">
                         <span>Track #{index + 1}</span>
                         {tracks.length > 1 && (
-                          <button type="button" onClick={() => handleRemoveTrack(index)} className="remove-track-btn">×</button>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveTrack(index)}
+                            className="remove-track-btn"
+                          >
+                            ×
+                          </button>
                         )}
                       </div>
-                      <input 
-                        type="text" 
-                        value={track.name} 
-                        onChange={(e) => handleTrackChange(index, 'name', e.target.value)} 
+                      <input
+                        type="text"
+                        value={track.name}
+                        onChange={(e) => handleTrackChange(index, 'name', e.target.value)}
                         placeholder="Track Name"
-                        required 
+                        required
                       />
                       <div className="file-upload-container">
-                        <input 
-                          type="file" 
+                        <input
+                          type="file"
                           id={`track-file-${index}`}
                           className="file-input"
-                          accept="audio/*"
+                          accept="audio/*,video/mp4,.mp3,.m4a,.wav,.flac,.ogg,.webm,.mp4"
                           onChange={(e) => {
                             const file = e.target.files?.[0];
-                            if (file) handleTrackChange(index, 'url', file.name);
+                            handleTrackChange(index, 'file', file ?? null);
                           }}
                         />
                         <label htmlFor={`track-file-${index}`} className="file-label">
-                          {track.url || 'Select Music File...'}
+                          {track.file ? track.file.name : 'Select Music File...'}
                         </label>
                       </div>
-                      <input 
-                        type="text" 
-                        value={track.description} 
-                        onChange={(e) => handleTrackChange(index, 'description', e.target.value)} 
+                      <input
+                        type="text"
+                        value={track.description}
+                        onChange={(e) => handleTrackChange(index, 'description', e.target.value)}
                         placeholder="Description (optional)"
                       />
-                      <input 
-                        type="text" 
-                        value={track.tag} 
-                        onChange={(e) => handleTrackChange(index, 'tag', e.target.value)} 
+                      <input
+                        type="text"
+                        value={track.tag}
+                        onChange={(e) => handleTrackChange(index, 'tag', e.target.value)}
                         placeholder="Tag(s) (optional, e.g. Rock, Metal)"
                       />
                     </div>
@@ -173,7 +286,7 @@ export default function Post({ username, onClose, onSuccess }: PostProps) {
               </div>
 
               {error && <p className="error-msg">{error}</p>}
-              
+
               <div className="post-actions">
                 <button type="button" className="cancel-btn" onClick={onClose}>
                   Cancel
