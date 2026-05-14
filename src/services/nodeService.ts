@@ -119,24 +119,24 @@ export class NodeService {
 
     return node;
   }
+public async createMusicNode(input: {
+  trackName: string;
+  trackDescription: string;
+  musicAuthor: string;
+  albumName: string;
+  coverUrl: string;
+  audioUrl: string;
+  nodeColor?: string;
+}): Promise<MusicNode> {
+  const nodeId = await this.getNextNodeId();
+  const musicId = String(nodeId);
 
-  public async createMusicNode(input: {
-    trackName: string;
-    trackDescription: string;
-    musicAuthor: string;
-    albumName: string;
-    coverUrl: string;
-    audioUrl: string;
-  }): Promise<MusicNode> {
-    const nodeId = await this.getNextNodeId();
-    const musicId = String(nodeId);
-
-    const node: MusicNode = {
-      node_id: nodeId,
-      node_type: "Music",
-      node_name: input.trackName,
-      node_color: "#636363",
-      node_music_links_next: [],
+  const node: MusicNode = {
+    node_id: nodeId,
+    node_type: "Music",
+    node_name: input.trackName,
+    node_color: input.nodeColor || "#636363",
+    node_music_links_next: [],
       node_music_links_previous: [],
       node_tag_links_next: [],
       node_tag_links_previous: [],

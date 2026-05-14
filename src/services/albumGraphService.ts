@@ -182,7 +182,7 @@ export class AlbumGraphService {
 
     const authorId = author.node_id;
     const authorColor = author.node_color || "#636363";
-    const finalNodeColor = (input.nodeColor ?? authorColor).trim() || authorColor;
+    const finalNodeColor = input.nodeColor?.trim() || authorColor;
     const authorUsername = author.node_name || username;
 
     const { maxNodeId, maxMusicId } = computeGlobalMax(items);
