@@ -11,6 +11,7 @@ interface SideNavProps {
 
 export default function SideNav({ activeTab, onSelect }: SideNavProps) {
   const handleClick = (item: NavItem) => {
+    console.log('SideNav clicking item:', item);
     onSelect?.(item);
   };
 
