@@ -653,9 +653,8 @@ export default function App() {
           )}
 
           {activeTab === 'Post' && (
-            <Post 
-              username={username || ''} 
-              onClose={() => setActiveTab('Home')} 
+            <Post
+              onClose={() => setActiveTab('Home')}
               onSuccess={() => setActiveTab('Home')}
             />
           )}

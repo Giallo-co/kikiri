@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './Post.css';
 
 const TOKEN_KEY = 'kikiri_token';
@@ -11,12 +11,11 @@ interface TrackInput {
 }
 
 interface PostProps {
-  username: string;
   onClose: () => void;
   onSuccess: () => void;
 }
 
-export default function Post({ username, onClose, onSuccess }: PostProps) {
+export default function Post({ onClose, onSuccess }: PostProps) {
   const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '').trim() ?? '';
   const apiUrl = (path: string) => `${apiBaseUrl}${path.startsWith('/') ? path : `/${path}`}`;
 
@@ -28,7 +27,17 @@ export default function Post({ username, onClose, onSuccess }: PostProps) {
   ]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const coverInputRef = useRef<HTMLInputElement>(null);
+  const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!coverFile) {
+      setCoverPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(coverFile);
+    setCoverPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [coverFile]);
 
   const token = () => localStorage.getItem(TOKEN_KEY);
 
@@ -66,9 +75,9 @@ export default function Post({ username, onClose, onSuccess }: PostProps) {
   };
 
   const handleTrackChange = (index: number, field: keyof TrackInput, value: string | File | null) => {
-    const newTracks = [...tracks];
-    (newTracks[index] as Record<string, unknown>)[field] = value;
-    setTracks(newTracks);
+    setTracks((prev) =>
+      prev.map((track, i) => (i === index ? { ...track, [field]: value } : track))
+    );
   };
 
   const handleRemoveTrack = (index: number) => {
@@ -175,30 +184,39 @@ export default function Post({ username, onClose, onSuccess }: PostProps) {
         <div className="post-card">
           <div className="post-card-inner">
             <div className="post-header">
-              <input
-                ref={coverInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif"
-                style={{ display: 'none' }}
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  setCoverFile(f ?? null);
-                }}
-              />
-              <button
-                type="button"
-                className="post-header-btn"
-                onClick={() => coverInputRef.current?.click()}
-              >
-                [ Album Cover ]{coverFile ? ` — ${coverFile.name}` : ''}
-              </button>
+              <h2 className="post-header-title">New album</h2>
               <p>Share your music with the network.</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="post-form">
+            <form method="post" action="#" onSubmit={handleSubmit} className="post-form">
               <div className="post-form-scrollable">
                 <div className="form-section">
                   <h3>Album Info</h3>
+                  <div className="form-group">
+                    <label htmlFor="post-album-cover-input">Album cover</label>
+                    <div className="post-cover-row">
+                      <div className="file-upload-container post-cover-file-wrap">
+                        <input
+                          id="post-album-cover-input"
+                          type="file"
+                          className="file-input"
+                          accept="image/jpeg,image/png,image/webp,image/gif"
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            setCoverFile(f ?? null);
+                          }}
+                        />
+                        <label htmlFor="post-album-cover-input" className="file-label">
+                          {coverFile ? coverFile.name : 'Select cover image…'}
+                        </label>
+                      </div>
+                      {coverPreviewUrl ? (
+                        <div className="post-cover-thumb">
+                          <img src={coverPreviewUrl} alt="Album cover preview" />
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
                   <div className="form-group">
                     <label>Album Name</label>
                     <input
@@ -208,10 +226,6 @@ export default function Post({ username, onClose, onSuccess }: PostProps) {
                       placeholder="e.g. Volume Beta"
                       required
                     />
-                  </div>
-                  <div className="form-group">
-                    <label>Artist (account)</label>
-                    <input type="text" value={username} readOnly disabled />
                   </div>
                   <div className="form-group">
                     <label>General Tag(s)</label>
