@@ -21,6 +21,7 @@ export default function Post({ onClose, onSuccess }: PostProps) {
 
   const [albumName, setAlbumName] = useState('');
   const [generalTag, setGeneralTag] = useState('');
+  const [nodeColor, setNodeColor] = useState('#636363');
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [tracks, setTracks] = useState<TrackInput[]>([
     { name: '', description: '', tag: '', file: null },
@@ -149,6 +150,7 @@ export default function Post({ onClose, onSuccess }: PostProps) {
           albumName: albumName.trim(),
           generalTag: generalTag.trim(),
           coverKey: coverPresign.key,
+          nodeColor,
           tracks: tracks.map((tr, i) => ({
             name: tr.name.trim(),
             description: tr.description.trim(),
@@ -235,6 +237,18 @@ export default function Post({ onClose, onSuccess }: PostProps) {
                       onChange={(e) => setGeneralTag(e.target.value)}
                       placeholder="e.g. Soundtrack, Indie, Electronic"
                     />
+                  </div>
+                  <div className="form-group">
+                    <label>Node Color</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <input
+                        type="color"
+                        value={nodeColor}
+                        onChange={(e) => setNodeColor(e.target.value)}
+                        style={{ width: '50px', height: '40px', padding: '0', border: 'none', cursor: 'pointer', background: 'transparent' }}
+                      />
+                      <span style={{ fontSize: '0.9rem', color: '#ccc' }}>{nodeColor}</span>
+                    </div>
                   </div>
                 </div>
 

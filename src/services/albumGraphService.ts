@@ -15,6 +15,7 @@ export interface AlbumGraphPublishInput {
   generalTag?: string;
   coverUrl: string;
   tracks: AlbumGraphTrackInput[];
+  nodeColor?: string;
 }
 
 function randomTagColor(): string {
@@ -181,6 +182,7 @@ export class AlbumGraphService {
 
     const authorId = author.node_id;
     const authorColor = author.node_color || "#636363";
+    const finalNodeColor = (input.nodeColor ?? authorColor).trim() || authorColor;
     const authorUsername = author.node_name || username;
 
     const { maxNodeId, maxMusicId } = computeGlobalMax(items);
@@ -257,7 +259,7 @@ export class AlbumGraphService {
       const node = buildMusicNode({
         nodeId: musicIds[i]!,
         authorId,
-        authorColor,
+        authorColor: finalNodeColor,
         authorUsername,
         albumName,
         trackName: name,

@@ -18,6 +18,7 @@ export interface PublishAlbumInput {
   generalTag?: string;
   coverKey: string;
   tracks: AlbumTrackInput[];
+  nodeColor?: string;
 }
 
 export class AlbumPublishService {
@@ -88,6 +89,7 @@ export class AlbumPublishService {
       generalTag: input.generalTag ?? '',
       coverUrl,
       tracks: graphTracks,
+      nodeColor: input.nodeColor,
     });
   }
 }
