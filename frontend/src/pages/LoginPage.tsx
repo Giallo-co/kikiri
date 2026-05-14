@@ -32,7 +32,7 @@ const LoginPage: React.FC = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8">
         <h2 className="text-3xl font-extrabold text-center text-gray-900 mb-8">
-          Welcome back to Kikiri
+          Create your account!!
         </h2>
         {error && (
           <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-6 text-sm font-medium">
