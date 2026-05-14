@@ -1,4 +1,4 @@
-import { PutCommand, ScanCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { PutCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
 import { docClient, NODE_TABLE_NAME } from "../lib/dynamo";
 
 export interface AuthorNode {
@@ -120,78 +120,23 @@ export class NodeService {
     return node;
   }
 
-  public async updateAuthorNode(nodeId: number, updates: {
-    author_name?: string;
-    author_description?: string;
-    author_profile_picture?: string;
-    node_color?: string;
-  }): Promise<AuthorNode> {
-    const names: Record<string, string> = {};
-    const values: Record<string, any> = { ":node_id": nodeId };
-    const parts: string[] = [];
-
-    if (updates.author_name !== undefined) {
-      names["#an"] = "author_name";
-      values[":an"] = updates.author_name;
-      parts.push("#an = :an");
-      // Also update node_name to keep them in sync if that's the intention
-      names["#nn"] = "node_name";
-      values[":nn"] = updates.author_name;
-      parts.push("#nn = :nn");
-    }
-    if (updates.author_description !== undefined) {
-      names["#ad"] = "author_description";
-      values[":ad"] = updates.author_description;
-      parts.push("#ad = :ad");
-    }
-    if (updates.author_profile_picture !== undefined) {
-      names["#ap"] = "author_profile_picture";
-      values[":ap"] = updates.author_profile_picture;
-      parts.push("#ap = :ap");
-    }
-    if (updates.node_color !== undefined) {
-      names["#nc"] = "node_color";
-      values[":nc"] = updates.node_color;
-      parts.push("#nc = :nc");
-    }
-
-    if (parts.length === 0) {
-      throw new Error("No fields to update");
-    }
-
-    const result = await docClient.send(
-      new UpdateCommand({
-        TableName: NODE_TABLE_NAME,
-        Key: { node_id: nodeId },
-        UpdateExpression: `SET ${parts.join(", ")}`,
-        ExpressionAttributeNames: names,
-        ExpressionAttributeValues: values,
-        ConditionExpression: "attribute_exists(node_id)",
-        ReturnValues: "ALL_NEW",
-      })
-    );
-
-    return result.Attributes as AuthorNode;
-  }
-
   public async createMusicNode(input: {
-  trackName: string;
-  trackDescription: string;
-  musicAuthor: string;
-  albumName: string;
-  coverUrl: string;
-  audioUrl: string;
-  nodeColor?: string;
-}): Promise<MusicNode> {
-  const nodeId = await this.getNextNodeId();
-  const musicId = String(nodeId);
+    trackName: string;
+    trackDescription: string;
+    musicAuthor: string;
+    albumName: string;
+    coverUrl: string;
+    audioUrl: string;
+  }): Promise<MusicNode> {
+    const nodeId = await this.getNextNodeId();
+    const musicId = String(nodeId);
 
-  const node: MusicNode = {
-    node_id: nodeId,
-    node_type: "Music",
-    node_name: input.trackName,
-    node_color: input.nodeColor || "#636363",
-    node_music_links_next: [],
+    const node: MusicNode = {
+      node_id: nodeId,
+      node_type: "Music",
+      node_name: input.trackName,
+      node_color: "#636363",
+      node_music_links_next: [],
       node_music_links_previous: [],
       node_tag_links_next: [],
       node_tag_links_previous: [],

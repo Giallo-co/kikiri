@@ -640,11 +640,16 @@ export default function App() {
       {isLoggedIn && (
         <>
           {activeTab === 'Profile' && (
-            <Profile 
-              userNode={rawNodes.find(n => n.node_type === 'Author' && (n.node_name === username || n.author_name === username)) || { node_id: '0', node_type: 'Author', node_name: username || '', node_color: '#636363', author_name: username || '' } as RawNode} 
-              onUpdate={handleProfileUpdate} 
-              onClose={() => setActiveTab('Home')} 
-            />
+            (() => {
+              const userNode = rawNodes.find(n => n.node_type === 'Author' && (n.node_name === username || n.author_name === username));
+              return userNode ? (
+                <Profile 
+                  userNode={userNode} 
+                  onUpdate={handleProfileUpdate} 
+                  onClose={() => setActiveTab('Home')} 
+                />
+              ) : null;
+            })()
           )}
 
           {activeTab === 'Post' && (

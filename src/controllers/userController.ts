@@ -127,30 +127,6 @@ export class UserController {
         }
     }
 
-    public async updateAuthorProfile(req: Request, res: Response, next: NextFunction) {
-        try {
-            const { node_id, author_name, author_description, author_profile_picture, node_color } = req.body;
-            
-            if (!node_id) {
-                return res.status(400).json({ error: "node_id is required" });
-            }
-
-            const updatedNode = await this.userService.updateAuthorNode(Number(node_id), {
-                author_name,
-                author_description,
-                author_profile_picture,
-                node_color
-            });
-
-            res.status(200).json({
-                message: "Profile updated successfully",
-                node: updatedNode
-            });
-        } catch (error) {
-            next(error);
-        }
-    }
-
     public async delete(req: Request, res: Response, next: NextFunction) {
         try {
             await this.userService.deleteUser(Number(req.params.id));

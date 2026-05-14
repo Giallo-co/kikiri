@@ -25,12 +25,11 @@ export class AlbumController {
         return res.status(401).json({ message: 'Unauthorized' });
       }
 
-      const { albumName, generalTag, coverKey, tracks, nodeColor } = req.body as {
+      const { albumName, generalTag, coverKey, tracks } = req.body as {
         albumName?: string;
         generalTag?: string;
         coverKey?: string;
         tracks?: unknown;
-        nodeColor?: string;
       };
 
       const result = await this.albumPublishService.publishAlbum(actorId, {
@@ -38,7 +37,6 @@ export class AlbumController {
         generalTag: typeof generalTag === 'string' ? generalTag : '',
         coverKey: typeof coverKey === 'string' ? coverKey : '',
         tracks: mapTracks(tracks),
-        nodeColor: typeof nodeColor === 'string' ? nodeColor : undefined,
       });
 
       return res.status(201).json(result);
