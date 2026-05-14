@@ -5,7 +5,8 @@ import type { Request } from "express";
  * para evitar costes y ruido en CloudWatch cuando el cliente reconecta a menudo.
  */
 export function shouldSkipHeavyObservability(req: Request): boolean {
-  const p = (req.originalUrl || req.url || "").split("?")[0].toLowerCase();
+  const raw = req.originalUrl ?? req.url ?? "";
+  const p = (raw.split("?")[0] ?? "").toLowerCase();
 
   if (p.includes("/nodes/stream") || /\/[^/]+\/stream$/i.test(p)) {
     return true;
