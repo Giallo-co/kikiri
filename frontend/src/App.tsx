@@ -25,7 +25,7 @@ const DEFAULT_TRACK: Music = {
   music_description: "Key from C418",
   music_author: "C418",
   music_cover_url: MEDIA_BASE_URL ? `${MEDIA_BASE_URL}/music-cover/c418/volume-alpha.jpg` : '',
-  music_url: MEDIA_BASE_URL ? `${MEDIA_BASE_URL}/music/c418/volume-alpha/01-key.mp3` : '',
+  music_url: MEDIA_BASE_URL ? `${MEDIA_BASE_URL}/music/c418/volume-alpha/01-key.mp4` : '',
   music_album: "Volume Alpha",
   likes: 0,
   views: 0,
