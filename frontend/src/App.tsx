@@ -64,6 +64,20 @@ export default function App() {
   const esRef = useRef<EventSource | null>(null)
   const initialSearchHandledRef = useRef(false)
 
+  const normalizeNode = useCallback((n: any): RawNode => ({
+    ...n,
+    node_id: String(n.node_id),
+    node_music_links_next: (n.node_music_links_next || []).map((id: any) => String(id)),
+    node_music_links_previous: (n.node_music_links_previous || []).map((id: any) => String(id)),
+    node_tag_links_next: (n.node_tag_links_next || []).map((id: any) => String(id)),
+    node_tag_links_previous: (n.node_tag_links_previous || []).map((id: any) => String(id)),
+    node_author_links_next: (n.node_author_links_next || []).map((id: any) => String(id)),
+    node_author_links_previous: (n.node_author_links_previous || []).map((id: any) => String(id)),
+    node_album_links_next: (n.node_album_links_next || []).map((id: any) => String(id)),
+    node_album_links_previous: (n.node_album_links_previous || []).map((id: any) => String(id)),
+    node_music_likes: (n.node_music_likes || []).map((id: any) => String(id)),
+  }), []);
+
   const visibleNodes = useMemo(() => {
     if (!rawNodes.length) return []
     
@@ -73,7 +87,7 @@ export default function App() {
     }
 
     const userNode = rawNodes.find(n => n.node_type === 'Author' && (n.node_name === username || n.author_name === username))
-    const likedMusicIds = (userNode?.node_music_likes || []).map(id => String(id))
+    const likedMusicIds = (userNode?.node_music_likes || []).map((id: string | number) => String(id))
     
     // helper to get all links for BFS
     const getAllLinks = (n: RawNode) => [
@@ -85,7 +99,7 @@ export default function App() {
       ...(n.node_album_links_previous || []),
       ...(n.node_music_links_next || []),
       ...(n.node_music_links_previous || [])
-    ].map(id => String(id)).filter(id => id && id !== String(n.node_id));
+    ].map((id: string | number) => String(id)).filter((id: string) => id && id !== String(n.node_id));
 
     const getReachableFrom = (startingNodes: RawNode[], maxDepth: number) => {
       const reachableIds = new Set<string>()
@@ -124,7 +138,6 @@ export default function App() {
           (rn.author_name?.toLowerCase().includes(q))
         )
 
-        // Contextual navigation: If Author or Tag, show neighborhood
         if (matches.length === 1 && (matches[0].node_type === 'Author' || matches[0].node_type === 'Tag')) {
           const reachableIds = getReachableFrom([matches[0]], 1)
           return rawNodes.filter(rn => reachableIds.has(String(rn.node_id)))
@@ -132,32 +145,38 @@ export default function App() {
 
         return matches
       } else {
-        // Default Search view (before typing): show everything reachable from user
+        // Union of Home and Explore: basically everything reachable
+        const homeMusic = rawNodes.filter(rn => rn.node_type === 'Music' && likedMusicIds.includes(String(rn.node_id)))
+        const exploreMusic = rawNodes.filter(rn => rn.node_type === 'Music' && !likedMusicIds.includes(String(rn.node_id)))
+        
+        const homeReachable = getReachableFrom(homeMusic, 2)
+        const exploreReachable = getReachableFrom(exploreMusic, 100)
+        
+        const unionIds = new Set([...homeReachable, ...exploreReachable])
         return rawNodes.filter(rn => {
           if (rn.node_type === 'Author' && (!rn.node_music_links_next || rn.node_music_links_next.length === 0)) return false
           if (String(rn.node_id) === String(userNode?.node_id)) return true
-          return true
+          return unionIds.has(String(rn.node_id))
         })
       }
     }
 
-    // --- NORMAL TABS LOGIC (Home / Explore) ---
-    const filteredBaseMusic = rawNodes.filter(rn => {
+    // --- NORMAL TABS LOGIC ---
+    const visibleMusicNodes = rawNodes.filter(rn => {
       if (rn.node_type !== 'Music') return false
-      const sid = String(rn.node_id)
-      if (activeTab === 'Home') return likedMusicIds.includes(sid)
-      if (activeTab === 'Explore') return !likedMusicIds.includes(sid)
+      if (activeTab === 'Home') return likedMusicIds.includes(String(rn.node_id))
+      if (activeTab === 'Explore') return !likedMusicIds.includes(String(rn.node_id))
       return true
     })
     
-    const maxDepth = activeTab === 'Home' ? 1 : 100 
-    const reachableIds = getReachableFrom(filteredBaseMusic, maxDepth)
+    const visibleMusicIds = new Set(visibleMusicNodes.map(m => String(m.node_id)))
+    const maxDepth = activeTab === 'Home' ? 2 : 100 
+    const reachableIds = getReachableFrom(visibleMusicNodes, maxDepth)
 
     return rawNodes.filter(rn => {
-      // Always show current user node if logged in
+      if (rn.node_type === 'Author' && (!rn.node_music_links_next || rn.node_music_links_next.length === 0)) return false
       if (String(rn.node_id) === String(userNode?.node_id)) return true
-      
-      // For Home/Explore, only show reachable nodes from the filtered base music
+      if (rn.node_type === 'Music' && !visibleMusicIds.has(String(rn.node_id))) return false
       return reachableIds.has(String(rn.node_id))
     })
   }, [rawNodes, activeTab, isLoggedIn, username, searchQuery])
@@ -166,7 +185,7 @@ export default function App() {
     if (!isLoggedIn || !username || !rawNodes.length) return null
     const userNode = rawNodes.find(n => n.node_type === 'Author' && (n.node_name === username || n.author_name === username))
     if (userNode && userNode.node_music_links_next && userNode.node_music_links_next.length > 0) {
-      return userNode.node_id
+      return String(userNode.node_id)
     }
     return null
   }, [isLoggedIn, username, rawNodes])
@@ -176,7 +195,7 @@ export default function App() {
 
     if (!targetNodeId) {
       const currentNode = visibleNodes.find(rn => rn.music_id === track.music_id)
-      if (currentNode) targetNodeId = currentNode.node_id
+      if (currentNode) targetNodeId = String(currentNode.node_id)
     }
 
     if (targetNodeId) {
@@ -195,22 +214,22 @@ export default function App() {
 
   const handleNext = useCallback(() => {
     if (!currentTrack || !visibleNodes.length) return
-    const currentNode = visibleNodes.find(rn => rn.node_id === selectedNodeId)
+    const currentNode = visibleNodes.find(rn => String(rn.node_id) === String(selectedNodeId))
     const baseNode = currentNode || visibleNodes.find(rn => rn.music_id === currentTrack.music_id)
     if (!baseNode) return
 
     if (baseNode.node_album_links_next?.length > 0) {
-      const nextId = baseNode.node_album_links_next[0]
-      const nextNode = visibleNodes.find(rn => rn.node_id === nextId)
+      const nextId = String(baseNode.node_album_links_next[0])
+      const nextNode = visibleNodes.find(rn => String(rn.node_id) === nextId)
       if (nextNode && nextNode.node_type === "Music") {
-        handleTrackChange(nextNode as unknown as Music, nextNode.node_id, true, isManualSelection)
+        handleTrackChange(nextNode as unknown as Music, String(nextNode.node_id), true, isManualSelection)
         return
       }
     }
 
     if (baseNode.node_author_links_next?.length > 0) {
-      const authorId = baseNode.node_author_links_next[0]
-      if (visibleNodes.some(n => n.node_id === authorId)) {
+      const authorId = String(baseNode.node_author_links_next[0])
+      if (visibleNodes.some(n => String(n.node_id) === authorId)) {
         setSelectedNodeId(authorId)
         setShouldFocus(isManualSelection)
       }
@@ -219,22 +238,22 @@ export default function App() {
 
   const handlePrevious = useCallback(() => {
     if (!currentTrack || !visibleNodes.length) return
-    const currentNode = visibleNodes.find(rn => rn.node_id === selectedNodeId)
+    const currentNode = visibleNodes.find(rn => String(rn.node_id) === String(selectedNodeId))
     const baseNode = currentNode || visibleNodes.find(rn => rn.music_id === currentTrack.music_id)
     if (!baseNode) return
 
     if (baseNode.node_album_links_previous?.length > 0) {
-      const prevId = baseNode.node_album_links_previous[0]
-      const prevNode = visibleNodes.find(rn => rn.node_id === prevId)
+      const prevId = String(baseNode.node_album_links_previous[0])
+      const prevNode = visibleNodes.find(rn => String(rn.node_id) === prevId)
       if (prevNode && prevNode.node_type === "Music") {
-        handleTrackChange(prevNode as unknown as Music, prevNode.node_id, false, isManualSelection)
+        handleTrackChange(prevNode as unknown as Music, String(prevNode.node_id), false, isManualSelection)
         return
       }
     }
 
     if (baseNode.node_author_links_next?.length > 0) {
-      const authorId = baseNode.node_author_links_next[0]
-      if (visibleNodes.some(n => n.node_id === authorId)) {
+      const authorId = String(baseNode.node_author_links_next[0])
+      if (visibleNodes.some(n => String(n.node_id) === authorId)) {
         setSelectedNodeId(authorId)
         setShouldFocus(isManualSelection)
       }
@@ -244,7 +263,7 @@ export default function App() {
   const playingNodeId = useMemo(() => {
     if (!currentTrack) return null
     const node = visibleNodes.find(rn => rn.music_id === currentTrack.music_id)
-    return node?.node_id || null
+    return node ? String(node.node_id) : null
   }, [currentTrack, visibleNodes])
 
   const handleShuffle = useCallback(async () => {
@@ -254,18 +273,18 @@ export default function App() {
     const getRandom = <T,>(arr: T[]): T | null => arr.length > 0 ? arr[Math.floor(Math.random() * arr.length)] : null
 
     const findMusicFromAuthor = (authorNode: RawNode) => {
-      const musicIds = authorNode.node_music_links_next || []
-      const musics = visibleNodes.filter(n => musicIds.includes(n.node_id) && n.node_type === "Music")
+      const musicIds = (authorNode.node_music_links_next || []).map(id => String(id))
+      const musics = visibleNodes.filter(n => musicIds.includes(String(n.node_id)) && n.node_type === "Music")
       return getRandom(musics)
     }
 
     const findAuthorFromTag = (tagNode: RawNode) => {
-      const authorIds = tagNode.node_author_links_next || []
-      const authors = visibleNodes.filter(n => authorIds.includes(n.node_id) && n.node_type === "Author")
+      const authorIds = (tagNode.node_author_links_next || []).map(id => String(id))
+      const authors = visibleNodes.filter(n => authorIds.includes(String(n.node_id)) && n.node_type === "Author")
       return getRandom(authors)
     }
 
-    let currentNode = selectedNodeId ? visibleNodes.find(n => n.node_id === selectedNodeId) : null
+    let currentNode = selectedNodeId ? visibleNodes.find(n => String(n.node_id) === String(selectedNodeId)) : null
 
     const startFullFlow = async (): Promise<boolean> => {
       const tags = visibleNodes.filter(n => n.node_type === "Tag" && (n.node_author_links_next?.length ?? 0) > 0)
@@ -278,36 +297,36 @@ export default function App() {
         const fallback = getRandom(authors) || getRandom(musics) || getRandom(visibleNodes)
         if (!fallback) return false
         
-        setSelectedNodeId(fallback.node_id)
+        setSelectedNodeId(String(fallback.node_id))
         setShouldFocus(true)
         if (fallback.node_type === "Music") {
-          handleTrackChange(fallback as unknown as Music, fallback.node_id, true, true)
+          handleTrackChange(fallback as unknown as Music, String(fallback.node_id), true, true)
           return true
         }
         // If it's an author, wait a bit then pick a music
         await delay(SHUFFLE_STEP_DELAY)
         const randomMusic = findMusicFromAuthor(fallback)
         if (randomMusic) {
-          handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id, true, true)
+          handleTrackChange(randomMusic as unknown as Music, String(randomMusic.node_id), true, true)
         }
         return true
       }
 
-      setSelectedNodeId(randomTag.node_id)
+      setSelectedNodeId(String(randomTag.node_id))
       setShouldFocus(true)
       await delay(SHUFFLE_STEP_DELAY)
 
       const randomAuthor = findAuthorFromTag(randomTag)
       if (!randomAuthor) return await startFullFlow()
 
-      setSelectedNodeId(randomAuthor.node_id)
+      setSelectedNodeId(String(randomAuthor.node_id))
       setShouldFocus(true)
       await delay(SHUFFLE_STEP_DELAY)
 
       const randomMusic = findMusicFromAuthor(randomAuthor)
       if (!randomMusic) return await startFullFlow()
 
-      handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id, true, true)
+      handleTrackChange(randomMusic as unknown as Music, String(randomMusic.node_id), true, true)
       return true
     }
 
@@ -319,37 +338,37 @@ export default function App() {
     if (currentNode.node_type === "Tag") {
       const randomAuthor = findAuthorFromTag(currentNode)
       if (!randomAuthor) { await startFullFlow(); return }
-      setSelectedNodeId(randomAuthor.node_id); setShouldFocus(true); await delay(SHUFFLE_STEP_DELAY)
+      setSelectedNodeId(String(randomAuthor.node_id)); setShouldFocus(true); await delay(SHUFFLE_STEP_DELAY)
       const randomMusic = findMusicFromAuthor(randomAuthor)
       if (!randomMusic) { await startFullFlow(); return }
-      handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id, true, true)
+      handleTrackChange(randomMusic as unknown as Music, String(randomMusic.node_id), true, true)
       return
     }
 
     if (currentNode.node_type === "Author") {
       const randomMusic = findMusicFromAuthor(currentNode)
       if (!randomMusic) { await startFullFlow(); return }
-      handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id, true, true)
+      handleTrackChange(randomMusic as unknown as Music, String(randomMusic.node_id), true, true)
       return
     }
 
     if (currentNode.node_type === "Music") {
-      const relatedIds = [...(currentNode.node_tag_links_next || []), ...(currentNode.node_author_links_next || [])]
-      const relatedNodes = visibleNodes.filter(n => relatedIds.includes(n.node_id))
+      const relatedIds = [...(currentNode.node_tag_links_next || []), ...(currentNode.node_author_links_next || [])].map(id => String(id))
+      const relatedNodes = visibleNodes.filter(n => relatedIds.includes(String(n.node_id)))
       const randomRelated = getRandom(relatedNodes)
       if (!randomRelated) { await startFullFlow(); return }
-      setSelectedNodeId(randomRelated.node_id); setShouldFocus(true); await delay(SHUFFLE_STEP_DELAY)
+      setSelectedNodeId(String(randomRelated.node_id)); setShouldFocus(true); await delay(SHUFFLE_STEP_DELAY)
       if (randomRelated.node_type === "Tag") {
         const randomAuthor = findAuthorFromTag(randomRelated)
         if (!randomAuthor) { await startFullFlow(); return }
-        setSelectedNodeId(randomAuthor.node_id); setShouldFocus(true); await delay(SHUFFLE_STEP_DELAY)
+        setSelectedNodeId(String(randomAuthor.node_id)); setShouldFocus(true); await delay(SHUFFLE_STEP_DELAY)
         const randomMusic = findMusicFromAuthor(randomAuthor)
         if (!randomMusic) { await startFullFlow(); return }
-        handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id, true, true)
+        handleTrackChange(randomMusic as unknown as Music, String(randomMusic.node_id), true, true)
       } else if (randomRelated.node_type === "Author") {
         const randomMusic = findMusicFromAuthor(randomRelated)
         if (!randomMusic) { await startFullFlow(); return }
-        handleTrackChange(randomMusic as unknown as Music, randomMusic.node_id, true, true)
+        handleTrackChange(randomMusic as unknown as Music, String(randomMusic.node_id), true, true)
       }
       return
     }
@@ -406,9 +425,12 @@ export default function App() {
   }, []);
 
   const handleProfileUpdate = useCallback((updatedNode: RawNode) => {
-    setRawNodes(prev => prev.map(n => n.node_id === updatedNode.node_id ? updatedNode : n));
-    if (updatedNode.node_name) setUsername(updatedNode.node_name);
-  }, []);
+    const normalized = normalizeNode(updatedNode)
+    setRawNodes(prev => prev.map(n => String(n.node_id) === String(normalized.node_id) ? normalized : n));
+    if (normalized.node_name) {
+      setUsername(normalized.node_name)
+    }
+  }, [normalizeNode])
 
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
@@ -437,12 +459,15 @@ export default function App() {
     )
     if (matches.length === 1) {
       const match = matches[0]
-      setSelectedNodeId(match.node_id);
-      setIsManualSelection(true);
-      setShouldFocus(true);
-      
       if (match.node_type === 'Music') {
-        handleTrackChange(match as unknown as Music, match.node_id, true, true)
+        setSelectedNodeId(String(match.node_id)); 
+        setIsManualSelection(true); 
+        setShouldFocus(true)
+        handleTrackChange(match as unknown as Music, String(match.node_id), true, true)
+      } else {
+        setSelectedNodeId(String(match.node_id));
+        setIsManualSelection(true);
+        setShouldFocus(true);
       }
     }
   }, [rawNodes, handleTrackChange])
@@ -468,12 +493,12 @@ export default function App() {
 
   useEffect(() => {
     const nodes: NodeDatum[] = visibleNodes.map(rn => ({
-      id: rn.node_id,
+      id: String(rn.node_id),
       name: rn.node_name,
       color: rn.node_color,
       content: (rn.node_type === "Music" || rn.node_type === "Author" || rn.node_type === "Tag") ? rn : null
     }))
-    const filteredNodeIds = new Set(visibleNodes.map(rn => rn.node_id))
+    const filteredNodeIds = new Set(visibleNodes.map(rn => String(rn.node_id)))
     const links: LinkDatum[] = []
     visibleNodes.forEach(rn => {
       const allLinks = [
@@ -481,9 +506,9 @@ export default function App() {
         ...(rn.node_music_links_next || []), ...(rn.node_music_links_previous || []),
         ...(rn.node_author_links_next || []), ...(rn.node_author_links_previous || []),
         ...(rn.node_album_links_next || []), ...(rn.node_album_links_previous || [])
-      ]
+      ].map(id => String(id))
       allLinks.forEach(targetId => {
-        if (filteredNodeIds.has(targetId)) links.push({ source: rn.node_id, target: targetId })
+        if (filteredNodeIds.has(targetId)) links.push({ source: String(rn.node_id), target: targetId })
       })
     })
     setGraphData({ nodes, links })
@@ -493,12 +518,12 @@ export default function App() {
     if (!currentTrack || !username || !rawNodes.length) return
     const trackNode = rawNodes.find(rn => rn.music_id === currentTrack.music_id)
     if (!trackNode) return
-    const trackId = trackNode.node_id
+    const trackId = String(trackNode.node_id)
     setRawNodes(prev => {
       const userIdx = prev.findIndex(n => n.node_type === 'Author' && (n.node_name === username || n.author_name === username))
       if (userIdx === -1) return prev
       const newUserNodes = [...prev]; const userNode = { ...newUserNodes[userIdx] }
-      const likes = userNode.node_music_likes || []
+      const likes = (userNode.node_music_likes || []).map((id: any) => String(id))
       if (likes.includes(trackId)) userNode.node_music_likes = likes.filter((id: string) => id !== trackId)
       else userNode.node_music_likes = [...likes, trackId]
       newUserNodes[userIdx] = userNode; return newUserNodes
@@ -514,7 +539,9 @@ export default function App() {
     if (!currentTrack || !username || !rawNodes.length) return false
     const userNode = rawNodes.find(n => n.node_type === 'Author' && (n.node_name === username || n.author_name === username))
     const trackNode = rawNodes.find(rn => rn.music_id === currentTrack.music_id)
-    return userNode?.node_music_likes?.includes(trackNode?.node_id || '') || false
+    const trackId = trackNode ? String(trackNode.node_id) : ''
+    const likes = (userNode?.node_music_likes || []).map((id: any) => String(id))
+    return likes.includes(trackId)
   }, [currentTrack, username, rawNodes])
 
   useEffect(() => {
@@ -544,8 +571,10 @@ export default function App() {
             if (track && track.music_id) setCurrentTrack(track)
             return
           }
-          const incomingNodes: RawNode[] = parsed
-          if (Array.isArray(incomingNodes) && incomingNodes.length) setRawNodes(incomingNodes)
+          const incomingNodes: any[] = parsed
+          if (Array.isArray(incomingNodes) && incomingNodes.length) {
+            setRawNodes(incomingNodes.map(normalizeNode))
+          }
         } catch (e) {
           setError('parse error')
         }
@@ -561,12 +590,13 @@ export default function App() {
         }, wait)
       }
     }
+    
     connect()
     return () => {
       cancelled = true
       esRef.current?.close()
     }
-  }, [])
+  }, [normalizeNode])
 
   useEffect(() => {
     if (isLoggedIn && rawNodes.length > 0 && !initialSearchHandledRef.current) {

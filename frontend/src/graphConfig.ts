@@ -12,7 +12,7 @@ export const graphConfig: GraphConfig = {
   innerExclusionRadius: 0,
   outerExclusionRadius: 600,
   enableOuterExclusion: true,
-  isOuterBoundaryDynamic: false, // Cámbialo a false para que la frontera sea permanente
+  isOuterBoundaryDynamic: false,
   enableMasking: true,
   searchBarWidth: 350,
 }
